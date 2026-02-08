@@ -4,6 +4,6 @@
 
 class BasicBlockNode : public Node {
 public:
-    BasicBlockNode(const std::string& name);
-    static BasicBlockNode* make(llvm::BasicBlock& F);
+    BasicBlockNode(llvm::BasicBlock& B);
+    static BasicBlockNode* make(llvm::BasicBlock& B);
 };

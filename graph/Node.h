@@ -1,5 +1,6 @@
 #pragma once
 
+#include "llvm/IR/Value.h"
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -8,7 +9,7 @@ using namespace std;
 
 class Node {
 public:
-    Node(const std::string label, const std::string name);
+    Node(llvm::Value* value, const std::string label);
 
     unsigned int getId() const;
     const std::string& getName() const;

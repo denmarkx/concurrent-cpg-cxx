@@ -1,14 +1,15 @@
 #include "GraphManager.h"
 #include "Node.h"
+#include "APIHelper.h"
 
-Node::Node(const std::string label, const std::string name) { 
+Node::Node(llvm::Value* value, const std::string label) { 
     _idCounter++;
     _id = _idCounter;
     _label = label;
-    _name = name;
+    _name = Util::getName(value);
     _labels.push_back(label);
 
-    GraphManager::get()->addNode(this);
+    GraphManager::get()->addNode(value, this);
 }
 
 unsigned int Node::getId() const {

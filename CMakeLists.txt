@@ -39,13 +39,20 @@ set(FILES
     graph/Node.cxx
     graph/FunctionNode.cxx
     graph/BasicBlockNode.cxx
+    graph/StackAllocation.cxx
+    graph/StoreNode.cxx
+    graph/LoadNode.cxx
+    graph/ParamNode.cxx
+    graph/LiteralNode.cxx
     graph/GraphBuilder.cxx
     BidirectionalCallGraph.cxx
     ConstructionPass.cxx
     GraphBuilderPass.cxx
+    APIHelper.h
     main.cxx
 )
 
 add_executable(analysis ${FILES})
 target_link_libraries(analysis ${LLVM_LIBS} Andersen neo4j-client ssl crypto m)
 target_link_directories(analysis PRIVATE ${NEO4J_LIBRARY_DIR})
+target_include_directories(analysis PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

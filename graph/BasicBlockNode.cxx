@@ -1,8 +1,8 @@
 #include "BasicBlockNode.h"
 
-BasicBlockNode::BasicBlockNode(const std::string& name) : Node("Block", name) {}
+BasicBlockNode::BasicBlockNode(llvm::BasicBlock& B) : Node(&B, "Block") {}
 
 BasicBlockNode* BasicBlockNode::make(llvm::BasicBlock &B) {
-    BasicBlockNode *node = new BasicBlockNode(B.getName().str());
+    BasicBlockNode *node = new BasicBlockNode(B);
     return node;
 }
