@@ -12,6 +12,10 @@ Node::Node(llvm::Value* value, const std::string label) {
     GraphManager::get()->addNode(value, this);
 }
 
+void Node::registerStoreEdge(Node* node) {
+    _edges.push_back(pair("STORE", node));
+}
+
 unsigned int Node::getId() const {
     return _id;
 }

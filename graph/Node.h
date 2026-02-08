@@ -17,6 +17,9 @@ public:
     const std::vector<std::pair<std::string, Node*>>& getEdges() const;
     const std::vector<std::string>& getLabels() const;
 
+    // probably shouldnt be in here:
+    void registerStoreEdge(Node* node);
+
 private:
     inline static unsigned int _idCounter;
 
