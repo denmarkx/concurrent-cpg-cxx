@@ -1,0 +1,30 @@
+#pragma once
+
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+using namespace std;
+
+class Node {
+public:
+    Node(const std::string label, const std::string name);
+
+    unsigned int getId() const;
+    const std::string& getName() const;
+
+    const std::vector<std::pair<std::string, Node*>>& getEdges() const;
+    const std::vector<std::string>& getLabels() const;
+
+private:
+    inline static unsigned int _idCounter;
+
+    unsigned int _id;
+    std::string _label = "Node";
+    std::string _name = "Node";
+
+protected:
+    std::vector<std::string> _labels;
+    std::unordered_map<std::string, std::string> _properties;
+    std::vector<std::pair<std::string, Node*>> _edges;
+};

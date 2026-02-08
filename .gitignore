@@ -1,0 +1,14 @@
+CMakeCache.txt
+CMakeFiles/
+Makefile
+compile_commands.json
+analysis
+
+*.clangd
+*.cmake
+*.so
+*.ll
+*.rs
+*.c
+*.out
+*.exe
