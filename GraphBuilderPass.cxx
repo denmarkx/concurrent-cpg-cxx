@@ -1,16 +1,25 @@
 #include "andersen/AndersenAA.h"
 #include "graph/BasicBlockNode.h"
+#include "graph/CallNode.h"
 #include "graph/FunctionNode.h"
+#include "graph/GlobalAllocation.h"
 #include "graph/StackAllocation.h"
 #include "graph/StoreNode.h"
 #include "graph/LoadNode.h"
 #include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
 #include "GraphBuilderPass.h"
 
 #include <iostream>
 
 bool GraphBuilderPass::runOnModule(Module &M) {
+    for (GlobalVariable &G : M.globals()) {
+        if (!G.isConstant()) {
+            GlobalAllocation::make(G);
+        }
+    }
+
     for (Function &F : M) {
         FunctionNode* funcNode = FunctionNode::make(F);
 
@@ -30,6 +39,11 @@ bool GraphBuilderPass::runOnModule(Module &M) {
                     }
                     case Instruction::Load: {
                         LoadNode::make(dyn_cast<LoadInst>(&I));
+                        break;
+                    }
+                    case Instruction::Call: {
+                        CallNode::make(dyn_cast<CallInst>(&I));
+                        break;
                     }
                 }
             }

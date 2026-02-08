@@ -5,5 +5,7 @@
 class LoadNode : public Node {
 public:
     LoadNode(llvm::LoadInst *I);
+
+    void registerLoadEdge(Node* source);
     static LoadNode* make(llvm::LoadInst* I);
 };

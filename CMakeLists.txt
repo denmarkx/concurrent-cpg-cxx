@@ -44,6 +44,8 @@ set(FILES
     graph/LoadNode.cxx
     graph/ParamNode.cxx
     graph/LiteralNode.cxx
+    graph/GlobalAllocation.cxx
+    graph/CallNode.cxx
     graph/GraphBuilder.cxx
     BidirectionalCallGraph.cxx
     ConstructionPass.cxx
