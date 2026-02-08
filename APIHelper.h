@@ -6,7 +6,9 @@
 #include <iostream>
 
 namespace Util {
-    std::string getName(llvm::Value* value) {
+    inline std::string getName(llvm::Value* value) {
+        if (value == nullptr) return "null";
+
         std::string name = value->getName().str();
         if (name.empty()) {
             // Some names are only for the LL format. In this case,

@@ -16,6 +16,7 @@ public:
     std::vector<Node*> getNodes();
 
     Node* getNode(llvm::Value* value);
+    Node* getNode(llvm::Instruction* instr);
     Node* handlePrimitive(llvm::Value* value);
 
     static GraphManager* get();

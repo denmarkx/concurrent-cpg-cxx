@@ -37,15 +37,15 @@ target_include_directories(Andersen PUBLIC andersen)
 set(FILES
     graph/GraphManager.cxx
     graph/Node.cxx
-    graph/FunctionNode.cxx
-    graph/BasicBlockNode.cxx
-    graph/StackAllocation.cxx
-    graph/StoreNode.cxx
-    graph/LoadNode.cxx
-    graph/ParamNode.cxx
-    graph/LiteralNode.cxx
-    graph/GlobalAllocation.cxx
-    graph/CallNode.cxx
+    graph/FunctionNode.h
+    graph/BasicBlockNode.h
+    graph/StackAllocation.h
+    graph/LoadNode.h
+    graph/ParamNode.h
+    graph/LiteralNode.h
+    graph/GlobalAllocation.h
+    graph/CallNode.h
+    graph/NullNode.h
     graph/GraphBuilder.cxx
     BidirectionalCallGraph.cxx
     ConstructionPass.cxx

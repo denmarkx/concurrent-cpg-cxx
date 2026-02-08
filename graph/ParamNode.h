@@ -4,6 +4,10 @@
 
 class ParamNode : public Node {
 public:
-    ParamNode(llvm::Value *I);
-    static ParamNode* make(llvm::Value* I);
+    ParamNode(llvm::Value *I) : Node(I, "Parameter") {};
+
+    static ParamNode* make(llvm::Value *I) {
+        ParamNode *node = new ParamNode(I);
+        return node;
+    }
 };

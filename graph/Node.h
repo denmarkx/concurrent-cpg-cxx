@@ -1,10 +1,12 @@
 #pragma once
 
 #include "llvm/IR/Value.h"
+
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <iostream>
 using namespace std;
 
 class Node {

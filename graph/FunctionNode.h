@@ -8,11 +8,29 @@
 
 class FunctionNode : public Node {
 public:
-    FunctionNode(llvm::Function& F);
-    static FunctionNode* make(llvm::Function& F);
+    FunctionNode(llvm::Function* F) : Node(F, "Function") {}
 
-    void addBlock(BasicBlockNode* block);
-    void addParam(ParamNode* param);
+    static FunctionNode* make(llvm::Function *F) {
+        FunctionNode *node = new FunctionNode(F);
+    
+        for (llvm::Argument &arg : F->args()) {
+            ParamNode *param = new ParamNode(&arg);
+            node->addParam(param);
+        }
+    
+        return node;
+    }
+
+    void addBlock(BasicBlockNode* block) {
+        _edges.push_back(pair("BLOCKS", block));
+        _blocks.push_back(block);
+    }
+    
+    void addParam(ParamNode* param) {
+        _edges.push_back(pair("PARAMETER", param));
+        _params.push_back(param);
+    }
+
 
 private:
     std::vector<BasicBlockNode*> _blocks;

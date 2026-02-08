@@ -1,54 +1,8 @@
-#include "andersen/AndersenAA.h"
-#include "graph/BasicBlockNode.h"
-#include "graph/CallNode.h"
-#include "graph/FunctionNode.h"
-#include "graph/GlobalAllocation.h"
-#include "graph/StackAllocation.h"
-#include "graph/StoreNode.h"
-#include "graph/LoadNode.h"
-#include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/GlobalVariable.h"
-#include "llvm/IR/Instructions.h"
+#include "graph/GraphParser.h"
 #include "GraphBuilderPass.h"
 
-#include <iostream>
-
 bool GraphBuilderPass::runOnModule(Module &M) {
-    for (GlobalVariable &G : M.globals()) {
-        if (!G.isConstant()) {
-            GlobalAllocation::make(G);
-        }
-    }
-
-    for (Function &F : M) {
-        FunctionNode* funcNode = FunctionNode::make(F);
-
-        for (BasicBlock &B : F) {
-            BasicBlockNode* blockNode = BasicBlockNode::make(B);
-            funcNode->addBlock(blockNode);
-
-            for (Instruction &I : B) {
-                switch (I.getOpcode()) {
-                    case Instruction::Alloca: {
-                        StackAllocation::make(dyn_cast<AllocaInst>(&I));
-                        break;
-                    }
-                    case Instruction::Store: {
-                        StoreNode::make(dyn_cast<StoreInst>(&I));
-                        break;
-                    }
-                    case Instruction::Load: {
-                        LoadNode::make(dyn_cast<LoadInst>(&I));
-                        break;
-                    }
-                    case Instruction::Call: {
-                        CallNode::make(dyn_cast<CallInst>(&I));
-                        break;
-                    }
-                }
-            }
-        }
-    }
+    GraphParser::handleGraph(M);
     return false;
 }
 
