@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 #include <iostream>
+#include <array>
 using namespace std;
 
 class Node {
@@ -41,4 +42,11 @@ protected:
     std::vector<std::string> _labels;
     std::unordered_map<std::string, std::string> _properties;
     std::vector<std::pair<std::string, Node*>> _edges;
+
+    static bool isIgnoredIntrinsic(llvm::Value* value);
+
+    static constexpr std::array<const char*, 2> IgnoredIntrinsics = {
+        "llvm.lifetime.start.p0",
+        "llvm.lifetime.end.p0",
+    };
 };

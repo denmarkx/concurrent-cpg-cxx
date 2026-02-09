@@ -11,6 +11,8 @@ public:
     FunctionNode(llvm::Function* F) : Node(F, "Function") {}
 
     static FunctionNode* make(llvm::Function *F) {
+        if (Node::isIgnoredIntrinsic(F)) return nullptr;
+
         FunctionNode *node = new FunctionNode(F);
     
         for (llvm::Argument &arg : F->args()) {

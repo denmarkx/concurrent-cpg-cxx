@@ -16,6 +16,7 @@ public:
 
     static CallNode* make(llvm::CallInst* I) {
         if (I->isInlineAsm() || !I->getCalledFunction()) return nullptr;
+        if (Node::isIgnoredIntrinsic(I->getCalledFunction())) return nullptr;
 
         CallNode *node = new CallNode(I);
 

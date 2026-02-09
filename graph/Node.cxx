@@ -17,6 +17,11 @@ llvm::Value* Node::getValue() {
     return _value;
 }
 
+bool Node::isIgnoredIntrinsic(Value* value) {
+    return std::find(IgnoredIntrinsics.begin(), IgnoredIntrinsics.end(),
+        value->getName().str()) != IgnoredIntrinsics.end();
+}
+
 void Node::registerStoreEdge(Node* node) {
     _edges.push_back(pair("STORE", node));
 }
