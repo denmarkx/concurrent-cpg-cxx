@@ -12,6 +12,9 @@ using namespace std;
 class Node {
 public:
     Node(llvm::Value* value, const std::string label);
+    virtual ~Node() = default;
+
+    llvm::Value* getValue();
 
     unsigned int getId() const;
     const std::string& getName() const;
@@ -21,6 +24,9 @@ public:
 
     // probably shouldnt be in here:
     void registerStoreEdge(Node* node);
+    void registerAliasEdge(Node* node);
+    void registerCopyEdge(Node* node);
+    void registerGEPEdge(Node* node);
 
 private:
     inline static unsigned int _idCounter;
@@ -28,6 +34,8 @@ private:
     unsigned int _id;
     std::string _label = "Node";
     std::string _name = "Node";
+
+    llvm::Value* _value;
 
 protected:
     std::vector<std::string> _labels;

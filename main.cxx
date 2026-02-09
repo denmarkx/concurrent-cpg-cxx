@@ -18,7 +18,7 @@ using namespace llvm;
 int main() {
     LLVMContext ctx;
     SMDiagnostic error;
-    std::unique_ptr<Module> module = parseIRFile("shared.ll", error, ctx);
+    std::unique_ptr<Module> module = parseIRFile("std_rs.ll", error, ctx);
 
     if (module == nullptr) {
         error.print("", errs());
@@ -28,7 +28,7 @@ int main() {
     GraphBuilder builder("neo4j", "00000000");
 
     legacy::PassManager PM;
-    // PM.add(new AndersenAAWrapperPass());
+    PM.add(new AndersenAAWrapperPass());
     // PM.add(new ConstructionPass());
     PM.add(new GraphBuilderPass());
     PM.run(*module);

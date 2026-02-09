@@ -14,6 +14,7 @@ class GraphBuilderPass : public ModulePass {
 public:
     GraphBuilderPass() : ModulePass(ID) {}
     bool runOnModule(Module &M) override;
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
 
 public:
     static char ID;

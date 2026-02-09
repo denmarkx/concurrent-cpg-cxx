@@ -1,7 +1,9 @@
 #include "GraphBuilder.h"
 #include "GraphManager.h"
+#include "APIHelper.h"
 
 #include "Node.h"
+#include <stdexcept>
 #include <tuple>
 #include <vector>
 #include <sstream>
@@ -69,9 +71,13 @@ void GraphBuilder::persistAll() {
     }
 
     std::vector<std::tuple<std::string, std::string, std::string>> rels;
-    for (const auto* node : nodes) {
+    for (auto* node : nodes) {
         auto edges = node->getEdges();
         for (const auto& [type, end] : edges) {
+            if (end == nullptr) {
+                std::string info = Util::getName(node->getValue());
+                throw std::runtime_error("end is null for " + info);
+            }
             rels.push_back({std::to_string(node->getId()), type, std::to_string(end->getId())});
         }
     }
@@ -96,6 +102,7 @@ void GraphBuilder::persistAll() {
             "MATCH (a {id: row.from}), (b {id: row.to}) "
             "CALL apoc.create.relationship(a, row.type, {}, b) YIELD rel "
             "RETURN count(rel)";
+        std::cout << cypher << "\n";
         execute(cypher);
     }
 }
