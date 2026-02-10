@@ -10,4 +10,15 @@ public:
         ParamNode *node = new ParamNode(I);
         return node;
     }
+
+    void setProperties(const Function *F, size_t i) {
+        AttributeSet attrSet = F->getAttributes().getParamAttrs(i);
+        for (const Attribute attr : attrSet) {
+            if (!attr.isStringAttribute()) {
+                addProperty(attr.getAsString(), "true");
+            } else {
+                addProperty(attr.getKindAsString().str(), attr.getValueAsString().str());
+            }
+        }
+    }
 };

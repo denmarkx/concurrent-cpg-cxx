@@ -21,9 +21,12 @@ public:
         FunctionNode *node = new FunctionNode(F);
         node->setProperties(F);
 
+        size_t i = 0;
         for (const Argument &arg : F->args()) {
             ParamNode *param = new ParamNode(&arg);
             node->addParam(param);
+            param->setProperties(F, i);
+            i++;
         }
     
         return node;
