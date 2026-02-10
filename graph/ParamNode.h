@@ -20,5 +20,7 @@ public:
                 addProperty(attr.getKindAsString().str(), attr.getValueAsString().str());
             }
         }
+
+        addProperty("parameterIndex", std::to_string(i));
     }
 };

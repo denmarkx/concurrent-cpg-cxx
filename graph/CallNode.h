@@ -8,6 +8,7 @@
 #include "llvm/IR/Use.h"
 #include "llvm/IR/Value.h"
 
+#include <stdexcept>
 #include <vector>
 
 class CallNode : public Node {
@@ -15,22 +16,58 @@ public:
     CallNode(const CallInst *I) : Node(I, "CallInst") {}
 
     static CallNode* make(const CallInst* I) {
-        if (I->isInlineAsm() || !I->getCalledFunction()) return nullptr;
+        std::vector<const llvm::Function *> functions{};
+        if (I->isInlineAsm()) return nullptr;
+        if (!I->getCalledFunction()) {
+            // This always (maybe?) is a function pointer. We'll try to resolve it..
+            Value* v = I->getOperand(0);
+            std::vector<const llvm::Value *> ptsSet{};
+            AndersenAAResult *AA = GraphManager::get()->getAliasResult();
+            AA->getPointsToSet(v, ptsSet);
+
+            functions.reserve(ptsSet.size());
+            for (auto &v : ptsSet) {
+                if (const Function* f = dyn_cast<Function>(v)) {
+                    functions.push_back(f);
+                }
+            }
+            // If functions len is 0, we sort of don't have a possible path towards
+            // any sort of function (which would actually be an oddity)
+            return nullptr; // TODO: though, I wouldn't return null here..
+        }
         if (Node::isIgnoredIntrinsic(I->getCalledFunction())) return nullptr;
 
         CallNode *node = new CallNode(I);
 
+        size_t index = 0;
         for (const Use &arg : I->args()) {
-            node->addArgument(&arg);
+            node->addArgument(&arg, index);
+            index++;
         }
 
-        node->addCalledFunction(I->getCalledFunction());
+        // If functions len is 0 and we got to this point, then
+        // we can just use I->getCalledFunction
+        if (functions.size() == 0) {
+            node->addCalledFunction(I->getCalledFunction());
+        } else if (functions.size() == 1) {
+            // If it's 1, we can technically say that this funcptr goes here.
+            node->addCalledFunction(functions[0]);
+        } else {
+            // > 1 is a bit of an assumption as we don't know where this will go.
+            // ..but we can say that we may call any of these.
+            for (const Function* f : functions) {
+                // TODO: though, we can probably add an edge property.
+                node->addCalledFunction(f);
+            }
+        }
         return node;
     }
 
-    void addArgument(const Use *value) {
+    void addArgument(const Use *value, size_t index) {
         Node *argNode = GraphManager::get()->getNode(value->get());
         if (argNode == nullptr) return;
+
+        argNode->addProperty("argumentIndex", std::to_string(index));
 
         _edges.push_back(pair("ARGUMENT", argNode));
         _arguments.push_back(argNode);

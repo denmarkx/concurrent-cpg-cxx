@@ -30,6 +30,8 @@ public:
     void registerCopyEdge(Node* node);
     void registerGEPEdge(Node* node);
 
+    void addProperty(std::string key, std::string value);
+
 private:
     void setDefaultProperties(const Value *value);
 
@@ -47,7 +49,6 @@ protected:
     std::vector<std::pair<std::string, Node*>> _edges;
 
     static bool isIgnoredIntrinsic(const Value* value);
-    void addProperty(std::string key, std::string value);
 
     static constexpr std::array<const char*, 2> IgnoredIntrinsics = {
         "llvm.lifetime.start.p0",

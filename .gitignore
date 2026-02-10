@@ -3,7 +3,9 @@ CMakeFiles/
 Makefile
 compile_commands.json
 analysis
+.cache
 
+*.dylib
 *.clangd
 *.cmake
 *.so
@@ -12,3 +14,4 @@ analysis
 *.c
 *.out
 *.exe
+APIHelper.h
