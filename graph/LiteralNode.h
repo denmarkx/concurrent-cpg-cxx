@@ -4,9 +4,9 @@
 
 class LiteralNode : public Node {
 public:
-    LiteralNode(llvm::Value *I) : Node(I, "Literal") {}
+    LiteralNode(const Value *I) : Node(I, "Literal") {}
 
-    static LiteralNode* make(llvm::Value *I) {
+    static LiteralNode* make(const Value *I) {
         LiteralNode *node = new LiteralNode(I);
         return node;
     }

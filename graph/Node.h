@@ -9,10 +9,11 @@
 #include <iostream>
 #include <array>
 using namespace std;
+using namespace llvm;
 
 class Node {
 public:
-    Node(llvm::Value* value, const std::string label);
+    Node(const Value* value, const std::string label);
     virtual ~Node() = default;
 
     unsigned int getId() const;
@@ -21,7 +22,7 @@ public:
     const std::vector<std::pair<std::string, Node*>>& getEdges() const;
     const std::vector<std::string>& getLabels() const;
     const std::unordered_map<std::string, std::string>& getProperties() const;
-    llvm::Value* getValue();
+    const Value* getValue() const;
 
     // probably shouldnt be in here:
     void registerStoreEdge(Node* node);
@@ -30,7 +31,7 @@ public:
     void registerGEPEdge(Node* node);
 
 private:
-    void setDefaultProperties(llvm::Value *value);
+    void setDefaultProperties(const Value *value);
 
     inline static unsigned int _idCounter;
 
@@ -38,14 +39,14 @@ private:
     std::string _label = "Node";
     std::string _name = "Node";
 
-    llvm::Value* _value;
+    const Value* _value;
 
 protected:
     std::vector<std::string> _labels;
     std::unordered_map<std::string, std::string> _properties;
     std::vector<std::pair<std::string, Node*>> _edges;
 
-    static bool isIgnoredIntrinsic(llvm::Value* value);
+    static bool isIgnoredIntrinsic(const Value* value);
     void addProperty(std::string key, std::string value);
 
     static constexpr std::array<const char*, 2> IgnoredIntrinsics = {

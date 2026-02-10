@@ -5,9 +5,9 @@
 
 class GlobalAllocation : public Node {
 public:
-    GlobalAllocation(llvm::GlobalVariable *G) : Node(G, "GlobalAllocation") {}
+    GlobalAllocation(const GlobalVariable *G) : Node(G, "GlobalAllocation") {}
 
-    static GlobalAllocation* make(llvm::GlobalVariable *G) {
+    static GlobalAllocation* make(const GlobalVariable *G) {
         GlobalAllocation *node = new GlobalAllocation(G);
         return node;
     }

@@ -14,26 +14,26 @@ public:
     GraphManager();
     GraphManager(const GraphManager& other) = delete;
 
-    void addNode(Value* value, Node* node);
-    std::vector<Node*> getNodes();
+    void addNode(const Value* value, Node* node);
+    std::vector<Node*> getNodes() const;
 
-    Node* getNode(Value* value);
-    Node* getNode(Instruction* instr);
-    Node* handlePrimitive(Value* value);
-    bool hasNode(Value* value);
-    Node* getNodeOrNull(Value *value);
+    Node* getNode(const Value* value);
+    Node* getNode(const Instruction* instr);
 
-    bool alias(Value* v1, Value* v2);
+    bool hasNode(const Value* value);
+    Node* getNodeOrNull(const Value *value);
+
+    bool alias(const Value* v1, const Value* v2);
 
     void setAliasResult(AndersenAAResult &AA);
-    AndersenAAResult* getAliasResult();
+    AndersenAAResult* getAliasResult() const;
 
     static GraphManager* get();
     static GraphManager* _graph;
 
 private:
     std::vector<Node*> _nodes;
-    std::unordered_map<Value*, Node*> _valueNodeMap;
+    std::unordered_map<const Value*, Node*> _valueNodeMap;
 
     AndersenAAResult* _AA;
 };

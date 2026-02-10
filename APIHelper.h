@@ -6,7 +6,7 @@
 #include <iostream>
 
 namespace Util {
-    inline std::string getName(llvm::Value* value) {
+    inline std::string getName(const llvm::Value* value) {
         if (value == nullptr) return "null";
 
         std::string name = value->getName().str();

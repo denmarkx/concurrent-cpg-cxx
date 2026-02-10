@@ -4,9 +4,9 @@
 
 class StackAllocation : public Node {
 public:
-    StackAllocation(llvm::AllocaInst* I) : Node(I, "StackAllocation") {}
+    StackAllocation(const AllocaInst* I) : Node(I, "StackAllocation") {}
 
-    static StackAllocation* make(llvm::AllocaInst *I) {
+    static StackAllocation* make(const AllocaInst *I) {
         StackAllocation *node = new StackAllocation(I);
         return node;
     }

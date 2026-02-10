@@ -9,15 +9,15 @@
 
 class FunctionNode : public Node {
 public:
-    FunctionNode(llvm::Function* F) : Node(F, "Function") {}
+    FunctionNode(const Function* F) : Node(F, "Function") {}
 
-    static FunctionNode* make(llvm::Function *F) {
+    static FunctionNode* make(const Function *F) {
         if (Node::isIgnoredIntrinsic(F)) return nullptr;
 
         FunctionNode *node = new FunctionNode(F);
         node->setProperties(F);
 
-        for (llvm::Argument &arg : F->args()) {
+        for (const Argument &arg : F->args()) {
             ParamNode *param = new ParamNode(&arg);
             node->addParam(param);
         }
@@ -25,9 +25,9 @@ public:
         return node;
     }
 
-    void setProperties(llvm::Function *F) {
-        llvm::AttributeSet attrSet = F->getAttributes().getFnAttrs();
-        for (const llvm::Attribute attr : attrSet) {
+    void setProperties(const Function *F) {
+        AttributeSet attrSet = F->getAttributes().getFnAttrs();
+        for (const Attribute attr : attrSet) {
             if (!attr.isStringAttribute()) {
                 addProperty(attr.getAsString(), "true");
             } else {

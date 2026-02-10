@@ -5,9 +5,9 @@
 
 class GlobalConstant : public Node {
 public:
-    GlobalConstant(llvm::GlobalVariable *G) : Node(G, "GlobalConstant") {}
+    GlobalConstant(const GlobalVariable *G) : Node(G, "GlobalConstant") {}
 
-    static GlobalConstant* make(llvm::GlobalVariable *G) {
+    static GlobalConstant* make(const GlobalVariable *G) {
         GlobalConstant *node = new GlobalConstant(G);
         return node;
     }

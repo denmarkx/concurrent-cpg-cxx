@@ -8,15 +8,15 @@
 
 class BinaryOperatorNode : public Node {
 public:
-    BinaryOperatorNode(llvm::BinaryOperator *G) : Node(G, "BinaryOperatorNode") {}
+    BinaryOperatorNode(const BinaryOperator *G) : Node(G, "BinaryOperatorNode") {}
 
-    static BinaryOperatorNode* make(llvm::BinaryOperator *inst) {
+    static BinaryOperatorNode* make(const BinaryOperator *inst) {
         BinaryOperatorNode *node = new BinaryOperatorNode(inst);
 
-        llvm::Value* lhs = inst->getOperand(0);
+        Value* lhs = inst->getOperand(0);
         Node* lhsNode = GraphManager::get()->getNode(lhs);
 
-        llvm::Value* rhs = inst->getOperand(1);
+        Value* rhs = inst->getOperand(1);
         Node* rhsNode = GraphManager::get()->getNode(rhs);
 
         node->registerBinaryEdge(lhsNode, rhsNode);

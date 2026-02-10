@@ -4,12 +4,12 @@
 
 class LoadNode : public Node {
 public:
-    LoadNode(llvm::LoadInst *I) : Node(I, "LoadInst") {}
+    LoadNode(const LoadInst *I) : Node(I, "LoadInst") {}
 
-    static LoadNode* make(llvm::LoadInst *I) {
+    static LoadNode* make(const LoadInst *I) {
         LoadNode *node = new LoadNode(I);
 
-        llvm::Value* src = I->getOperand(0);
+        Value* src = I->getOperand(0);
         if (src == nullptr) return nullptr;
 
         Node* srcNode = GraphManager::get()->getNode(src);

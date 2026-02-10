@@ -4,9 +4,9 @@
 
 class BasicBlockNode : public Node {
 public:
-    BasicBlockNode(llvm::BasicBlock* B) : Node(B, "Block") {}
+    BasicBlockNode(const BasicBlock* B) : Node(B, "Block") {}
 
-    static BasicBlockNode* make(llvm::BasicBlock *B) {
+    static BasicBlockNode* make(const BasicBlock *B) {
         BasicBlockNode *node = new BasicBlockNode(B);
         return node;
     }

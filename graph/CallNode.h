@@ -12,15 +12,15 @@
 
 class CallNode : public Node {
 public:
-    CallNode(llvm::CallInst *I) : Node(I, "CallInst") {}
+    CallNode(const CallInst *I) : Node(I, "CallInst") {}
 
-    static CallNode* make(llvm::CallInst* I) {
+    static CallNode* make(const CallInst* I) {
         if (I->isInlineAsm() || !I->getCalledFunction()) return nullptr;
         if (Node::isIgnoredIntrinsic(I->getCalledFunction())) return nullptr;
 
         CallNode *node = new CallNode(I);
 
-        for (llvm::Use &arg : I->args()) {
+        for (const Use &arg : I->args()) {
             node->addArgument(&arg);
         }
 
@@ -28,15 +28,15 @@ public:
         return node;
     }
 
-    void addArgument(llvm::Use *value) {
-        Node *argNode = GraphManager::get()->handlePrimitive(value->get());
+    void addArgument(const Use *value) {
+        Node *argNode = GraphManager::get()->getNode(value->get());
         if (argNode == nullptr) return;
 
         _edges.push_back(pair("ARGUMENT", argNode));
         _arguments.push_back(argNode);
     }
 
-    void addCalledFunction(llvm::Function *function) {
+    void addCalledFunction(const Function *function) {
         // CallNode's internal container of functions is a list..
         // only because the instruction here may be a function pointer
         // pointing to any number of functions.
@@ -50,9 +50,9 @@ public:
 
         for (int i = 0; i < _arguments.size(); i++) {
             Node* argNode = _arguments[i];
-            llvm::Value* argument = argNode->getValue();
+            const Value* argument = argNode->getValue();
 
-            llvm::Value* param = function->getArg(i);
+            Value* param = function->getArg(i);
             Node* paramNode = GraphManager::get()->getNode(param);
 
             if (GraphManager::get()->alias(argument, param)) {

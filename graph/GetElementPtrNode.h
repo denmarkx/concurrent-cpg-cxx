@@ -7,12 +7,12 @@
 class GetElementPtrNode : public Node {
 public:
     // TODO: probably not the best thing to name this. pointer is too ambiguous, address? element?
-    GetElementPtrNode(llvm::GetElementPtrInst *G) : Node(G, "GetElementPtrNode") {}
+    GetElementPtrNode(const GetElementPtrInst *G) : Node(G, "GetElementPtrNode") {}
 
-    static GetElementPtrNode* make(llvm::GetElementPtrInst *inst) {
+    static GetElementPtrNode* make(const GetElementPtrInst *inst) {
         GetElementPtrNode *node = new GetElementPtrNode(inst);
 
-        llvm::Value* pointer = inst->getOperand(0);
+        Value* pointer = inst->getOperand(0);
         Node* pointerNode = GraphManager::get()->getNode(pointer);
         node->registerGEPEdge(pointerNode);
 

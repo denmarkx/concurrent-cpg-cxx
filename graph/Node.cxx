@@ -4,7 +4,7 @@
 #include "Node.h"
 #include "APIHelper.h"
 
-Node::Node(llvm::Value* value, const std::string label) { 
+Node::Node(const Value* value, const std::string label) { 
     _idCounter++;
     _id = _idCounter;
     _label = label;
@@ -16,15 +16,15 @@ Node::Node(llvm::Value* value, const std::string label) {
     GraphManager::get()->addNode(value, this);
 }
 
-void Node::setDefaultProperties(llvm::Value *value) {
+void Node::setDefaultProperties(const Value *value) {
     std::string code = "";
-    llvm::raw_string_ostream stream(code);
+    raw_string_ostream stream(code);
     value->print(stream);
 
     addProperty("code", code);
 }
 
-bool Node::isIgnoredIntrinsic(Value* value) {
+bool Node::isIgnoredIntrinsic(const Value* value) {
     return std::find(IgnoredIntrinsics.begin(), IgnoredIntrinsics.end(),
         value->getName().str()) != IgnoredIntrinsics.end();
 }
@@ -72,6 +72,6 @@ const std::unordered_map<std::string, std::string>& Node::getProperties() const 
     return _properties;
 }
 
-llvm::Value* Node::getValue() {
+const Value* Node::getValue() const {
     return _value;
 }

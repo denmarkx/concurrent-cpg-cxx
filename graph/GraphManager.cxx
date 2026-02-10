@@ -8,35 +8,22 @@
 
 GraphManager::GraphManager() {}
 
-void GraphManager::addNode(llvm::Value* value, Node* node) {
+void GraphManager::addNode(const Value* value, Node* node) {
     _nodes.push_back(node);
 
     if (value == nullptr) return;
     _valueNodeMap[value] = node;
 }
 
-Node* GraphManager::handlePrimitive(llvm::Value* value) {
-    Node* node = _valueNodeMap[value];
-    if (node == nullptr) {
-        if (value->getType()->isPointerTy()) {
-            // TODO: maybe another way to do this?
-            std::string name = Util::getName(value);
-            if (name == "ptr null") return NullNode::make();
-        }
-        node = LiteralNode::make(value);
-    }
-    return node;
-}
-
-std::vector<Node*> GraphManager::getNodes() {
+std::vector<Node*> GraphManager::getNodes() const {
     return _nodes;
 }
 
-bool GraphManager::hasNode(llvm::Value* value) {
+bool GraphManager::hasNode(const Value* value) {
     return _valueNodeMap[value] != nullptr;
 }
 
-Node* GraphManager::getNode(llvm::Instruction* instr) {
+Node* GraphManager::getNode(const Instruction* instr) {
     Node* node = _valueNodeMap[instr];
     if (node == nullptr) {
         node = GraphParser::handleNode(instr);
@@ -44,7 +31,7 @@ Node* GraphManager::getNode(llvm::Instruction* instr) {
     return node;
 }
 
-Node* GraphManager::getNode(llvm::Value* value) {
+Node* GraphManager::getNode(const Value* value) {
     Node* node = _valueNodeMap[value];
     if (node == nullptr) {
         node = GraphParser::handleNode(value);
@@ -52,7 +39,7 @@ Node* GraphManager::getNode(llvm::Value* value) {
     return node;
 }
 
-Node* GraphManager::getNodeOrNull(llvm::Value *value) {
+Node* GraphManager::getNodeOrNull(const Value *value) {
     return _valueNodeMap[value];
 }
 
@@ -67,11 +54,11 @@ void GraphManager::setAliasResult(AndersenAAResult &AA) {
     _AA = &AA;
 }
 
-AndersenAAResult* GraphManager::getAliasResult() {
+AndersenAAResult* GraphManager::getAliasResult() const {
     return _AA;
 }
 
-bool GraphManager::alias(Value* v1, Value* v2) {
+bool GraphManager::alias(const Value* v1, const Value* v2) {
     MemoryLocation L1(v1, MemoryLocation::UnknownSize);
     MemoryLocation L2(v1, MemoryLocation::UnknownSize);
     return _AA->alias(L1, L2) != AliasResult::NoAlias;
