@@ -40,6 +40,7 @@ set(FILES
     graph/FunctionNode.h
     graph/BasicBlockNode.h
     graph/StackAllocation.h
+    graph/GroupNode.h
     graph/LoadNode.h
     graph/ParamNode.h
     graph/LiteralNode.h

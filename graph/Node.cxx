@@ -12,8 +12,9 @@ Node::Node(const Value* value, const std::string label) {
     _labels.push_back(label);
     _value = value;
 
-    setDefaultProperties(value);
     GraphManager::get()->addNode(value, this);
+    if (value != nullptr) 
+        setDefaultProperties(value);
 }
 
 void Node::setDefaultProperties(const Value *value) {

@@ -2,6 +2,7 @@
 #include "Node.h"
 #include "BasicBlockNode.h"
 #include "ParamNode.h"
+#include "graph/GroupNode.h"
 
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"
@@ -9,7 +10,10 @@
 
 class FunctionNode : public Node {
 public:
-    FunctionNode(const Function* F) : Node(F, "Function") {}
+    FunctionNode(const Function* F) : Node(F, "Function") {
+        _blockGroup = GroupNode::make("Group", "BLOCKS");
+        _edges.push_back(pair("BLOCK_GROUP", _blockGroup));
+    }
 
     static FunctionNode* make(const Function *F) {
         if (Node::isIgnoredIntrinsic(F)) return nullptr;
@@ -37,8 +41,7 @@ public:
     }
 
     void addBlock(BasicBlockNode* block) {
-        _edges.push_back(pair("BLOCKS", block));
-        _blocks.push_back(block);
+        _blockGroup->storeEdge(block);
     }
     
     void addParam(ParamNode* param) {
@@ -48,6 +51,8 @@ public:
 
 
 private:
+    GroupNode *_blockGroup;
+
     std::vector<BasicBlockNode*> _blocks;
     std::vector<ParamNode*> _params;
 };
