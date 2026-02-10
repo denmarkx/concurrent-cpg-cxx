@@ -1,3 +1,5 @@
+#include <llvm/Support/raw_ostream.h>
+
 #include "GraphManager.h"
 #include "Node.h"
 #include "APIHelper.h"
@@ -10,16 +12,25 @@ Node::Node(llvm::Value* value, const std::string label) {
     _labels.push_back(label);
     _value = value;
 
+    setDefaultProperties(value);
     GraphManager::get()->addNode(value, this);
 }
 
-llvm::Value* Node::getValue() {
-    return _value;
+void Node::setDefaultProperties(llvm::Value *value) {
+    std::string code = "";
+    llvm::raw_string_ostream stream(code);
+    value->print(stream);
+
+    addProperty("code", code);
 }
 
 bool Node::isIgnoredIntrinsic(Value* value) {
     return std::find(IgnoredIntrinsics.begin(), IgnoredIntrinsics.end(),
         value->getName().str()) != IgnoredIntrinsics.end();
+}
+
+void Node::addProperty(std::string key, std::string value) {
+    _properties[key] = value;
 }
 
 void Node::registerStoreEdge(Node* node) {
@@ -55,4 +66,12 @@ const std::vector<std::string>& Node::getLabels() const {
 
 const std::vector<std::pair<std::string, Node*>>& Node::getEdges() const {
     return _edges;
+}
+
+const std::unordered_map<std::string, std::string>& Node::getProperties() const {
+    return _properties;
+}
+
+llvm::Value* Node::getValue() {
+    return _value;
 }

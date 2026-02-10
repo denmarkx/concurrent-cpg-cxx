@@ -15,13 +15,13 @@ public:
     Node(llvm::Value* value, const std::string label);
     virtual ~Node() = default;
 
-    llvm::Value* getValue();
-
     unsigned int getId() const;
     const std::string& getName() const;
 
     const std::vector<std::pair<std::string, Node*>>& getEdges() const;
     const std::vector<std::string>& getLabels() const;
+    const std::unordered_map<std::string, std::string>& getProperties() const;
+    llvm::Value* getValue();
 
     // probably shouldnt be in here:
     void registerStoreEdge(Node* node);
@@ -30,6 +30,8 @@ public:
     void registerGEPEdge(Node* node);
 
 private:
+    void setDefaultProperties(llvm::Value *value);
+
     inline static unsigned int _idCounter;
 
     unsigned int _id;
@@ -44,6 +46,7 @@ protected:
     std::vector<std::pair<std::string, Node*>> _edges;
 
     static bool isIgnoredIntrinsic(llvm::Value* value);
+    void addProperty(std::string key, std::string value);
 
     static constexpr std::array<const char*, 2> IgnoredIntrinsics = {
         "llvm.lifetime.start.p0",

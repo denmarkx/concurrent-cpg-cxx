@@ -48,6 +48,7 @@ void GraphBuilder::persistAll() {
         for (size_t i = start; i < end; i++) {
             if (i > start) batchData << ",";
             auto labels = nodes[i]->getLabels();
+            auto properties = nodes[i]->getProperties();
 
             batchData << "{id: '" << nodes[i]->getId() << "', ";
             batchData << "label: '";
@@ -57,7 +58,13 @@ void GraphBuilder::persistAll() {
                     batchData << ":";
                 }
             }
-            batchData << "', name: '" << nodes[i]->getName() << "'}";
+            batchData << "', ";
+            size_t propSize = 0;
+            for (auto &[k, v] : properties) {
+                batchData << Util::parseNeo4jKey(k) << ": '" << v << "', ";
+                propSize++;
+            }
+            batchData << "name: '" << nodes[i]->getName() << "'}";
         }
         batchData << "]";
 

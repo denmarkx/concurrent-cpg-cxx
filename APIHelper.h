@@ -18,4 +18,12 @@ namespace Util {
         }
         return name;
     }
+
+    inline std::string parseNeo4jKey(std::string key) {
+        std::string parsedKey = "";
+        std::copy_if(key.begin(), key.end(),
+            std::back_inserter(parsedKey),
+            [](unsigned char c){ return std::isalnum(c); });
+        return parsedKey;
+    }
 }

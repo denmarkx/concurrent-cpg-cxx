@@ -3,6 +3,7 @@
 #include "BasicBlockNode.h"
 #include "ParamNode.h"
 
+#include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"
 #include <vector>
 
@@ -14,13 +15,25 @@ public:
         if (Node::isIgnoredIntrinsic(F)) return nullptr;
 
         FunctionNode *node = new FunctionNode(F);
-    
+        node->setProperties(F);
+
         for (llvm::Argument &arg : F->args()) {
             ParamNode *param = new ParamNode(&arg);
             node->addParam(param);
         }
     
         return node;
+    }
+
+    void setProperties(llvm::Function *F) {
+        llvm::AttributeSet attrSet = F->getAttributes().getFnAttrs();
+        for (const llvm::Attribute attr : attrSet) {
+            if (!attr.isStringAttribute()) {
+                addProperty(attr.getAsString(), "true");
+            } else {
+                addProperty(attr.getKindAsString().str(), attr.getValueAsString().str());
+            }
+        }
     }
 
     void addBlock(BasicBlockNode* block) {
