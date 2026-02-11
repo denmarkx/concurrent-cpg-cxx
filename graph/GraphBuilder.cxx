@@ -81,10 +81,7 @@ void GraphBuilder::persistAll() {
     for (auto* node : nodes) {
         auto edges = node->getEdges();
         for (const auto& [type, end] : edges) {
-            if (end == nullptr) {
-                std::string info = Util::getName(node->getValue());
-                throw std::runtime_error("end is null for " + info);
-            }
+            if (end == nullptr) continue;
             rels.push_back({std::to_string(node->getId()), type, std::to_string(end->getId())});
         }
     }

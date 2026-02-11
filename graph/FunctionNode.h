@@ -4,6 +4,7 @@
 #include "ParamNode.h"
 #include "graph/GroupNode.h"
 
+#include <llvm/IR/DebugInfoMetadata.h>
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"
 #include <vector>
@@ -20,6 +21,7 @@ public:
 
         FunctionNode *node = new FunctionNode(F);
         node->setProperties(F);
+        node->setDebugInfo(F);
 
         size_t i = 0;
         for (const Argument &arg : F->args()) {
@@ -28,7 +30,7 @@ public:
             param->setProperties(F, i);
             i++;
         }
-    
+
         return node;
     }
 
@@ -43,6 +45,16 @@ public:
         }
     }
 
+    void setDebugInfo(const Function *F) {
+        // A bit different than Node::setDebugInfo because a Function
+        // is not an Instruction type.
+        DISubprogram *subprogram = F->getSubprogram();
+        if (subprogram == nullptr) return;
+
+        addProperty("line", std::to_string(subprogram->getLine()));
+        addProperty("file", subprogram->getFilename().str());
+    }
+
     void addBlock(BasicBlockNode* block) {
         _blockGroup->storeEdge(block);
     }
@@ -52,10 +64,16 @@ public:
         _params.push_back(param);
     }
 
+    void addReturn(Node* node) {
+        _edges.push_back(pair("RETURNS", node));
+        _returns.push_back(node);
+    }
+
 
 private:
     GroupNode *_blockGroup;
 
     std::vector<BasicBlockNode*> _blocks;
     std::vector<ParamNode*> _params;
+    std::vector<Node*> _returns;
 };

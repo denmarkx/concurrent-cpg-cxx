@@ -1,4 +1,5 @@
 #include <llvm/Support/raw_ostream.h>
+#include <llvm/IR/DebugInfoMetadata.h>
 
 #include "GraphManager.h"
 #include "Node.h"
@@ -13,8 +14,12 @@ Node::Node(const Value* value, const std::string label) {
     _value = value;
 
     GraphManager::get()->addNode(value, this);
-    if (value != nullptr) 
+    if (value != nullptr) {
         setDefaultProperties(value);
+        if (const Instruction *I = dyn_cast<Instruction>(value)) {
+           handleDebugInfo(I);
+        }
+    }
 }
 
 void Node::setDefaultProperties(const Value *value) {
@@ -23,6 +28,18 @@ void Node::setDefaultProperties(const Value *value) {
     value->print(stream);
 
     addProperty("code", code);
+}
+
+void Node::handleDebugInfo(const Instruction *instr) {
+    if (!instr->hasMetadata()) return;
+
+    const DebugLoc &loc = instr->getDebugLoc();
+
+    addProperty("column", std::to_string(loc.getCol()));
+    addProperty("line", std::to_string(loc.getLine()));
+
+    DIScope *scope = dyn_cast<DIScope>(loc.getScope());
+    addProperty("file", scope->getFilename().str());
 }
 
 bool Node::isIgnoredIntrinsic(const Value* value) {

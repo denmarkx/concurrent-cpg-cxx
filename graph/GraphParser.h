@@ -65,6 +65,21 @@ namespace GraphParser {
         return nullptr;
     }
 
+    inline Node* handleReturn(const Instruction *instr) {
+        assert (instr != nullptr);
+        const ReturnInst *ret = dyn_cast<ReturnInst>(instr);
+        Value *retValue = ret->getReturnValue();
+
+        if (retValue == nullptr) return nullptr; // ret void
+        Node *retNode = GraphManager::get()->getNode(retValue);
+
+        const Function *f = instr->getFunction();
+        FunctionNode *funcNode = dynamic_cast<FunctionNode*>(
+            GraphManager::get()->getNode(f));
+        funcNode->addReturn(retNode);
+        return nullptr;
+    }
+
     inline Node* handleNode(const Instruction* instr) {
         assert (instr != nullptr);
         switch (instr->getOpcode()) {
@@ -73,6 +88,7 @@ namespace GraphParser {
             case Instruction::GetElementPtr: return handleNode<GetElementPtrNode, GetElementPtrInst>(instr);
             case Instruction::Call: return handleNode<CallNode, CallInst>(instr);
             case Instruction::Store: return handleStore(instr);
+            case Instruction::Ret: return handleReturn(instr);
         }
         return handleNode(dynamic_cast<const Value*>(instr));
     }
@@ -95,6 +111,7 @@ namespace GraphParser {
     
                 for (Instruction &I : B) {
                     Node* node = handleNode(&I);
+                    blockNode->addNode(node);
                 }
             }
         }

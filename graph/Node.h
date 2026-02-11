@@ -36,6 +36,7 @@ public:
 
 private:
     void setDefaultProperties(const Value *value);
+    void handleDebugInfo(const Instruction *instr);
 
     inline static unsigned int _idCounter;
 

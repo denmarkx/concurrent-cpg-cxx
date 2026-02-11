@@ -1,6 +1,7 @@
 #pragma once
 #include "GraphManager.h"
 #include "Node.h"
+#include "graph/IntrinsicHandler.h"
 
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/MemoryLocation.h"
@@ -19,8 +20,10 @@ public:
         std::vector<const llvm::Function *> functions{};
         Value *funcPtrV = nullptr; // Corresponds to a loadinst.
 
+        const Function *calledFunc = I->getCalledFunction();
+
         if (I->isInlineAsm()) return nullptr;
-        if (!I->getCalledFunction()) {
+        if (!calledFunc) {
             // This always (maybe?) is a function pointer. We'll try to resolve it..
             funcPtrV = I->getOperand(0);
             std::vector<const llvm::Value *> ptsSet{};
@@ -38,7 +41,11 @@ public:
             // TODO: though, I wouldn't return null here..
             if (functions.size() == 0) return nullptr;
         }
-        if (Node::isIgnoredIntrinsic(I->getCalledFunction())) return nullptr;
+        if (Node::isIgnoredIntrinsic(calledFunc)) return nullptr;
+        if (calledFunc && calledFunc->getIntrinsicID() > 0) {
+            IntrinsicHandler::handleIntrinsic(I);
+            return nullptr;
+        }
 
         CallNode *node = new CallNode(I);
 
@@ -52,7 +59,7 @@ public:
         // we can just use I->getCalledFunction
         if (functions.size() == 0) {
             LOG_DEBUG("Direct function call to " + Util::getName(I->getCalledFunction()));
-            node->addCalledFunction(I->getCalledFunction());
+            node->addCalledFunction(calledFunc);
         } else if (functions.size() == 1) {
             // If it's 1, we can technically say that this funcptr goes here.
             LOG_DEBUG("Indirect call to " + Util::getName(functions[0]));
