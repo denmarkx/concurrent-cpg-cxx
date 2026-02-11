@@ -17,13 +17,15 @@ public:
 
     static CallNode* make(const CallInst* I) {
         std::vector<const llvm::Function *> functions{};
+        Value *funcPtrV = nullptr; // Corresponds to a loadinst.
+
         if (I->isInlineAsm()) return nullptr;
         if (!I->getCalledFunction()) {
             // This always (maybe?) is a function pointer. We'll try to resolve it..
-            Value* v = I->getOperand(0);
+            funcPtrV = I->getOperand(0);
             std::vector<const llvm::Value *> ptsSet{};
             AndersenAAResult *AA = GraphManager::get()->getAliasResult();
-            AA->getPointsToSet(v, ptsSet);
+            AA->getPointsToSet(funcPtrV, ptsSet);
 
             functions.reserve(ptsSet.size());
             for (auto &v : ptsSet) {
@@ -64,7 +66,20 @@ public:
                 node->addCalledFunction(f);
             }
         }
+
+
+        // In my opinion, the optimizations should at least try to
+        // resolve the function pointer for at trivial cases.
+        // Otherwise, we are left with a disconnected graph for operand 0.
+        if (functions.size() > 0 && funcPtrV != nullptr) {
+            node->addFunctionPointer(funcPtrV);
+        }
         return node;
+    }
+
+    void addFunctionPointer(const Value* value) {
+        Node *ptrNode = GraphManager::get()->getNode(value);
+        _edges.push_back(pair("FUNCTION_POINTER", ptrNode));
     }
 
     void addArgument(const Use *value, size_t index) {
