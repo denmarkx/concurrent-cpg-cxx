@@ -1,6 +1,7 @@
 #include "GraphBuilder.h"
 #include "GraphManager.h"
 #include "APIHelper.h"
+#include "Debug.h"
 
 #include "Node.h"
 #include <stdexcept>
@@ -73,7 +74,7 @@ void GraphBuilder::persistAll() {
             "CALL apoc.create.node([row.label], apoc.map.removeKey(row, 'label')) "
             "YIELD node "
             "RETURN node";
-        std::cout << cypher << "\n";
+        LOG_NEO4J(cypher);
         execute(cypher);
     }
 
@@ -106,7 +107,7 @@ void GraphBuilder::persistAll() {
             "MATCH (a {id: row.from}), (b {id: row.to}) "
             "CALL apoc.create.relationship(a, row.type, {}, b) YIELD rel "
             "RETURN count(rel)";
-        std::cout << cypher << "\n";
+        LOG_NEO4J(cypher);
         execute(cypher);
     }
 }

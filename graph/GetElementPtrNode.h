@@ -4,6 +4,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/Casting.h"
+#include <stdexcept>
 
 class FieldNode : public Node {
 public:
@@ -36,35 +37,42 @@ public:
         //     .. or .. (Type B)
         //     %4 = getelementptr inbounds %struct.Double, ptr %3, i32 0, i32 0, i64 0, i64 9
 
+        // TODO: offset being non-zero isnt handled.
+        // TODO: fieldNode needs to identify what its accessing and what it even is!
+        // TODO: duplicates?
         if (srcType->isAggregateType()) {
             // The parent node gets a new field node.
-            // TODO: how can we be sure this isn't a duplicate?
-            FieldNode *fieldNode = FieldNode::make();
-
-            // Type A: len of operands is 3. (ptr x, i32 offset, i32 index);
-            if (inst->getNumOperands() == 3) {
-                Node* highNode = srcNode;
-                if (isa<GetElementPtrInst>(src)) {
-                    GetElementPtrNode *gepNode =
-                        dynamic_cast<GetElementPtrNode*>(srcNode);
-                    highNode = gepNode->getSourceNode();
-                }
-
-                // TODO: it is an oddity if highNode is null
-                // and we should raise an error if so.
-                highNode->registerFieldEdge(fieldNode);
-                node->setSourceNode(fieldNode);
-                node->registerGEPEdge(fieldNode);
+            Node* highNode = srcNode;
+            if (isa<GetElementPtrInst>(src)) {
+                GetElementPtrNode *gepNode =
+                    dynamic_cast<GetElementPtrNode*>(srcNode);
+                highNode = gepNode->getSourceNode();
             }
-            // Type B: len of operands > 3 where i=2+ are variadic indices.
-            else {
 
+            if (!highNode) throw std::runtime_error("GEP: highNode is null.");
+
+            // In the case of variadic indices, we still model field by field.
+            // ..only to be accurate with what field we are actually ending with.
+            // The source node in the end is the last field node only because
+            // our GEP instr refers to the address of that last field node.
+            // 
+            // Intermediate fieldnode pointers aren't kept here. They are just 
+            // managed by the GraphManager as usual.
+            Node* prevHighNode = highNode;
+            for (size_t i=2; i < inst->getNumOperands(); i++) {
+                // Value* index = inst->getOperand(i);
+                FieldNode *fieldNode = FieldNode::make();
+                prevHighNode->registerFieldEdge(fieldNode);
+                prevHighNode = fieldNode;
             }
+
+            node->setSourceNode(prevHighNode);
+            node->registerGEPEdge(prevHighNode);
         }
         return node;
     }
 
-    Node* setSourceNode(Node* parentNode) { _parentNode = parentNode; }
+    void setSourceNode(Node* parentNode) { _parentNode = parentNode; }
     Node* getSourceNode() { return _parentNode; }
 
 private:
