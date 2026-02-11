@@ -33,7 +33,8 @@ public:
             }
             // If functions len is 0, we sort of don't have a possible path towards
             // any sort of function (which would actually be an oddity)
-            return nullptr; // TODO: though, I wouldn't return null here..
+            // TODO: though, I wouldn't return null here..
+            if (functions.size() == 0) return nullptr;
         }
         if (Node::isIgnoredIntrinsic(I->getCalledFunction())) return nullptr;
 
@@ -48,15 +49,18 @@ public:
         // If functions len is 0 and we got to this point, then
         // we can just use I->getCalledFunction
         if (functions.size() == 0) {
+            LOG_DEBUG("Direct function call to " + Util::getName(I->getCalledFunction()));
             node->addCalledFunction(I->getCalledFunction());
         } else if (functions.size() == 1) {
             // If it's 1, we can technically say that this funcptr goes here.
+            LOG_DEBUG("Indirect call to " + Util::getName(functions[0]));
             node->addCalledFunction(functions[0]);
         } else {
             // > 1 is a bit of an assumption as we don't know where this will go.
             // ..but we can say that we may call any of these.
             for (const Function* f : functions) {
                 // TODO: though, we can probably add an edge property.
+                LOG_DEBUG("Indirect call to " + Util::getName(f));
                 node->addCalledFunction(f);
             }
         }

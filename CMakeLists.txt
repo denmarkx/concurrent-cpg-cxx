@@ -59,6 +59,7 @@ set(FILES
     ConstructionPass.cxx
     GraphBuilderPass.cxx
     APIHelper.h
+    Debug.h
     main.cxx
 )
 

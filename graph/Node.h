@@ -1,6 +1,8 @@
 #pragma once
 
 #include "llvm/IR/Value.h"
+#include "Debug.h"
+#include "APIHelper.h"
 
 #include <string>
 #include <unordered_map>

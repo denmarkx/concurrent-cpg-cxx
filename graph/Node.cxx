@@ -26,6 +26,7 @@ void Node::setDefaultProperties(const Value *value) {
 }
 
 bool Node::isIgnoredIntrinsic(const Value* value) {
+    if (value == nullptr) return false;
     return std::find(IgnoredIntrinsics.begin(), IgnoredIntrinsics.end(),
         value->getName().str()) != IgnoredIntrinsics.end();
 }
