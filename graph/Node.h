@@ -31,6 +31,7 @@ public:
     void registerAliasEdge(Node* node);
     void registerCopyEdge(Node* node);
     void registerGEPEdge(Node* node);
+    void registerFieldEdge(Node* node);
 
     void addProperty(std::string key, std::string value);
 

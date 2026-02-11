@@ -87,6 +87,7 @@ namespace GraphParser {
             case Instruction::Load: return handleNode<LoadNode, LoadInst>(instr);
             case Instruction::GetElementPtr: return handleNode<GetElementPtrNode, GetElementPtrInst>(instr);
             case Instruction::Call: return handleNode<CallNode, CallInst>(instr);
+            case Instruction::Invoke: return handleNode<CallNode, InvokeInst>(instr);
             case Instruction::Store: return handleStore(instr);
             case Instruction::Ret: return handleReturn(instr);
         }

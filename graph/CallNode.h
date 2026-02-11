@@ -5,6 +5,7 @@
 
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/MemoryLocation.h"
+#include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Use.h"
 #include "llvm/IR/Value.h"
@@ -14,9 +15,9 @@
 
 class CallNode : public Node {
 public:
-    CallNode(const CallInst *I) : Node(I, "CallInst") {}
+    CallNode(const CallBase *I) : Node(I, "CallInst") {}
 
-    static CallNode* make(const CallInst* I) {
+    static CallNode* make(const CallBase* I) {
         std::vector<const llvm::Function *> functions{};
         Value *funcPtrV = nullptr; // Corresponds to a loadinst.
 

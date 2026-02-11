@@ -71,6 +71,10 @@ void Node::registerGEPEdge(Node* node) {
     _edges.push_back(pair("ALIAS", node));
 }
 
+void Node::registerFieldEdge(Node* node) {
+    _edges.push_back(pair("FIELD", node));
+}
+
 unsigned int Node::getId() const {
     return _id;
 }

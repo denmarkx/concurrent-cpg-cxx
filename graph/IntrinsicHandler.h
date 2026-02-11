@@ -10,7 +10,7 @@
 using namespace llvm;
 
 namespace IntrinsicHandler {
-    inline void handleIntrinsic(const CallInst *call) {
+    inline void handleIntrinsic(const CallBase *call) {
         const Function *f = call->getCalledFunction();
 
         switch (f->getIntrinsicID()) {
