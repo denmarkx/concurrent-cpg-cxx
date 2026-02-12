@@ -25,12 +25,8 @@ Node::Node(const Value* value, const std::string label) {
     path->field = this;
 }
 
-AccessPath* Node::insert(unsigned int key, Node* field) {
-    // TODO: this will leak if we overwrite a path
-    AccessPath *newPath = new AccessPath();
-    newPath->field = field;
-    path->path[key] = newPath;
-    return newPath;
+AccessPath* Node::getAccessPath() {
+    return path;
 }
 
 Node* Node::getPathNode(unsigned int key) {

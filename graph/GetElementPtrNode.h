@@ -2,17 +2,22 @@
 #include "Node.h"
 #include "graph/GraphManager.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include <stdexcept>
 #include <type_traits>
 
 class FieldNode : public Node {
 public:
-    FieldNode() : Node(nullptr, "FieldNode") {}
+    FieldNode(Type *type) : Node(nullptr, "FieldNode") {
+        raw_string_ostream stream(_name);
+        type->print(stream);
+    }
 
-    static FieldNode* make() {
-        FieldNode *node = new FieldNode();
+    static FieldNode* make(Type *type) {
+        FieldNode *node = new FieldNode(type);
         return node;
     }
 };
@@ -39,72 +44,49 @@ public:
         //     %4 = getelementptr inbounds %struct.Double, ptr %3, i32 0, i32 0, i64 0, i64 9
 
         // TODO: offset being non-zero isnt handled.
-        // TODO: fieldNode needs to identify what its accessing and what it even is!
-        // TODO: duplicates?
         if (srcType->isAggregateType()) {
-            // The highest node that isn't a GEP.
-            const Value *underlyingSrc = inst->getPointerOperand()->stripInBoundsConstantOffsets();
-            Node* highNode = GraphManager::get()->getNode(underlyingSrc);
+            // Our GEP instruction is the address of the final field, so we keep track of that.
+            FieldNode *lastField = nullptr;
+            
+            // We can immediately start with our first path (if it exists):
+            // ..this also satisfies the case where src pointer is non-GEP.
+            AccessPath *current = srcNode->getAccessPath();
 
-            // if (isa<GetElementPtrInst>(src)) {
-            //     GetElementPtrNode *gepNode =
-            //         dynamic_cast<GetElementPtrNode*>(srcNode);
-            //     highNode = gepNode->getSourceNode();
-            // }
+            if (isa<GetElementPtrInst>(src)) {
+                // In the case of when the source pointer is a GEP instr..
+                // We keep a pointer in each GEP to our "final" field node.
+                // this avoids a lengthy traversal through each accesspath.
+                GetElementPtrNode *srcNodeGEP = 
+                    dynamic_cast<GetElementPtrNode*>(srcNode);
 
-            if (!highNode) throw std::runtime_error("GEP: highNode is null.");
-
-            // In the case of variadic indices, we still model field by field.
-            // ..only to be accurate with what field we are actually ending with.
-            // The source node in the end is the last field node only because
-            // our GEP instr refers to the address of that last field node.
-            // 
-            // Intermediate fieldnode pointers aren't kept here. They are just 
-            // managed by the GraphManager as usual.
-            Node* prevHighNode = highNode;
-            AccessPath* prevPath = nullptr;
-            for (size_t i=2; i < inst->getNumOperands(); i++) {
-                Value* index = inst->getOperand(i);
-                Node *fieldNode = nullptr;
-
-                // If our source node is not a GEP, we can directly add it:
-                if (dynamic_cast<GetElementPtrNode*>(prevHighNode)) {
-                    // TODO: index outside of a Value* is an i32 but uh....
-                    fieldNode = highNode->getPathNode(0);
-                    if (fieldNode == nullptr) {
-                        fieldNode = FieldNode::make();
-                    }
-                    std::cout << "setting prev prevPath\n";
-                    prevPath = highNode->insert(0, fieldNode);
-                } else if(prevPath != nullptr) {
-                    // Otherwise, we have prevPath and we can add it:
-                    std::cout << "prevpath != nullptr\n";
-                    AccessPath *path = prevPath->path.lookup(0);
-                    if (path == nullptr) {
-                        path = new AccessPath();
-                        fieldNode = FieldNode::make();
-                        path->field = fieldNode;
-                    } else {
-                        fieldNode = path->field;
-                    }
-                } else {
-                    // Otherwise, we have to look for it...
-                }
-
-                prevHighNode->registerFieldEdge(fieldNode);
-                prevHighNode = fieldNode;
+                current = srcNodeGEP->getAddressToNode()->getAccessPath();
             }
 
-            node->setSourceNode(prevHighNode);
-            node->registerGEPEdge(prevHighNode);
+            for (size_t i=2; i < inst->getNumOperands(); i++) {
+                // We're going to keep "indexing" our current AP's path
+                // until we get to the end.
+
+                // TODO: its not really guaranteed that the operand here
+                // is an actual integer (albeit the type is an i32/64, it can be from another instr)..
+                if (!current->hasPath(0)) {
+                    // If there exists no path to the key, we insert one.
+                    current = current->insertPath(0, FieldNode::make(inst->getResultElementType()));
+                    continue;
+                }
+                current = current->getPath(0);
+            }
+
+            // Such that our latest current variable represents the path
+            // to the end of the GEP instruction.
+            node->registerGEPEdge(current->field);
+            node->setAddressToNode(current->field);
         }
         return node;
     }
 
-    void setSourceNode(Node* parentNode) { _parentNode = parentNode; }
-    Node* getSourceNode() { return _parentNode; }
+    void setAddressToNode(Node* node) { _addrToNode = node; }
+    Node* getAddressToNode() { return _addrToNode; }
 
 private:
-    Node* _parentNode = nullptr;
-    AccessPath* fieldPath;
+    Node* _addrToNode = nullptr;
 };

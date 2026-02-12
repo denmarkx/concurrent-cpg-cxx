@@ -14,13 +14,7 @@
 using namespace std;
 using namespace llvm;
 
-class Node;
-
-struct AccessPath {
-    Node* field;
-    // it is probably unwise to make a uint as the key here too
-    DenseMap<unsigned int, AccessPath*> path;
-};
+struct AccessPath;
 
 class Node {
 public:
@@ -42,7 +36,8 @@ public:
     void registerCopyEdge(Node* node);
     void registerGEPEdge(Node* node);
     void registerFieldEdge(Node* node);
-    AccessPath* insert(unsigned int, Node* field);
+
+    AccessPath* getAccessPath();
     Node* getPathNode(unsigned int key);
     AccessPath* path;
 
@@ -56,7 +51,6 @@ private:
 
     unsigned int _id;
     std::string _label = "Node";
-    std::string _name = "Node";
 
     const Value* _value;
 
@@ -65,10 +59,34 @@ protected:
     std::unordered_map<std::string, std::string> _properties;
     std::vector<std::pair<std::string, Node*>> _edges;
 
+    std::string _name = "Node";
     static bool isIgnoredIntrinsic(const Value* value);
 
     static constexpr std::array<const char*, 2> IgnoredIntrinsics = {
         "llvm.lifetime.start.p0",
         "llvm.lifetime.end.p0",
     };
+};
+
+struct AccessPath {
+    Node* field;
+    // it is probably unwise to make a uint as the key here too
+    DenseMap<unsigned int, AccessPath*> path;
+
+    bool hasPath(unsigned int key) {
+        return path.contains(key);
+    }
+
+    AccessPath* insertPath(unsigned int key, Node* newField) {
+        AccessPath* newPath = new AccessPath();
+        newPath->field = newField;
+        path[key] = newPath;
+        field->registerFieldEdge(newField);
+        newField->path = newPath;
+        return newPath;
+    }
+
+    AccessPath* getPath(unsigned int key) {
+        return path[key];
+    }
 };
