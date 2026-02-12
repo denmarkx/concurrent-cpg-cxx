@@ -20,6 +20,24 @@ Node::Node(const Value* value, const std::string label) {
            handleDebugInfo(I);
         }
     }
+
+    path = new AccessPath();
+    path->field = this;
+}
+
+AccessPath* Node::insert(unsigned int key, Node* field) {
+    // TODO: this will leak if we overwrite a path
+    AccessPath *newPath = new AccessPath();
+    newPath->field = field;
+    path->path[key] = newPath;
+    return newPath;
+}
+
+Node* Node::getPathNode(unsigned int key) {
+    if (path->path.contains(key)) {
+        return path->path.lookup(key)->field;
+    }
+    return nullptr;
 }
 
 void Node::setDefaultProperties(const Value *value) {

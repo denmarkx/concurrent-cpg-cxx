@@ -5,6 +5,7 @@
 #include "llvm/IR/Value.h"
 #include "llvm/Support/Casting.h"
 #include <stdexcept>
+#include <type_traits>
 
 class FieldNode : public Node {
 public:
@@ -41,13 +42,15 @@ public:
         // TODO: fieldNode needs to identify what its accessing and what it even is!
         // TODO: duplicates?
         if (srcType->isAggregateType()) {
-            // The parent node gets a new field node.
-            Node* highNode = srcNode;
-            if (isa<GetElementPtrInst>(src)) {
-                GetElementPtrNode *gepNode =
-                    dynamic_cast<GetElementPtrNode*>(srcNode);
-                highNode = gepNode->getSourceNode();
-            }
+            // The highest node that isn't a GEP.
+            const Value *underlyingSrc = inst->getPointerOperand()->stripInBoundsConstantOffsets();
+            Node* highNode = GraphManager::get()->getNode(underlyingSrc);
+
+            // if (isa<GetElementPtrInst>(src)) {
+            //     GetElementPtrNode *gepNode =
+            //         dynamic_cast<GetElementPtrNode*>(srcNode);
+            //     highNode = gepNode->getSourceNode();
+            // }
 
             if (!highNode) throw std::runtime_error("GEP: highNode is null.");
 
@@ -59,9 +62,35 @@ public:
             // Intermediate fieldnode pointers aren't kept here. They are just 
             // managed by the GraphManager as usual.
             Node* prevHighNode = highNode;
+            AccessPath* prevPath = nullptr;
             for (size_t i=2; i < inst->getNumOperands(); i++) {
-                // Value* index = inst->getOperand(i);
-                FieldNode *fieldNode = FieldNode::make();
+                Value* index = inst->getOperand(i);
+                Node *fieldNode = nullptr;
+
+                // If our source node is not a GEP, we can directly add it:
+                if (dynamic_cast<GetElementPtrNode*>(prevHighNode)) {
+                    // TODO: index outside of a Value* is an i32 but uh....
+                    fieldNode = highNode->getPathNode(0);
+                    if (fieldNode == nullptr) {
+                        fieldNode = FieldNode::make();
+                    }
+                    std::cout << "setting prev prevPath\n";
+                    prevPath = highNode->insert(0, fieldNode);
+                } else if(prevPath != nullptr) {
+                    // Otherwise, we have prevPath and we can add it:
+                    std::cout << "prevpath != nullptr\n";
+                    AccessPath *path = prevPath->path.lookup(0);
+                    if (path == nullptr) {
+                        path = new AccessPath();
+                        fieldNode = FieldNode::make();
+                        path->field = fieldNode;
+                    } else {
+                        fieldNode = path->field;
+                    }
+                } else {
+                    // Otherwise, we have to look for it...
+                }
+
                 prevHighNode->registerFieldEdge(fieldNode);
                 prevHighNode = fieldNode;
             }
@@ -77,4 +106,5 @@ public:
 
 private:
     Node* _parentNode = nullptr;
+    AccessPath* fieldPath;
 };

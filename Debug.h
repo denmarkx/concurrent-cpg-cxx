@@ -6,3 +6,5 @@
     #define LOG_DEBUG(x)
     #define LOG_NEO4J(x)
 #endif
+
+#define PRINT_VALUE(x) x->print(outs()); std::cout << "\n";

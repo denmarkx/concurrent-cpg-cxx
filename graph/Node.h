@@ -1,5 +1,6 @@
 #pragma once
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/IR/Value.h"
 #include "Debug.h"
 #include "APIHelper.h"
@@ -12,6 +13,14 @@
 #include <array>
 using namespace std;
 using namespace llvm;
+
+class Node;
+
+struct AccessPath {
+    Node* field;
+    // it is probably unwise to make a uint as the key here too
+    DenseMap<unsigned int, AccessPath*> path;
+};
 
 class Node {
 public:
@@ -26,12 +35,16 @@ public:
     const std::unordered_map<std::string, std::string>& getProperties() const;
     const Value* getValue() const;
 
-    // probably shouldnt be in here:
+    // TODO: all this needs to be moved into a subclass
+    // where nodes that actually produce SSA values derive
     void registerStoreEdge(Node* node);
     void registerAliasEdge(Node* node);
     void registerCopyEdge(Node* node);
     void registerGEPEdge(Node* node);
     void registerFieldEdge(Node* node);
+    AccessPath* insert(unsigned int, Node* field);
+    Node* getPathNode(unsigned int key);
+    AccessPath* path;
 
     void addProperty(std::string key, std::string value);
 
