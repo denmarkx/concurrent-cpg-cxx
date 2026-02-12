@@ -38,7 +38,6 @@ public:
     void registerFieldEdge(Node* node);
 
     AccessPath* getAccessPath();
-    Node* getPathNode(unsigned int key);
     AccessPath* path;
 
     void addProperty(std::string key, std::string value);
@@ -70,14 +69,13 @@ protected:
 
 struct AccessPath {
     Node* field;
-    // it is probably unwise to make a uint as the key here too
-    DenseMap<unsigned int, AccessPath*> path;
+    DenseMap<const Value*, AccessPath*> path;
 
-    bool hasPath(unsigned int key) {
+    bool hasPath(const Value* key) {
         return path.contains(key);
     }
 
-    AccessPath* insertPath(unsigned int key, Node* newField) {
+    AccessPath* insertPath(const Value* key, Node* newField) {
         AccessPath* newPath = new AccessPath();
         newPath->field = newField;
         path[key] = newPath;
@@ -86,7 +84,7 @@ struct AccessPath {
         return newPath;
     }
 
-    AccessPath* getPath(unsigned int key) {
+    AccessPath* getPath(const Value* key) {
         return path[key];
     }
 };

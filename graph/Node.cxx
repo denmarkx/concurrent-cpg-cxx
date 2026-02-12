@@ -29,13 +29,6 @@ AccessPath* Node::getAccessPath() {
     return path;
 }
 
-Node* Node::getPathNode(unsigned int key) {
-    if (path->path.contains(key)) {
-        return path->path.lookup(key)->field;
-    }
-    return nullptr;
-}
-
 void Node::setDefaultProperties(const Value *value) {
     std::string code = "";
     raw_string_ostream stream(code);

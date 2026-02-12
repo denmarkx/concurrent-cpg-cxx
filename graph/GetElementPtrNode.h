@@ -1,6 +1,7 @@
 #pragma once
 #include "Node.h"
 #include "graph/GraphManager.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
@@ -42,8 +43,6 @@ public:
         //     %6 = getelementptr inbounds [10 x i32], ptr %5, i64 0, i64 9
         //     .. or .. (Type B)
         //     %4 = getelementptr inbounds %struct.Double, ptr %3, i32 0, i32 0, i64 0, i64 9
-
-        // TODO: offset being non-zero isnt handled.
         if (srcType->isAggregateType()) {
             // Our GEP instruction is the address of the final field, so we keep track of that.
             FieldNode *lastField = nullptr;
@@ -63,17 +62,19 @@ public:
             }
 
             for (size_t i=2; i < inst->getNumOperands(); i++) {
+                // Constant integers share the same memory location in C++ API.
+                // If we have two GEPs each indexing directly i32 0, the Value* i32 0 is the same for both.
+                // Although, I digress that non-const ints are ambiguous right now.
+                const Value *index = inst->getOperand(i);
+
                 // We're going to keep "indexing" our current AP's path
                 // until we get to the end.
-
-                // TODO: its not really guaranteed that the operand here
-                // is an actual integer (albeit the type is an i32/64, it can be from another instr)..
-                if (!current->hasPath(0)) {
+                if (!current->hasPath(index)) {
                     // If there exists no path to the key, we insert one.
-                    current = current->insertPath(0, FieldNode::make(inst->getResultElementType()));
+                    current = current->insertPath(index, FieldNode::make(inst->getResultElementType()));
                     continue;
                 }
-                current = current->getPath(0);
+                current = current->getPath(index);
             }
 
             // Such that our latest current variable represents the path
