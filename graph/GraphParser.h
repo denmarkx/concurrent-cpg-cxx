@@ -103,17 +103,28 @@ namespace GraphParser {
             }
         }
 
+        std::vector<BasicBlockNode*> blocks;
+
         for (Function &F : M) {
             FunctionNode* funcNode = handleNode<FunctionNode, Function>(&F);
 
             for (BasicBlock &B : F) {
                 BasicBlockNode* blockNode = handleNode<BasicBlockNode, BasicBlock>(&B);
+                blocks.push_back(blockNode);
                 funcNode->addBlock(blockNode);
     
                 for (Instruction &I : B) {
                     Node* node = handleNode(&I);
                     blockNode->addNode(node);
                 }
+            }
+        }
+
+        for (BasicBlockNode* block : blocks) {
+            for (auto *s : successors(dyn_cast<BasicBlock>(block->getValue()))) {
+                Node* next = GraphManager::get()->getNodeOrNull(s);
+                if (next)
+                    block->registerCFGEdge(next);
             }
         }
     }

@@ -82,6 +82,10 @@ void Node::registerFieldEdge(Node* node) {
     _edges.push_back(pair("FIELD", node));
 }
 
+void Node::registerCFGEdge(Node* node) {
+    _edges.push_back(pair("CFG", node));
+}
+
 unsigned int Node::getId() const {
     return _id;
 }

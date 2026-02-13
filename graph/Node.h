@@ -37,6 +37,12 @@ public:
     void registerGEPEdge(Node* node);
     void registerFieldEdge(Node* node);
 
+    // TODO: i also disagree with this being in here since
+    // cfg is not necessarily per-instruction..
+    // ..unless we really want that in which case we would be
+    // edging on fraunhofer-style eog
+    void registerCFGEdge(Node* node);
+
     AccessPath* getAccessPath();
     AccessPath* path;
 
