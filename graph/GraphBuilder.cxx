@@ -88,7 +88,7 @@ void GraphBuilder::persistAll() {
     }
 
     size_t numEdgeBatches = (rels.size() + batchSize - 1) / batchSize;
-    for (size_t batch = 0; batch < numBatches; batch++) {
+    for (size_t batch = 0; batch < numEdgeBatches; batch++) {
         size_t start = batch * batchSize;
         size_t end = std::min(start + batchSize, rels.size());
 
