@@ -5,6 +5,7 @@
 #include "graph/GroupNode.h"
 
 #include <llvm/IR/DebugInfoMetadata.h>
+#include <llvm/Demangle/Demangle.h>
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"
 #include <vector>
@@ -18,10 +19,13 @@ public:
 
     static FunctionNode* make(const Function *F) {
         if (Node::isIgnoredIntrinsic(F)) return nullptr;
+        if (F->getIntrinsicID() > 0) return nullptr;
 
         FunctionNode *node = new FunctionNode(F);
         node->setProperties(F);
         node->setDebugInfo(F);
+
+        node->_name = demangle(F->getName().str());
 
         size_t i = 0;
         for (const Argument &arg : F->args()) {

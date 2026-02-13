@@ -39,6 +39,11 @@ Node* GraphManager::getNode(const Value* value) {
     return node;
 }
 
+Node* GraphManager::getNodeFromOperand(const Instruction* instr, unsigned int idx) {
+    const Value *operand = instr->getOperand(idx);
+    return getNode(operand);
+}
+
 Node* GraphManager::getNodeOrNull(const Value *value) {
     return _valueNodeMap[value];
 }

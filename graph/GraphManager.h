@@ -19,6 +19,7 @@ public:
 
     Node* getNode(const Value* value);
     Node* getNode(const Instruction* instr);
+    Node* getNodeFromOperand(const Instruction* instr, unsigned int idx);
 
     bool hasNode(const Value* value);
     Node* getNodeOrNull(const Value *value);

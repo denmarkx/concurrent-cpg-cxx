@@ -41,6 +41,7 @@ void Node::handleDebugInfo(const Instruction *instr) {
     if (!instr->hasMetadata()) return;
 
     const DebugLoc &loc = instr->getDebugLoc();
+    if (!loc.get()) return;
 
     addProperty("column", std::to_string(loc.getCol()));
     addProperty("line", std::to_string(loc.getLine()));

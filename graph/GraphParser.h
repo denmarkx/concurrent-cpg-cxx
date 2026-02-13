@@ -17,9 +17,13 @@
 #include "llvm/ADT/TypeSwitch.h"
 #include "GraphManager.h"
 #include "graph/BinaryOperatorNode.h"
+#include "graph/BranchNode.h"
+#include "graph/CastNode.h"
 #include "graph/GetElementPtrNode.h"
 #include "graph/GlobalConstant.h"
+#include "graph/ICompareNode.h"
 #include "graph/LiteralNode.h"
+#include "graph/SwitchNode.h"
 using namespace llvm;
 
 #include <type_traits>
@@ -80,6 +84,7 @@ namespace GraphParser {
         return nullptr;
     }
 
+
     inline Node* handleNode(const Instruction* instr) {
         assert (instr != nullptr);
         switch (instr->getOpcode()) {
@@ -90,6 +95,25 @@ namespace GraphParser {
             case Instruction::Invoke: return handleNode<CallNode, InvokeInst>(instr);
             case Instruction::Store: return handleStore(instr);
             case Instruction::Ret: return handleReturn(instr);
+            case Instruction::ICmp: return handleNode<ICompareNode, ICmpInst> (instr);
+            case Instruction::Br: return handleNode<BranchNode, BranchInst> (instr);
+            case Instruction::Switch: return handleNode<SwitchNode, SwitchInst> (instr);
+
+            case Instruction::Trunc:
+            case Instruction::ZExt:
+            case Instruction::SExt:
+            case Instruction::FPToUI:
+            case Instruction::FPToSI:
+            case Instruction::UIToFP:
+            case Instruction::SIToFP:
+            case Instruction::FPTrunc:
+            case Instruction::FPExt:
+            case Instruction::PtrToInt:
+            case Instruction::IntToPtr:
+            case Instruction::BitCast:
+            case Instruction::AddrSpaceCast: {
+                return handleNode<CastNode, CastInst>(instr);
+            }
         }
         return handleNode(dynamic_cast<const Value*>(instr));
     }

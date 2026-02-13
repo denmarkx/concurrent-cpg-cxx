@@ -36,7 +36,7 @@ set (ANDERSEN_FILES
 
 add_library(Andersen SHARED ${ANDERSEN_FILES})
 target_include_directories(Andersen PUBLIC andersen)
-target_link_libraries(Andersen PRIVATE ${LLVM_LIBS})
+target_link_libraries(Andersen PUBLIC ${LLVM_LIBS})
 
 set(FILES
     graph/GraphManager.cxx
@@ -54,6 +54,9 @@ set(FILES
     graph/BinaryOperatorNode.h
     graph/CallNode.h
     graph/NullNode.h
+    graph/ICompareNode.h
+    graph/BranchNode.h
+    graph/SwitchNode.h
     graph/GraphBuilder.cxx
     BidirectionalCallGraph.cxx
     ConstructionPass.cxx
@@ -64,7 +67,7 @@ set(FILES
 )
 
 add_executable(analysis ${FILES})
-target_link_libraries(analysis ${LLVM_LIBS} Andersen neo4j-client m)
+target_link_libraries(analysis Andersen neo4j-client m)
 target_link_directories(analysis PRIVATE ${NEO4J_LIBRARY_DIR})
 target_include_directories(analysis PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(analysis PRIVATE ${NEO4J_INCLUDE_DIR})
