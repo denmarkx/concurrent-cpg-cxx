@@ -52,14 +52,14 @@ void GraphBuilder::persistAll() {
             auto properties = nodes[i]->getProperties();
 
             batchData << "{id: '" << nodes[i]->getId() << "', ";
-            batchData << "label: '";
+            batchData << "label: [";
             for (size_t j = 0; j < labels.size(); j++) {
-                batchData << labels[j];
+                batchData << "'" << labels[j] << "'";
                 if (j != (labels.size()-1)) {
-                    batchData << ":";
+                    batchData << ", ";
                 }
             }
-            batchData << "', ";
+            batchData << "], ";
             size_t propSize = 0;
             for (auto &[k, v] : properties) {
                 batchData << Util::parseNeo4jKey(k) << ": '" << v << "', ";
@@ -71,7 +71,7 @@ void GraphBuilder::persistAll() {
 
         std::string cypher =
             "UNWIND " + batchData.str() +  " AS row "
-            "CALL apoc.create.node([row.label], apoc.map.removeKey(row, 'label')) "
+            "CALL apoc.create.node(row.label, apoc.map.removeKey(row, 'label')) "
             "YIELD node "
             "RETURN node";
         LOG_NEO4J(cypher);

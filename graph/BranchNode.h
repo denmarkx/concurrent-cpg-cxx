@@ -16,7 +16,6 @@ public:
     BranchNode(const BranchInst* I) : Node(I, "BranchNode") {}
 
     static BranchNode* make(const BranchInst *I) {
-        // TODO: for unconditional branches.. i don't think we need this?
         if (I->isUnconditional()) return nullptr;
 
         BranchNode *node = new BranchNode(I);

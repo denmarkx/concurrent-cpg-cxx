@@ -5,6 +5,7 @@
 #include "llvm/Support/TypeName.h"
 #include "graph/GraphManager.h"
 #include "Node.h"
+#include <unordered_map>
 #include <utility>
 
 // https://llvm.org/docs/LangRef.html#conversion-operations
@@ -31,8 +32,8 @@ public:
 
         Node *srcNode = GraphManager::get()->getNodeFromOperand(I, 0);
 
-        // TODO: could probably add another label in addition to castnode
-        //  that says what kind of operation this is
+        auto it = node->InstrLabelMap.find(I->getOpcode());
+        node->_labels.push_back(it->second);
         node->_edges.push_back(pair("SOURCE", srcNode));
 
         // I have a hard time reasoning about an explicit "type" node.
@@ -43,4 +44,21 @@ public:
         node->addProperty("castType", typeName);
         return node;
     }
+
+private:
+    const unordered_map<uint8_t, std::string> InstrLabelMap = {
+        {Instruction::Trunc, "Trunc"},
+        {Instruction::ZExt, "ZExt"},
+        {Instruction::SExt, "SExt"},
+        {Instruction::FPToSI, "FPToSI"},
+        {Instruction::FPToUI, "FPToUI"},
+        {Instruction::UIToFP, "UIToFP"},
+        {Instruction::SIToFP, "SIToFP"},
+        {Instruction::PtrToInt, "PtrToInt"},
+        {Instruction::IntToPtr, "IntToPtr"},
+        {Instruction::BitCast, "BitCast"},
+        {Instruction::FPTrunc, "FPTrunc"},
+        {Instruction::FPExt, "FPExt"},
+        {Instruction::AddrSpaceCast, "AddrSpaceCast"},
+    };
 };
