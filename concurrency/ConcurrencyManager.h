@@ -1,0 +1,101 @@
+#pragma once
+
+#include "graph/Node.h"
+#include "llvm/IR/Value.h"
+#include <llvm/IR/Function.h>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+using namespace llvm;
+
+enum ThreadOperation {
+    NONE,
+    CREATE,
+    JOIN,
+};
+
+struct OperationInfo {
+    ThreadOperation opCode;
+    Type::TypeID returnType;
+    std::vector<Type::TypeID> parameters;
+
+    template<typename... VArgs>
+    OperationInfo(ThreadOperation code, Type::TypeID retType, VArgs... args)
+        : opCode(code), returnType(retType) {
+            (parameters.push_back(args), ...);
+        }
+
+    bool checkFunction(const Function *func) const {
+        if (!func) return false;
+        if (func->getReturnType()->getTypeID() != returnType) return false;
+
+        size_t numParams = std::distance(func->args().begin(), func->args().end());
+        if (numParams != parameters.size()) return false;
+
+        for (size_t i=0; i < numParams; i++) {
+            Value* operand = func->getArg(i);
+            if (operand->getType()->getTypeID() != parameters[i]) return false;
+        }
+        return true;
+    }
+};
+
+typedef std::unordered_map<std::string, OperationInfo> OperationMapType;
+
+class ConcurrencyManager {
+public:
+    void registerNode(Node* node) {
+        _concurrencyNodes.push_back(node);
+    }
+
+    static inline ConcurrencyManager* get();
+    static inline ThreadOperation getConcurrencyOperation(const Function *F);
+
+private:
+    vector<Node*> _concurrencyNodes;
+
+    static inline ConcurrencyManager* _concurrencyMgr = nullptr;
+    static const OperationMapType _operationMap;
+};
+
+inline ConcurrencyManager* ConcurrencyManager::get() {
+    if (_concurrencyMgr == nullptr) {
+        _concurrencyMgr = new ConcurrencyManager();
+    }
+    return _concurrencyMgr;
+}
+
+inline ThreadOperation ConcurrencyManager::getConcurrencyOperation(const Function *F) {
+    if (!F) return ThreadOperation::NONE;
+
+    auto it = _operationMap.find(F->getName().str());
+    if (it == _operationMap.end()) return ThreadOperation::NONE;
+
+    if (it->second.checkFunction(F)) {
+        return it->second.opCode;
+    }
+
+    return ThreadOperation::NONE;
+}
+
+const inline OperationMapType ConcurrencyManager::_operationMap{
+    // https://www.man7.org/linux/man-pages/man3/pthread_create.3.html
+    // int pthread_create(<ptr>, <ptr>, <ptr>, <ptr>)
+    {"pthread_create", 
+        OperationInfo(
+            ThreadOperation::CREATE,
+            Type::IntegerTyID,
+            Type::PointerTyID, Type::PointerTyID, Type::PointerTyID, Type::PointerTyID
+        )
+    },
+
+    // https://www.man7.org/linux/man-pages/man3/pthread_join.3.html
+    // int pthread_join(i64, <ptr>)
+    {"pthread_join",
+        OperationInfo(
+            ThreadOperation::JOIN,
+            Type::IntegerTyID,
+            Type::IntegerTyID, Type::PointerTyID
+        )
+    },
+};

@@ -15,7 +15,7 @@
 
 class CallNode : public Node {
 public:
-    CallNode(const CallBase *I) : Node(I, "CallInst") {}
+    CallNode(const CallBase *I, std::string label="CallInst") : Node(I, label) {}
 
     static CallNode* make(const CallBase* I) {
         std::vector<const llvm::Function *> functions{};

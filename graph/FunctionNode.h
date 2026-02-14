@@ -12,9 +12,11 @@
 
 class FunctionNode : public Node {
 public:
-    FunctionNode(const Function* F) : Node(F, "Function") {
-        _blockGroup = GroupNode::make("Group", "BLOCKS");
-        _edges.push_back(pair("BLOCK_GROUP", _blockGroup));
+    FunctionNode(const Function* F, std::string name="Function") : Node(F, name) {
+        if (!F->isDeclaration()) {
+            _blockGroup = GroupNode::make("Group", "BLOCKS");
+            _edges.push_back(pair("BLOCK_GROUP", _blockGroup));
+        }
     }
 
     static FunctionNode* make(const Function *F) {

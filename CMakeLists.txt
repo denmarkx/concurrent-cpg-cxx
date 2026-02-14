@@ -58,6 +58,9 @@ set(FILES
     graph/BranchNode.h
     graph/SwitchNode.h
     graph/GraphBuilder.cxx
+    concurrency/ConcurrencyManager.h
+    concurrency/ThreadNode.h
+    concurrency/JoinNode.h
     BidirectionalCallGraph.cxx
     ConstructionPass.cxx
     GraphBuilderPass.cxx

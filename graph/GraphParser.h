@@ -16,6 +16,9 @@
 #include "llvm/IR/Value.h"
 #include "llvm/ADT/TypeSwitch.h"
 #include "GraphManager.h"
+#include "concurrency/ConcurrencyManager.h"
+#include "concurrency/JoinNode.h"
+#include "concurrency/ThreadNode.h"
 #include "graph/BinaryOperatorNode.h"
 #include "graph/BranchNode.h"
 #include "graph/CastNode.h"
@@ -91,7 +94,17 @@ namespace GraphParser {
             case Instruction::Alloca: return handleNode<StackAllocation, AllocaInst>(instr);
             case Instruction::Load: return handleNode<LoadNode, LoadInst>(instr);
             case Instruction::GetElementPtr: return handleNode<GetElementPtrNode, GetElementPtrInst>(instr);
-            case Instruction::Call: return handleNode<CallNode, CallInst>(instr);
+            case Instruction::Call: {
+                const CallInst *callInst = dyn_cast<CallInst>(instr);
+                if (auto cOp = ConcurrencyManager::get()->getConcurrencyOperation(callInst->getCalledFunction())) {
+                    switch (cOp) {
+                        case ThreadOperation::CREATE: return handleNode<ThreadNode, CallInst>(callInst);
+                        case ThreadOperation::JOIN: return handleNode<JoinNode, CallInst>(callInst);
+                        default: return handleNode<CallNode, CallInst>(callInst);
+                    }
+                }
+                return handleNode<CallNode, CallInst>(instr);
+            }
             case Instruction::Invoke: return handleNode<CallNode, InvokeInst>(instr);
             case Instruction::Store: return handleStore(instr);
             case Instruction::Ret: return handleReturn(instr);
