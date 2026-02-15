@@ -239,7 +239,7 @@ bool Andersen::addConstraintForExternalLibrary(const CallBase *cs,
     const Value* data = cs->getArgOperand(3);
     if (data == nullptr) return false; // Not always given data, e.g., globals.
 
-    NodeIndex argIndex = nodeFactory.getObjectNodeFor(data);
+    NodeIndex argIndex = nodeFactory.getValueNodeFor(data);
     assert(argIndex != AndersNodeFactory::InvalidIndex && "Failed to find argIndex node");
 
     Function *routine = dyn_cast<Function>(cs->getArgOperand(2));

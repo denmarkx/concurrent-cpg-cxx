@@ -69,4 +69,23 @@ bool GraphManager::alias(const Value* v1, const Value* v2) {
     return _AA->alias(L1, L2) != AliasResult::NoAlias;
 }
 
+
+void GraphManager::setMemorySSAResult(const Function* F, MemorySSA &MSSA) { 
+    _memorySSAMap[F] = &MSSA;
+}
+
+MemorySSA* GraphManager::getMemorySSAResult(const Function* F) const { 
+    auto it = _memorySSAMap.find(F);
+    if (it == _memorySSAMap.end()) return nullptr;
+    return it->second;
+}
+
+void GraphManager::setCallGraph(BidirectionalCallGraph *callGraph) {
+    _callGraph = callGraph;
+}
+
+BidirectionalCallGraph* GraphManager::getCallGraph() { 
+    return _callGraph;
+};
+
 GraphManager* GraphManager::_graph = nullptr;

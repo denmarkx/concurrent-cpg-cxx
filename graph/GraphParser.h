@@ -17,6 +17,7 @@
 #include "llvm/ADT/TypeSwitch.h"
 #include "GraphManager.h"
 #include "concurrency/ConcurrencyManager.h"
+#include "concurrency/ConcurrencyPass.h"
 #include "concurrency/JoinNode.h"
 #include "concurrency/ThreadNode.h"
 #include "graph/BinaryOperatorNode.h"
@@ -27,6 +28,7 @@
 #include "graph/ICompareNode.h"
 #include "graph/LiteralNode.h"
 #include "graph/SwitchNode.h"
+#include "llvm/Pass.h"
 using namespace llvm;
 
 #include <type_traits>
@@ -164,5 +166,8 @@ namespace GraphParser {
                     block->registerCFGEdge(next);
             }
         }
+
+        ConcurrencyPass *pass = new ConcurrencyPass();
+        pass->run();
     }
 };

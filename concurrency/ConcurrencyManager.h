@@ -48,6 +48,17 @@ public:
         _concurrencyNodes.push_back(node);
     }
 
+    template <typename T>
+    std::vector<T*> getConcurrencyNodes() {
+        std::vector<T*> nodes;
+        for (Node *n : _concurrencyNodes) {
+            if (auto castNode = dynamic_cast<T*>(n)) {
+                nodes.push_back(castNode);
+            }
+        }
+        return nodes;
+    }
+
     static inline ConcurrencyManager* get();
     static inline ThreadOperation getConcurrencyOperation(const Function *F);
 

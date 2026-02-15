@@ -32,6 +32,10 @@ public:
         return node;
     }
 
+    Node* getDataNode() { return _argNode; }
+    Node* getRoutine() { return _routine; }
+    Node* getHandle() { return _handle; }
+
 private:
     Node* _handle = nullptr;
     Node* _routine = nullptr;

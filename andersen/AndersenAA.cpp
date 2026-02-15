@@ -93,6 +93,21 @@ bool AndersenAAResult::getPointsToSet(const llvm::Value *v,
   return anders.getPointsToSet(v, ptsSet);
 }
 
+void AndersenAAResult::printPointsToSet(const llvm::Value *v) {
+  std::vector<const llvm::Value *> ptsSet{};
+  getPointsToSet(v, ptsSet);
+
+  errs() << "Value: " << *v << "\n";
+  if (ptsSet.size() == 0) {
+    errs() << "\tptsSet is empty.";
+    return;
+  }
+  for (const llvm::Value *v : ptsSet) {
+    errs() << "  ptsSet: " << *v << "\n";
+  }
+  errs() << "\n";
+}
+
 AndersenAAResult::AndersenAAResult(const Module &m) : anders(m) {}
 
 void AndersenAAWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {

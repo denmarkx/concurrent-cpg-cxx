@@ -1,6 +1,8 @@
 #pragma once
 
+#include "BidirectionalCallGraph.h"
 #include "Node.h"
+#include "llvm/Analysis/MemorySSA.h"
 #include "llvm/IR/Value.h"
 #include "andersen/AndersenAA.h"
 
@@ -29,12 +31,20 @@ public:
     void setAliasResult(AndersenAAResult &AA);
     AndersenAAResult* getAliasResult() const;
 
+    void setMemorySSAResult(const Function* F, MemorySSA &MSAA);
+    MemorySSA* getMemorySSAResult(const Function* F) const;
+
+    void setCallGraph(BidirectionalCallGraph *callGraph);
+    BidirectionalCallGraph* getCallGraph();
+
     static GraphManager* get();
     static GraphManager* _graph;
 
 private:
     std::vector<Node*> _nodes;
     std::unordered_map<const Value*, Node*> _valueNodeMap;
+    std::unordered_map<const Function*, MemorySSA*> _memorySSAMap;
 
     AndersenAAResult* _AA;
+    BidirectionalCallGraph* _callGraph;
 };
