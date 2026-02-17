@@ -6,12 +6,15 @@
 #include "llvm/IR/Value.h"
 #include "andersen/AndersenAA.h"
 
+#include <functional>
 #include <unordered_map>
 #include <vector>
 using namespace std;
 using namespace llvm;
 
 class GraphManager {
+    using MSSAGet = std::function<MemorySSA &(Function &)>;
+
 public:
     GraphManager();
     GraphManager(const GraphManager& other) = delete;
@@ -31,8 +34,8 @@ public:
     void setAliasResult(AndersenAAResult &AA);
     AndersenAAResult* getAliasResult() const;
 
-    void setMemorySSAResult(const Function* F, MemorySSA &MSAA);
-    MemorySSA* getMemorySSAResult(const Function* F) const;
+    void setMemorySSACall(MSSAGet func);
+    MemorySSA &getMemorySSAResult(const Function* F) const;
 
     void setCallGraph(BidirectionalCallGraph *callGraph);
     BidirectionalCallGraph* getCallGraph();
@@ -43,8 +46,9 @@ public:
 private:
     std::vector<Node*> _nodes;
     std::unordered_map<const Value*, Node*> _valueNodeMap;
-    std::unordered_map<const Function*, MemorySSA*> _memorySSAMap;
+    // std::unordered_map<const Function*, MemorySSA*> _memorySSAMap;
 
     AndersenAAResult* _AA;
     BidirectionalCallGraph* _callGraph;
+    MSSAGet _mssaGetter = nullptr;
 };

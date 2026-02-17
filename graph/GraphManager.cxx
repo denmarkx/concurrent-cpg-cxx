@@ -70,14 +70,14 @@ bool GraphManager::alias(const Value* v1, const Value* v2) {
 }
 
 
-void GraphManager::setMemorySSAResult(const Function* F, MemorySSA &MSSA) { 
-    _memorySSAMap[F] = &MSSA;
+void GraphManager::setMemorySSACall(MSSAGet getter) { 
+    _mssaGetter = std::move(getter);
 }
 
-MemorySSA* GraphManager::getMemorySSAResult(const Function* F) const { 
-    auto it = _memorySSAMap.find(F);
-    if (it == _memorySSAMap.end()) return nullptr;
-    return it->second;
+MemorySSA &GraphManager::getMemorySSAResult(const Function* F) const {
+    // this may be hacky
+    Function &constFunc = const_cast<Function &>(*F);
+    return _mssaGetter(constFunc);
 }
 
 void GraphManager::setCallGraph(BidirectionalCallGraph *callGraph) {

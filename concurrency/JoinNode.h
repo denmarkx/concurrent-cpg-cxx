@@ -47,8 +47,8 @@ public:
         const Instruction *threadId = dyn_cast<Instruction>(_threadID->getValue());
         if (isa<ConstantInt>(threadId)) return;
 
-        MemorySSA *MSSA = GraphManager::get()->getMemorySSAResult(threadId->getFunction());
-        MemoryAccess *access = MSSA->getWalker()->getClobberingMemoryAccess(threadId);
+        MemorySSA &MSSA = GraphManager::get()->getMemorySSAResult(threadId->getFunction());
+        MemoryAccess *access = MSSA.getWalker()->getClobberingMemoryAccess(threadId);
         MemoryDef *memoryDef = dyn_cast<MemoryDef>(access);
         if (!memoryDef) return; // TODO: What do we do with this join then?
 
