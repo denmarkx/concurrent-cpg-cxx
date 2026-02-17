@@ -168,6 +168,7 @@ namespace GraphParser {
         }
 
         ConcurrencyPass *pass = new ConcurrencyPass();
+        pass->handleGlobals(M.globals());
         pass->run();
     }
 };

@@ -1,12 +1,19 @@
 #pragma once
 
+#include "andersen/AndersenAA.h"
 #include "concurrency/ConcurrencyManager.h"
 #include "concurrency/ThreadNode.h"
 #include "graph/GraphManager.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/Analysis/CallGraph.h"
+#include "llvm/Analysis/MemorySSA.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/IR/Use.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
+#include <iterator>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -22,9 +29,12 @@ struct ThreadSummary {
 
 inline raw_ostream& operator<<(raw_ostream& out, const ThreadSummary& summary) {
     out << "ThreadSummary:\n";
-    out << "\tRoutine: " << summary.routineNode->getValue()->getName() << "\n";
-    out << "\tArgs: " << *summary.threadNode->getDataNode()->getValue() << "\n";
-    out << "\n";
+    out << "  Routine: " << summary.routineNode->getValue()->getName() << "\n";
+    out << "  Args: " << *summary.threadNode->getDataNode()->getValue() << "\n";
+    out << "  Functions:\n";
+    for (const Function *f : summary.functions) {
+        out << "  " << f->getName() << "\n";
+    }
     return out;
 }
 
@@ -60,6 +70,21 @@ public:
         }
     }
 
+    /**
+     * We're interested in usages of globals from within threads. 
+    */
+    void handleGlobals(iterator_range<Module::global_iterator> it) {
+        AndersenAAResult *result = GraphManager::get()->getAliasResult();
+        for (GlobalVariable &g : it) {
+            // Just not really constant globals.
+            // TODO: interested in what happens if we use const_cast on a global in cxx.
+            if (g.isConstant()) continue;
+            for (User *user : g.users()) {
+                // errs() << *user << "\n";
+            }
+        }
+    }
+
 private:
     void handleThreadNode(ThreadNode *node) {
         std::vector<const llvm::Value *> ptsSet{};
@@ -89,8 +114,10 @@ private:
 
     void computeThreadSummaries() {
         for (ThreadSummary *summary : _summaries) {
-            collectFunctionUsage(summary,
-                dyn_cast<Function>(summary->routineNode->getValue()));
+            const Function *routine = dyn_cast<Function>(
+                summary->routineNode->getValue());
+            summary->functions.insert(routine);
+            collectFunctionUsage(summary, routine);
             collectSharedUsage(summary);
         }
     }
@@ -104,7 +131,26 @@ private:
     }
 
     void collectSharedUsage(ThreadSummary *summary) {
-        
+        const Function *routine = dyn_cast<Function>(summary->routineNode->getValue());
+        const Value *data = routine->getArg(0);
+
+        std::vector<const Value *> ptsSet{};
+        GraphManager::get()->getAliasResult()->getPointsToSet(data, ptsSet);
+
+        for (const Value *v : ptsSet) {
+            std::vector<const Value *> innerSet{};
+            GraphManager::get()->getAliasResult()->getPointsFromSet(v, innerSet);
+            for (const Value *w : innerSet) {
+                if (auto *instr = dyn_cast<Instruction>(w)) {
+                    handleUsageInstruction(instr, summary);
+                }
+            }
+        }
+    }
+
+    void handleUsageInstruction(const Instruction *instr, ThreadSummary *summary) {
+        if (instr->getOpcode() == Instruction::Alloca) return;
+        errs() << *instr << "\n"; // need to get usages
     }
 
 private:
