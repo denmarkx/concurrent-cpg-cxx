@@ -23,6 +23,9 @@ public:
   bool getPointsToSet(const llvm::Value *v,
                       std::vector<const llvm::Value *> &ptsSet) const;
 
+  bool getPointsFromSet(const llvm::Value *v,
+                      std::vector<const llvm::Value *> &ptsSet) const;
+
   void printPointsToSet(const llvm::Value *v);
 };
 

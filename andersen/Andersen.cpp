@@ -53,6 +53,28 @@ bool Andersen::getPointsToSet(const llvm::Value *v,
   return true;
 }
 
+bool Andersen::getPointsFromSet(const llvm::Value *v,
+                                std::vector<const llvm::Value *> &ptsSet) const {
+  NodeIndex ptrIndex = nodeFactory.getValueNodeFor(v);
+  if (ptrIndex == AndersNodeFactory::InvalidIndex ||
+      ptrIndex == nodeFactory.getUniversalPtrNode())
+    return false;
+
+  NodeIndex ptrTgt = nodeFactory.getMergeTarget(ptrIndex);
+  ptsSet.clear();
+
+  for (unsigned i = 0, e = nodeFactory.getNumNodes(); i < e; ++i) {
+    NodeIndex rep = nodeFactory.getMergeTarget(i);
+    auto ptsItr = ptsGraph.find(rep);
+    if (ptsItr != ptsGraph.end() && ptsItr->second.has(ptrIndex)) {
+      const llvm::Value *val = nodeFactory.getValueForNode(ptsItr->first);
+      if (val != nullptr)
+        ptsSet.push_back(val);
+    }
+  }
+  return true;
+}
+
 bool Andersen::runOnModule(const Module &M) {
   collectConstraints(M);
 

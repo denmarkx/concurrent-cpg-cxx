@@ -6,6 +6,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Analysis/CallGraph.h"
+#include "llvm/Analysis/MemorySSA.h"
 
 #include "andersen/AndersenAA.h"
 
@@ -18,7 +19,7 @@ using namespace llvm;
 int main() {
     LLVMContext ctx;
     SMDiagnostic error;
-    std::unique_ptr<Module> module = parseIRFile("std_rs.ll", error, ctx);
+    std::unique_ptr<Module> module = parseIRFile("shared.ll", error, ctx);
 
     if (module == nullptr) {
         error.print("", errs());
@@ -29,6 +30,7 @@ int main() {
 
     legacy::PassManager PM;
     PM.add(new AndersenAAWrapperPass());
+    PM.add(new MemorySSAWrapperPass());
     // PM.add(new ConstructionPass());
     PM.add(new GraphBuilderPass());
     PM.run(*module);

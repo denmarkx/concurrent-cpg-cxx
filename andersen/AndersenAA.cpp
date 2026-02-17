@@ -93,6 +93,12 @@ bool AndersenAAResult::getPointsToSet(const llvm::Value *v,
   return anders.getPointsToSet(v, ptsSet);
 }
 
+
+bool AndersenAAResult::getPointsFromSet(const llvm::Value *v,
+  std::vector<const llvm::Value *> &ptsSet) const {
+  return anders.getPointsFromSet(v, ptsSet);
+}
+
 void AndersenAAResult::printPointsToSet(const llvm::Value *v) {
   std::vector<const llvm::Value *> ptsSet{};
   getPointsToSet(v, ptsSet);
