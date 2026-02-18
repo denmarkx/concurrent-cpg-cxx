@@ -4,27 +4,38 @@
 #include "concurrency/ConcurrencyManager.h"
 #include "concurrency/ThreadNode.h"
 #include "graph/GraphManager.h"
-#include "llvm/ADT/iterator_range.h"
+
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/MemorySSA.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Use.h"
 #include "llvm/Support/raw_ostream.h"
-#include <algorithm>
-#include <iterator>
-#include <unordered_map>
+
 #include <unordered_set>
+#include <utility>
 #include <vector>
 using namespace llvm;
+
+enum Usage {
+    UNKNOWN,
+    READ,
+    WRITE,
+};
 
 struct ThreadSummary {
     Node* routineNode;
     ThreadNode* threadNode;
-    std::unordered_set<Node*> writes;
-    std::unordered_set<Node*> reads;
+    std::unordered_set<const Value*> writes;
+    std::unordered_set<const Value*> reads;
     std::unordered_set<const Function*> functions;
+
+    /**
+     * Boolean indicating if <v> is apart of any functions that the thread calls. 
+    */
+    bool isApartOfThread(const Instruction *v) {
+        return functions.contains(v->getFunction());
+    }
 };
 
 inline raw_ostream& operator<<(raw_ostream& out, const ThreadSummary& summary) {
@@ -33,7 +44,25 @@ inline raw_ostream& operator<<(raw_ostream& out, const ThreadSummary& summary) {
     out << "  Args: " << *summary.threadNode->getDataNode()->getValue() << "\n";
     out << "  Functions:\n";
     for (const Function *f : summary.functions) {
-        out << "  " << f->getName() << "\n";
+        out << "     " << f->getName() << "\n";
+    }
+    out << "  Reads: ";
+    if (summary.reads.size() == 0) {
+        out << " (empty)\n";
+    } else {
+        out << "\n";
+        for (const Value *v : summary.reads) {
+            out << "   " << *v << "\n";
+        }
+    }
+    out << "  Writes: ";
+    if (summary.writes.size() == 0) { 
+        out << " (empty)\n";
+    } else {
+        out << "\n";
+        for (const Value *v : summary.writes) {
+            out << "   " << *v << "\n";
+        }
     }
     return out;
 }
@@ -150,7 +179,38 @@ private:
 
     void handleUsageInstruction(const Instruction *instr, ThreadSummary *summary) {
         if (instr->getOpcode() == Instruction::Alloca) return;
-        errs() << *instr << "\n"; // need to get usages
+        if (!summary->isApartOfThread(instr)) return;
+
+        switch(instr->getOpcode()) {
+            case Instruction::Load: {
+                const LoadInst *load = dyn_cast<LoadInst>(instr);
+                std::pair<Usage, const Instruction*> usages = checkLoadUsages(load);
+                if (usages.second) {
+                    saveUsage(usages.first, usages.second, summary);
+                }
+                break;
+            }
+            default:
+                errs() << "handleUsageInstruction: unhandled opcode: "
+                    << instr->getOpcodeName() << "\n";
+        }
+    }
+
+    std::pair<Usage, const Instruction*> checkLoadUsages(const LoadInst *load) {
+        for (const User *user : load->users()) {
+            if (const StoreInst *store = dyn_cast<StoreInst>(user)) {
+                return pair(Usage::WRITE, store);
+            }
+        }
+        return pair(Usage::UNKNOWN, nullptr);
+    }
+
+    void saveUsage(Usage usage, const Instruction *instr, ThreadSummary *summary) {
+        if (usage == Usage::READ) {
+            summary->reads.insert(instr);
+        } else if (usage == Usage::WRITE) {
+            summary->writes.insert(instr);
+        }
     }
 
 private:
