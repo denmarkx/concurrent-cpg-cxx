@@ -152,6 +152,7 @@ private:
     }
 
     void collectFunctionUsage(ThreadSummary *summary, const Function* f) {
+        if (f->isDeclaration()) return;
         auto callGraph = GraphManager::get()->getCallGraph();
         for (auto &cgNode : *callGraph->getOrInsertFunction(f)) {
             summary->functions.insert(cgNode.second->getFunction());

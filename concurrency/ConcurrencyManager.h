@@ -12,6 +12,8 @@ enum ThreadOperation {
     NONE,
     CREATE,
     JOIN,
+    LOCK,
+    UNLOCK
 };
 
 struct OperationInfo {
@@ -107,6 +109,22 @@ const inline OperationMapType ConcurrencyManager::_operationMap{
             ThreadOperation::JOIN,
             Type::IntegerTyID,
             Type::IntegerTyID, Type::PointerTyID
+        )
+    },
+
+    {"pthread_mutex_lock",
+        OperationInfo(
+            ThreadOperation::LOCK,
+            Type::IntegerTyID,
+            Type::PointerTyID
+        )
+    },
+
+    {"pthread_mutex_unlock",
+        OperationInfo(
+            ThreadOperation::UNLOCK,
+            Type::IntegerTyID,
+            Type::PointerTyID
         )
     },
 };

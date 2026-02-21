@@ -27,6 +27,7 @@
 #include "graph/GlobalConstant.h"
 #include "graph/ICompareNode.h"
 #include "graph/LiteralNode.h"
+#include "graph/MutexNode.h"
 #include "graph/SwitchNode.h"
 #include "llvm/Pass.h"
 using namespace llvm;
@@ -102,6 +103,8 @@ namespace GraphParser {
                     switch (cOp) {
                         case ThreadOperation::CREATE: return handleNode<ThreadNode, CallInst>(callInst);
                         case ThreadOperation::JOIN: return handleNode<JoinNode, CallInst>(callInst);
+                        case ThreadOperation::LOCK: return handleNode<MutexNode, CallInst>(callInst);
+                        case ThreadOperation::UNLOCK: return handleNode<MutexNode, CallInst>(callInst);
                         default: return handleNode<CallNode, CallInst>(callInst);
                     }
                 }
