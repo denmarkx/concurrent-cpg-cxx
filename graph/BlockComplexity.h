@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * When it comes to analyses that traditionally may traverse
  * through each instruction, we make an attempt to avoid this for
@@ -55,6 +57,11 @@ public:
                 _complexityMap[currentBlock] |= Complexity::PHI;
                 break;
         }
+    }
+
+    static BlockComplexity* get() {
+        static BlockComplexity* _object = new BlockComplexity();
+        return _object;
     }
 
 private:

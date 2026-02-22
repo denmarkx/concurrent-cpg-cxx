@@ -21,11 +21,13 @@
 #include "concurrency/JoinNode.h"
 #include "concurrency/ThreadNode.h"
 #include "graph/BinaryOperatorNode.h"
+#include "graph/BlockComplexity.h"
 #include "graph/BranchNode.h"
 #include "graph/CastNode.h"
 #include "graph/GetElementPtrNode.h"
 #include "graph/GlobalConstant.h"
 #include "graph/ICompareNode.h"
+#include "graph/InstructionOrdering.h"
 #include "graph/LiteralNode.h"
 #include "graph/MutexNode.h"
 #include "graph/SwitchNode.h"
@@ -148,14 +150,20 @@ namespace GraphParser {
         std::vector<BasicBlockNode*> blocks;
 
         for (Function &F : M) {
+            ConcurrencyManager::get()->discoverSyncFunctions(&F);
             FunctionNode* funcNode = handleNode<FunctionNode, Function>(&F);
 
             for (BasicBlock &B : F) {
+                BlockComplexity::get()->handleBlock(&B);
+                InstructionOrdering::get()->handleBasicBlock(&B);
+
                 BasicBlockNode* blockNode = handleNode<BasicBlockNode, BasicBlock>(&B);
                 blocks.push_back(blockNode);
                 funcNode->addBlock(blockNode);
     
                 for (Instruction &I : B) {
+                    BlockComplexity::get()->handleInstruction(&I);
+                    InstructionOrdering::get()->handleInstruction(&I);
                     Node* node = handleNode(&I);
                     blockNode->addNode(node);
                 }

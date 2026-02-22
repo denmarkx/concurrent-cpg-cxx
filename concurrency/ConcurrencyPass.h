@@ -67,6 +67,7 @@ inline raw_ostream& operator<<(raw_ostream& out, const ThreadSummary& summary) {
     return out;
 }
 
+#include "concurrency/LocksetAnalysis.h"
 class ConcurrencyPass {
 public:
     void run() {
@@ -77,6 +78,10 @@ public:
         }
         computeThreadSummaries();
         printSummaries();
+
+        for (ThreadSummary *summary : _summaries) {
+            LocksetAnalysis::get()->handleThread(*summary);
+        }
     }
 
     void printSharedMap() {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "graph/Node.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
 #include <llvm/IR/Function.h>
 #include <unordered_map>
@@ -50,6 +51,14 @@ public:
         _concurrencyNodes.push_back(node);
     }
 
+    void discoverSyncFunctions(const Function *func) {
+        if (
+            func->getName().str() == "pthread_mutex_lock" ||
+            func->getName().str() == "pthread_mutex_unlock") {
+            propagateLockCall(func, getConcurrencyOperation(func));
+        }
+    }
+
     template <typename T>
     std::vector<T*> getConcurrencyNodes() {
         std::vector<T*> nodes;
@@ -63,9 +72,25 @@ public:
 
     static inline ConcurrencyManager* get();
     static inline ThreadOperation getConcurrencyOperation(const Function *F);
+    static inline ThreadOperation getConcurrencyOperation(std::string &name);
+
+private:
+    void propagateLockCall(const Function *func, ThreadOperation opCode) {
+        if (_syncFunctions.contains(func)) return;
+        _syncFunctions[func] = opCode;
+        errs() << "propagateLockCall -> " << func->getName() << "\n";
+
+        for (const User *user : func->users()) {
+            if (auto *call = dyn_cast<CallInst>(user)) {
+                if (call->getCalledFunction() == func)
+                    propagateLockCall(call->getFunction(), opCode);
+            }
+        }
+    }
 
 private:
     vector<Node*> _concurrencyNodes;
+    unordered_map<const Function*, ThreadOperation> _syncFunctions;
 
     static inline ConcurrencyManager* _concurrencyMgr = nullptr;
     static const OperationMapType _operationMap;
