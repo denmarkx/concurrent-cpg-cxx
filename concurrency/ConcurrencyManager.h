@@ -17,6 +17,10 @@ enum ThreadOperation {
     UNLOCK
 };
 
+const ThreadOperation SyncOperations[2] = {
+    ThreadOperation::LOCK, ThreadOperation::UNLOCK
+};
+
 struct OperationInfo {
     ThreadOperation opCode;
     Type::TypeID returnType;
@@ -52,11 +56,8 @@ public:
     }
 
     void discoverSyncFunctions(const Function *func) {
-        if (
-            func->getName().str() == "pthread_mutex_lock" ||
-            func->getName().str() == "pthread_mutex_unlock") {
-            propagateLockCall(func, getConcurrencyOperation(func));
-        }
+        ThreadOperation opCode = getConcurrencyOperation(func);
+        if (isSyncOperation(opCode)) propagateLockCall(func, opCode);
     }
 
     template <typename T>
@@ -70,6 +71,13 @@ public:
         return nodes;
     }
 
+    bool isSyncOperation(ThreadOperation opCode) {
+        for (int i = 0; i < (sizeof(SyncOperations) / sizeof(SyncOperations[0])); i++) {
+            if (SyncOperations[i] == opCode) return true;
+        }
+        return false;
+    }
+
     static inline ConcurrencyManager* get();
     static inline ThreadOperation getConcurrencyOperation(const Function *F);
     static inline ThreadOperation getConcurrencyOperation(std::string &name);
@@ -78,7 +86,6 @@ private:
     void propagateLockCall(const Function *func, ThreadOperation opCode) {
         if (_syncFunctions.contains(func)) return;
         _syncFunctions[func] = opCode;
-        errs() << "propagateLockCall -> " << func->getName() << "\n";
 
         for (const User *user : func->users()) {
             if (auto *call = dyn_cast<CallInst>(user)) {
