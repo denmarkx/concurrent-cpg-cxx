@@ -60,6 +60,11 @@ public:
         if (isSyncOperation(opCode)) propagateLockCall(func, opCode);
     }
 
+    std::optional<pair<ThreadOperation, const CallInst*>> getSyncCall(const Function *func) {
+        if (!_syncFunctions.contains(func)) return {};
+        return _syncFunctions[func];
+    }
+
     template <typename T>
     std::vector<T*> getConcurrencyNodes() {
         std::vector<T*> nodes;
@@ -85,19 +90,20 @@ public:
 private:
     void propagateLockCall(const Function *func, ThreadOperation opCode) {
         if (_syncFunctions.contains(func)) return;
-        _syncFunctions[func] = opCode;
 
         for (const User *user : func->users()) {
             if (auto *call = dyn_cast<CallInst>(user)) {
-                if (call->getCalledFunction() == func)
+                if (call->getCalledFunction() == func) {
+                    _syncFunctions[func] = pair(opCode, call);
                     propagateLockCall(call->getFunction(), opCode);
+                }
             }
         }
     }
 
 private:
     vector<Node*> _concurrencyNodes;
-    unordered_map<const Function*, ThreadOperation> _syncFunctions;
+    unordered_map<const Function*, pair<ThreadOperation, const CallInst*>> _syncFunctions;
 
     static inline ConcurrencyManager* _concurrencyMgr = nullptr;
     static const OperationMapType _operationMap;

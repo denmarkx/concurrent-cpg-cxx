@@ -28,6 +28,8 @@ struct ThreadSummary {
     ThreadNode* threadNode;
     std::unordered_set<const Value*> writes;
     std::unordered_set<const Value*> reads;
+    std::unordered_set<const Value*> locks;
+    std::unordered_set<const Value*> unlocks;
     std::unordered_set<const Function*> functions;
 
     /**
@@ -38,6 +40,21 @@ struct ThreadSummary {
     }
 };
 
+inline void writeSummarySet(raw_ostream& out, std::string title,
+    const std::unordered_set<const Value*>& set) {
+    
+    out << "  " + title + ":";
+    if (set.size() == 0) {
+        out << " (empty)\n";
+        return;
+    }
+
+    out << "\n";
+    for (const Value *v : set) {
+        out << "   " << *v << "\n";
+    }
+}
+
 inline raw_ostream& operator<<(raw_ostream& out, const ThreadSummary& summary) {
     out << "ThreadSummary:\n";
     out << "  Routine: " << summary.routineNode->getValue()->getName() << "\n";
@@ -46,24 +63,11 @@ inline raw_ostream& operator<<(raw_ostream& out, const ThreadSummary& summary) {
     for (const Function *f : summary.functions) {
         out << "     " << f->getName() << "\n";
     }
-    out << "  Reads: ";
-    if (summary.reads.size() == 0) {
-        out << " (empty)\n";
-    } else {
-        out << "\n";
-        for (const Value *v : summary.reads) {
-            out << "   " << *v << "\n";
-        }
-    }
-    out << "  Writes: ";
-    if (summary.writes.size() == 0) { 
-        out << " (empty)\n";
-    } else {
-        out << "\n";
-        for (const Value *v : summary.writes) {
-            out << "   " << *v << "\n";
-        }
-    }
+
+    writeSummarySet(out, "Reads", summary.reads);
+    writeSummarySet(out, "Writes", summary.writes);
+    writeSummarySet(out, "Locks", summary.locks);
+    writeSummarySet(out, "Unlocks", summary.unlocks);
     return out;
 }
 
@@ -153,6 +157,19 @@ private:
             summary->functions.insert(routine);
             collectFunctionUsage(summary, routine);
             collectSharedUsage(summary);
+            associateLocks(summary);
+        }
+    }
+
+    void associateLocks(ThreadSummary *summary) {
+        for (const Function *func : summary->functions) {
+            std::optional<pair<ThreadOperation, const CallInst*>> syncInfo = ConcurrencyManager::get()->getSyncCall(func);
+            if (syncInfo) {
+                if (syncInfo->first == ThreadOperation::LOCK)
+                    summary->locks.insert(syncInfo->second);
+                else
+                    summary->unlocks.insert(syncInfo->second);
+            }
         }
     }
 
