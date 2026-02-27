@@ -12,7 +12,7 @@ using namespace std;
  * Provides numeric ordering of instructions relative to the block and sub-calls.
  * Implicit calls (ie: pthread_create) are not considered sub-calls and therefore, does not constitute MHP ordering.
  * 
- * Currently a heavy WIP and supports the most basic order. 
+ * Currently a heavy WIP and supports the most basic order.
 */
 class InstructionOrdering {
 public:
@@ -62,4 +62,5 @@ private:
     uint32_t counter = 0;
 
     unordered_map<const Instruction*, uint32_t> _idMap;
+    unordered_map<const Function*, const Function*> _hbFuncMap; 
 };

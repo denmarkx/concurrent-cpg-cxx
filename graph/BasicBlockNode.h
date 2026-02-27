@@ -2,6 +2,7 @@
 #include "llvm/IR/BasicBlock.h"
 
 #include "Node.h"
+#include <vector>
 #include <utility>
 
 class BasicBlockNode : public Node {
@@ -26,4 +27,16 @@ public:
         // redefine this via cfg.
         // _edges.push_back(pair("BLOCK_CHILD", node));
     }
+
+    void addDominator(const BasicBlockNode* block) {
+        _dominatedBy.push_back(block);
+    }
+
+    void addDominates(const BasicBlockNode* block) {
+        _dominates.push_back(block);
+    }
+
+private:
+    std::vector<const BasicBlockNode*> _dominates;
+    std::vector<const BasicBlockNode*> _dominatedBy;
 };

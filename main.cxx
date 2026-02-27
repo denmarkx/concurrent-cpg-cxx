@@ -13,6 +13,7 @@
 #include "ConstructionPass.h"
 #include "graph/GraphBuilder.h"
 #include "GraphBuilderPass.h"
+#include "GraphBuilderFuncPass.h"
 
 using namespace llvm;
 
@@ -33,6 +34,7 @@ int main() {
     PM.add(new MemorySSAWrapperPass());
     // PM.add(new ConstructionPass());
     PM.add(new GraphBuilderPass());
+    PM.add(new GraphBuilderFuncPass());
     PM.run(*module);
     builder.persistAll();
     return 0;

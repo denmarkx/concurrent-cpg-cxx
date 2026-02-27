@@ -67,6 +67,7 @@ set(FILES
     BidirectionalCallGraph.cxx
     ConstructionPass.cxx
     GraphBuilderPass.cxx
+    GraphBuilderFuncPass.cxx
     APIHelper.h
     Debug.h
     main.cxx
