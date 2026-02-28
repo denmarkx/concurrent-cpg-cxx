@@ -8,6 +8,7 @@
 
 #include "graph/BasicBlockNode.h"
 #include "graph/GraphManager.h"
+#include "llvm/IR/User.h"
 
 using namespace llvm;
 using namespace std;
@@ -38,6 +39,9 @@ public:
     }
 
     Ordering getOrdering(const Instruction* instrA, const Instruction* instrB) {
+        errs() << "\n";
+        errs() << getSequenceInfoRelativeTo(instrA, instrB->getFunction())->second << "\n";
+        errs() << "after\n";
         // The same function will follow the dominance tree for the blocks.
         if (isSameFunction(instrA, instrB)) {
             BasicBlockNode *blockA = GraphManager::get()->getNode<BasicBlockNode>(instrA->getParent());
@@ -59,7 +63,23 @@ public:
         }
 
         // Otherwise, this is considered interprocedural:
+        return Ordering::UNKNOWN;
 
+    }
+
+    std::optional<pair<const BasicBlock*, int>> getSequenceInfoRelativeTo(const Instruction *instr, const Function *func) {
+        errs() << "getSequenceRelativeTo(\n\t" << *instr << "\n\t" << func->getName() << "\n)\n"; 
+        const Function *instrFunc = instr->getFunction();
+        if (instrFunc == func) return pair(instr->getParent(), getSequence(instr));
+
+        for (const User *user : instrFunc->users()) {
+            if (auto *call = dyn_cast<CallInst>(user)) {
+                auto info = getSequenceInfoRelativeTo(call, func);
+                if (info->second >= 0)
+                    return pair(call->getParent(), info->second);
+            }
+        }
+        return {};
     }
 
     int getSequence(const Instruction* instr) {
