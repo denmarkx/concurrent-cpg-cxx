@@ -2,6 +2,7 @@
 #include "llvm/IR/BasicBlock.h"
 
 #include "Node.h"
+#include <algorithm>
 #include <vector>
 #include <utility>
 
@@ -34,6 +35,19 @@ public:
 
     void addDominates(const BasicBlockNode* block) {
         _dominates.push_back(block);
+    }
+
+    bool isDominatedBy(const BasicBlockNode* block) const {
+        if (getNumDominatedBy() == 0) return false;
+        for (const BasicBlockNode* dominator : _dominatedBy) {
+            if (dominator->isDominatedBy(block))
+                return true;
+        }
+        return std::find(_dominatedBy.begin(), _dominatedBy.end(), block) != _dominatedBy.end();
+    }
+
+    size_t getNumDominatedBy() const {
+        return _dominatedBy.size();
     }
 
 private:

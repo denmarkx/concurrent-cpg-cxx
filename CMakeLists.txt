@@ -4,7 +4,7 @@ project(analysis)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_COMPILER "clang++")
+set(CMAKE_CXX_COMPILER "clang++-17")
 
 find_package(LLVM 17 REQUIRED CONFIG)
 set(LLVM_USE_ZSTD OFF)
@@ -68,6 +68,7 @@ set(FILES
     ConstructionPass.cxx
     GraphBuilderPass.cxx
     GraphBuilderFuncPass.cxx
+    GraphBuilderProcessPass.cxx
     APIHelper.h
     Debug.h
     main.cxx

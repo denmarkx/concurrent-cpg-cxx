@@ -22,6 +22,12 @@ public:
     void addNode(const Value* value, Node* node);
     std::vector<Node*> getNodes() const;
 
+    template <typename T>
+    T* getNode(const Value* value) {
+        Node* node = getNode(value);
+        return dynamic_cast<T*>(node);
+    }
+
     Node* getNode(const Value* value);
     Node* getNode(const Instruction* instr);
     Node* getNodeFromOperand(const Instruction* instr, unsigned int idx);

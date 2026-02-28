@@ -177,9 +177,5 @@ namespace GraphParser {
                     block->registerCFGEdge(next);
             }
         }
-
-        ConcurrencyPass *pass = new ConcurrencyPass();
-        pass->handleGlobals(M.globals());
-        pass->run();
     }
 };

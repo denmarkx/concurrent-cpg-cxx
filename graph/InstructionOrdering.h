@@ -1,9 +1,13 @@
 #pragma once
 
+#include <llvm/IR/Instruction.h>
 #include <llvm/IR/Instructions.h>
 #include <unordered_map>
 #include <stdexcept>
 #include <cstdint>
+
+#include "graph/BasicBlockNode.h"
+#include "graph/GraphManager.h"
 
 using namespace llvm;
 using namespace std;
@@ -34,15 +38,28 @@ public:
     }
 
     Ordering getOrdering(const Instruction* instrA, const Instruction* instrB) {
-        if (instrA->getParent() != instrB->getParent()) return Ordering::UNKNOWN;
+        // The same function will follow the dominance tree for the blocks.
+        if (isSameFunction(instrA, instrB)) {
+            BasicBlockNode *blockA = GraphManager::get()->getNode<BasicBlockNode>(instrA->getParent());
+            BasicBlockNode *blockB = GraphManager::get()->getNode<BasicBlockNode>(instrB->getParent());
+            if (blockB->isDominatedBy(blockA))
+                return Ordering::BEFORE;
+            return Ordering::UNKNOWN;
+        }
 
-        int instrASequence = getSequence(instrA);
-        int instrBSequence = getSequence(instrB);
-        if (instrASequence < 0 || instrBSequence < 0) return Ordering::UNKNOWN;
+        // The same block will follow instruction sequence:
+        if (isSameBlock(instrA, instrB)) {
+            int instrASequence = getSequence(instrA);
+            int instrBSequence = getSequence(instrB);
+            if (instrASequence < 0 || instrBSequence < 0) 
+                throw std::runtime_error("getOrdering: instr sequence < 0");
 
-        if (instrASequence < instrBSequence) return Ordering::BEFORE;
+            if (instrASequence < instrBSequence) return Ordering::BEFORE;
+            return Ordering::UNKNOWN;
+        }
 
-        return Ordering::UNKNOWN;
+        // Otherwise, this is considered interprocedural:
+
     }
 
     int getSequence(const Instruction* instr) {
@@ -56,6 +73,14 @@ public:
     }
 
 private:
+    bool isSameBlock(const Instruction* instrA, const Instruction* instrB) {
+        return instrA->getParent() == instrB->getParent();
+    }
+
+
+    bool isSameFunction(const Instruction* instrA, const Instruction* instrB) {
+        return instrA->getFunction() == instrB->getFunction();
+    }
 
 private:
     const BasicBlock* currentBlock;

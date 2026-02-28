@@ -14,6 +14,7 @@
 #include "graph/GraphBuilder.h"
 #include "GraphBuilderPass.h"
 #include "GraphBuilderFuncPass.h"
+#include "GraphBuilderProcessPass.h"
 
 using namespace llvm;
 
@@ -35,6 +36,7 @@ int main() {
     // PM.add(new ConstructionPass());
     PM.add(new GraphBuilderPass());
     PM.add(new GraphBuilderFuncPass());
+    PM.add(new GraphBuilderProcessPass());
     PM.run(*module);
     builder.persistAll();
     return 0;
