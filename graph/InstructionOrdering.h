@@ -24,7 +24,15 @@ public:
     enum Ordering {
         UNKNOWN,
         BEFORE,
+        AFTER,
     };
+
+    #ifdef DEBUG
+    std::vector<std::string> orderNames = {"UNKNOWN", "BEFORE", "AFTER"};
+    std::string getOrderName(int order) { return orderNames[order]; };
+    #else
+    std::string getOrderName(int order) { return ""; };
+    #endif
 
     void handleInstruction(const Instruction* instr) {
         if (!currentBlock)
@@ -39,44 +47,44 @@ public:
     }
 
     Ordering getOrdering(const Instruction* instrA, const Instruction* instrB) {
-        errs() << "\n";
-        errs() << getSequenceInfoRelativeTo(instrA, instrB->getFunction())->second << "\n";
-        errs() << "after\n";
         // The same function will follow the dominance tree for the blocks.
         if (isSameFunction(instrA, instrB)) {
             BasicBlockNode *blockA = GraphManager::get()->getNode<BasicBlockNode>(instrA->getParent());
             BasicBlockNode *blockB = GraphManager::get()->getNode<BasicBlockNode>(instrB->getParent());
             if (blockB->isDominatedBy(blockA))
                 return Ordering::BEFORE;
+            if (blockA->isDominatedBy(blockB))
+                return Ordering::AFTER;
             return Ordering::UNKNOWN;
         }
 
         // The same block will follow instruction sequence:
+        int instrBSequence = getSequence(instrB);
         if (isSameBlock(instrA, instrB)) {
             int instrASequence = getSequence(instrA);
-            int instrBSequence = getSequence(instrB);
             if (instrASequence < 0 || instrBSequence < 0) 
                 throw std::runtime_error("getOrdering: instr sequence < 0");
 
             if (instrASequence < instrBSequence) return Ordering::BEFORE;
+            if (instrASequence > instrBSequence) return Ordering::AFTER;
             return Ordering::UNKNOWN;
         }
 
         // Otherwise, this is considered interprocedural:
-        return Ordering::UNKNOWN;
+        auto seqOpt = getSequenceInfoRelativeTo(instrB, instrA->getFunction());
+        if (!seqOpt) return Ordering::UNKNOWN;
 
+        return getOrdering(instrA, seqOpt->first);
     }
 
-    std::optional<pair<const BasicBlock*, int>> getSequenceInfoRelativeTo(const Instruction *instr, const Function *func) {
-        errs() << "getSequenceRelativeTo(\n\t" << *instr << "\n\t" << func->getName() << "\n)\n"; 
+    std::optional<pair<const Instruction*, int>> getSequenceInfoRelativeTo(const Instruction *instr, const Function *func) {
         const Function *instrFunc = instr->getFunction();
-        if (instrFunc == func) return pair(instr->getParent(), getSequence(instr));
-
+        if (instrFunc == func) return pair(instr, getSequence(instr));
         for (const User *user : instrFunc->users()) {
             if (auto *call = dyn_cast<CallInst>(user)) {
                 auto info = getSequenceInfoRelativeTo(call, func);
                 if (info->second >= 0)
-                    return pair(call->getParent(), info->second);
+                    return info;
             }
         }
         return {};
