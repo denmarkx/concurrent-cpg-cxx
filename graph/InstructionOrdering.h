@@ -46,17 +46,13 @@ public:
         counter = 0;
     }
 
-    Ordering getOrdering(const Instruction* instrA, const Instruction* instrB) {
-        // The same function will follow the dominance tree for the blocks.
-        if (isSameFunction(instrA, instrB)) {
-            BasicBlockNode *blockA = GraphManager::get()->getNode<BasicBlockNode>(instrA->getParent());
-            BasicBlockNode *blockB = GraphManager::get()->getNode<BasicBlockNode>(instrB->getParent());
-            if (blockB->isDominatedBy(blockA))
-                return Ordering::BEFORE;
-            if (blockA->isDominatedBy(blockB))
-                return Ordering::AFTER;
-            return Ordering::UNKNOWN;
-        }
+    Ordering getOrdering(const Instruction* instrA, const Instruction* instrB, const Function* relativeTo=nullptr) {
+        // errs() << "getOrdering {\n";
+        // errs() << "\t" << *instrA << "\n";
+        // errs() << "\t" << *instrB << "\n";
+        // if (relativeTo)
+        //     errs() << "\tRelative To: " << relativeTo->getName() << "\n";
+        // errs() << "}\n";
 
         // The same block will follow instruction sequence:
         int instrBSequence = getSequence(instrB);
@@ -70,11 +66,26 @@ public:
             return Ordering::UNKNOWN;
         }
 
-        // Otherwise, this is considered interprocedural:
-        auto seqOpt = getSequenceInfoRelativeTo(instrB, instrA->getFunction());
-        if (!seqOpt) return Ordering::UNKNOWN;
+        // The same function will follow the dominance tree for the blocks.
+        if (isSameFunction(instrA, instrB)) {
+            BasicBlockNode *blockA = GraphManager::get()->getNode<BasicBlockNode>(instrA->getParent());
+            BasicBlockNode *blockB = GraphManager::get()->getNode<BasicBlockNode>(instrB->getParent());
+            if (blockB->isDominatedBy(blockA))
+                return Ordering::BEFORE;
+            if (blockA->isDominatedBy(blockB))
+                return Ordering::AFTER;
+            return Ordering::UNKNOWN;
+        }
 
-        return getOrdering(instrA, seqOpt->first);
+        // Otherwise, this is considered interprocedural:
+        if (!relativeTo)
+            relativeTo = instrA->getFunction();
+
+        auto seqOptA = getSequenceInfoRelativeTo(instrA, relativeTo);
+        auto seqOptB = getSequenceInfoRelativeTo(instrB, relativeTo);
+        if (!seqOptA || !seqOptB) return Ordering::UNKNOWN;
+
+        return getOrdering(seqOptA->first, seqOptB->first);
     }
 
     std::optional<pair<const Instruction*, int>> getSequenceInfoRelativeTo(const Instruction *instr, const Function *func) {

@@ -95,7 +95,7 @@ private:
             if (auto *call = dyn_cast<CallInst>(user)) {
                 if (call->getCalledFunction() == func) {
                     _syncFunctions[func] = pair(opCode, call);
-                    propagateLockCall(call->getFunction(), opCode);
+                    // propagateLockCall(call->getFunction(), opCode);
                 }
             }
         }

@@ -5,6 +5,8 @@ compile_commands.json
 analysis
 .cache
 
+*.DS_Store
+*.json
 *.dylib
 *.clangd
 *.cmake
