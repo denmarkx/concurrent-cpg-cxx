@@ -162,6 +162,7 @@ bool Andersen::addConstraintForExternalLibrary(const CallBase *cs,
   }
 
   if (lookupName(retArg1Funcs, f->getName().data())) {
+    return false; // TODO; signal()
     NodeIndex retIndex = nodeFactory.getValueNodeFor(cs);
     assert(retIndex != AndersNodeFactory::InvalidIndex &&
            "Failed to find call site node");
