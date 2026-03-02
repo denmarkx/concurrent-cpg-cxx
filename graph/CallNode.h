@@ -112,6 +112,12 @@ public:
 
         if (function->isDeclaration()) return;
 
+        // TODO: This is a bit of an oddity on our part in Rust IR at the moment.
+        // main is being called indirectly with arguments (but it received none?)
+        // this is only because core::ptr::drop_in_place::<core::result::Result<(), std::io::error::Error>>
+        // claims that main is a function pointer of one of its parameters (which may not be entirely true)
+        if (function->getNumOperands() != _arguments.size()) return;
+
         for (int i = 0; i < _arguments.size(); i++) {
             Node* argNode = _arguments[i];
             const Value* argument = argNode->getValue();
