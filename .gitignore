@@ -4,6 +4,7 @@ Makefile
 compile_commands.json
 analysis
 .cache
+callgrind.*
 
 *.DS_Store
 *.json

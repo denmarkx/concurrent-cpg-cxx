@@ -32,7 +32,7 @@ AccessPath* Node::getAccessPath() {
 void Node::setDefaultProperties(const Value *value) {
     std::string code = "";
     raw_string_ostream stream(code);
-    value->print(stream);
+    // value->print(stream); // TODO: this is apparently really expensive
 
     addProperty("code", code);
 }
