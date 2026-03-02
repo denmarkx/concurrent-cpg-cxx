@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+#include <iterator>
 #include <llvm/IR/Instructions.h>
 #include <cstdint>
 #include <unordered_set>
@@ -14,65 +16,52 @@ class LocksetAnalysis {
 public:
 
     void handleThread(const ThreadSummary &summary) {
-        std::unordered_set<const Value *> lcl;
+        std::vector<const Value *> handledInstructions;
+        std::vector<const Value *> declaredAfterLock;
+
         for (const Value *lock : summary.locks) {
             const Instruction* lockInst = dyn_cast<Instruction>(lock);
 
             for (const Value *v : summary.writes) {
                 const Instruction *instr = dyn_cast<Instruction>(v);
-                errs() << "\n\n";
-                InstructionOrdering::Ordering orderAgainstLock = InstructionOrdering::get()->getOrdering(instr,
-                    lockInst, dyn_cast<Function>(summary.routineNode->getValue()));
+
+                InstructionOrdering::Ordering orderAgainstLock = InstructionOrdering::get()->getOrdering(
+                    instr, lockInst, dyn_cast<Function>(summary.routineNode->getValue()));
+
                 if (orderAgainstLock == InstructionOrdering::Ordering::AFTER)
-                    lcl.insert(v);
-                errs() << *v << "\n";
-                errs() << "\torder against lock: " << InstructionOrdering::get()->getOrderName(orderAgainstLock) << "\n";
+                    declaredAfterLock.push_back(v);
             }
             break;
         }
-
-        std::vector<const Value*> temp;
-        for (const Value *v : lcl) {
-            temp.push_back(v);
-        }
-
-        std::vector<int> a;
 
         for (const Value *lock : summary.unlocks) {
             const Instruction* lockInst = dyn_cast<Instruction>(lock);
 
-            size_t i = 0;
-            for (const Value *v : temp) {
-                const Instruction *instr = dyn_cast<Instruction>(v);
-                InstructionOrdering::Ordering orderAgainstLock = InstructionOrdering::get()->getOrdering(instr,
-                    lockInst, dyn_cast<Function>(summary.routineNode->getValue()));
-                errs() << *v << "\n";
-                errs() << "\torder against unlock: " << InstructionOrdering::get()->getOrderName(orderAgainstLock) << "\n";
+            for (size_t i = 0; i < declaredAfterLock.size(); i++) {
+                const Instruction *instr = dyn_cast<Instruction>(declaredAfterLock[i]);
+
+                InstructionOrdering::Ordering orderAgainstLock = InstructionOrdering::get()->getOrdering(
+                    instr, lockInst, dyn_cast<Function>(summary.routineNode->getValue()));
+
                 if (orderAgainstLock == InstructionOrdering::Ordering::BEFORE) {
-                    // lcl.erase(lcl.begin() + i);
-                    a.push_back(i);
-                    // errs() << "removing " << i << '\n';
+                    handledInstructions.push_back(declaredAfterLock[i]);
+                    std::erase_if(declaredAfterLock, [&declaredAfterLock, &i](const Value *e) {
+                        return e == declaredAfterLock[i];
+                    });
                 }
-                i++;
             }
-            break;
         }
 
         errs() << "\n==============================================\n";
-        size_t i = 0;
-        for (const Value* v : lcl) {
-            if (std::find(a.begin(), a.end(), i) != a.end())
+        for (const Value *v : summary.writes) {
+            if (std::find(handledInstructions.begin(), handledInstructions.end(), v) != handledInstructions.end())
                 continue;
             errs() << "\t" << *v << "\n";
-            i++;
         }
 
-        for (const Value *v : summary.writes) {
-            if (!lcl.contains(v)) {
-                errs() << "\t" << *v << "\n";
-            }
+        for (const Value* v : declaredAfterLock) {
+            errs() << "\t" << *v << "\n";
         }
-
         errs() << "==============================================\n";
     }
 
