@@ -78,6 +78,13 @@ void Andersen::collectConstraintsForGlobals(const Module &M) {
     constraints.emplace_back(AndersConstraint::ADDR_OF, gVal, gObj);
   }
 
+  // Aliases are considered their own thing I suppose.
+  for (auto const &alias : M.aliases()) {
+    NodeIndex aVal = nodeFactory.createValueNode(&alias);
+    NodeIndex aObj = nodeFactory.createObjectNode(&alias);
+    constraints.emplace_back(AndersConstraint::ADDR_OF, aVal, aObj);
+  }
+
   // Functions and function pointers are also considered global
   for (auto const &f : M) {
     // If f is an addr-taken function, create a pointer and an object for it
