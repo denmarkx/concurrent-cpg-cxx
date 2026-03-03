@@ -1,5 +1,7 @@
 #include "Andersen.h"
 #include "CycleDetector.h"
+#include "NodeFactory.h"
+#include "PtsSet.h"
 #include "SparseBitVectorGraph.h"
 
 #include "llvm/ADT/DenseMap.h"
@@ -427,6 +429,20 @@ public:
 
 } // end of anonymous namespace
 
+static void pruneEdges(
+  DenseSet<std::pair<NodeIndex, NodeIndex>> &edges,
+  AndersNodeFactory &factory) {
+
+  DenseSet<std::pair<NodeIndex, NodeIndex>> valid;
+  for (auto const &edge : edges) {
+    if (factory.getMergeTarget(edge.first) == edge.first &&
+      factory.getMergeTarget(edge.second) == edge.second) {
+      valid.insert(edge);
+    }
+  }
+  edges = std::move(valid);
+}
+
 /// solveConstraints - This stage iteratively processes the constraints list
 /// propagating constraints (adding edges to the Nodes in the points-to graph)
 /// until a fixed point is reached.
@@ -464,6 +480,16 @@ void Andersen::solveConstraints() {
   // The set of edges that LCD believes not on a cycle
   DenseSet<std::pair<NodeIndex, NodeIndex>> checkedEdges;
 
+  DenseMap<NodeIndex, NodeIndex> updateMap;
+
+  DenseMap<NodeIndex, AndersPtsSet> deltaPts;
+  deltaPts.reserve(nodeFactory.getNumNodes() * 2);
+  for (auto const &mapping : ptsGraph) {
+    deltaPts[mapping.first] = mapping.second;
+  }
+
+  constexpr unsigned LCD_THRESHOLD = 500;
+
   // Scan the node list, add it to work list if the node a representative and
   // can contribute to the calculation right now.
   for (auto const &mapping : ptsGraph) {
@@ -478,12 +504,13 @@ void Andersen::solveConstraints() {
 
     // First we've got to check if there is any cycle candidates in the last
     // iteration. If there is, detect and collapse cycle
-    if (EnableLCD && !cycleCandidates.empty()) {
+    if (EnableLCD && cycleCandidates.size() >= LCD_THRESHOLD) {
       // Detect and collapse cycles online
       OnlineCycleDetector cycleDetector(nodeFactory, constraintGraph, ptsGraph,
                                         cycleCandidates);
       cycleDetector.run();
       cycleCandidates.clear();
+      pruneEdges(checkedEdges, nodeFactory);
     }
 
     while (!currWorkList->isEmpty()) {
@@ -494,6 +521,11 @@ void Andersen::solveConstraints() {
       ConstraintGraphNode *cNode = constraintGraph.getNodeWithIndex(node);
       if (cNode == nullptr)
         continue;
+
+      auto deltaItr = deltaPts.find(node);
+      if (deltaItr == deltaPts.end() || deltaItr->second.isEmpty())
+        continue;
+      AndersPtsSet &delta = deltaItr->second;
 
       auto ptsItr = ptsGraph.find(node);
       if (ptsItr != ptsGraph.end()) {
@@ -529,15 +561,15 @@ void Andersen::solveConstraints() {
               // node no longer exists. Push ctRep to the worklist and proceed
               if (ctRep != node) {
                 nextWorkList->enqueue(ctRep);
+                deltaPts[ctRep] = ptsGraph[ctRep];
+                delta.clear();
                 continue;
               }
             }
           }
         }
 
-        for (auto v : ptsSet) {
-          DenseMap<NodeIndex, NodeIndex> updateMap;
-
+        for (auto v : delta) {
           NodeIndex vRep = nodeFactory.getMergeTarget(v);
           for (auto const &dst : cNode->loads()) {
             NodeIndex tgtNode = nodeFactory.getMergeTarget(dst);
@@ -547,6 +579,7 @@ void Andersen::solveConstraints() {
               // errs() << "\tInsert copy edge " << v << " -> " << tgtNode <<
               // "\n";
               nextWorkList->enqueue(vRep);
+              deltaPts[vRep].unionWith(ptsGraph[vRep]);
             }
 
             // If we find that dst has been merged to elsewhere, remember this
@@ -566,6 +599,7 @@ void Andersen::solveConstraints() {
               // errs() << "\tInsert copy edge " << tgtNode << " -> " << v <<
               // "\n";
               nextWorkList->enqueue(tgtNode);
+              deltaPts[tgtNode].unionWith(ptsGraph[tgtNode]);
             }
 
             // If we find that dst has been merged to elsewhere, remember this
@@ -577,6 +611,7 @@ void Andersen::solveConstraints() {
           // Now perform the store edge updates
           for (auto const &mapping : updateMap)
             cNode->replaceStoreEdge(mapping.first, mapping.second);
+          updateMap.clear();
         }
 
         DenseMap<NodeIndex, NodeIndex> updateMap;
@@ -588,9 +623,10 @@ void Andersen::solveConstraints() {
           AndersPtsSet &tgtPtsSet = ptsGraph[tgtNode];
 
           // errs() << "pts[" << tgtNode << "] |= pts[" << node << "]\n";
-          bool isChanged = tgtPtsSet.unionWith(ptsSet);
+          bool isChanged = tgtPtsSet.unionWith(delta);
 
           if (isChanged) {
+            deltaPts[tgtNode].unionWith(delta);
             nextWorkList->enqueue(tgtNode);
           } else if (EnableLCD) {
             // This is where we do lazy cycle detection.
@@ -611,7 +647,9 @@ void Andersen::solveConstraints() {
         // Now perform the copy edge updates
         for (auto const &mapping : updateMap)
           cNode->replaceCopyEdge(mapping.first, mapping.second);
+        updateMap.clear();
       }
+      delta.clear();
     }
     // Swap the current and the next worklist
     std::swap(currWorkList, nextWorkList);

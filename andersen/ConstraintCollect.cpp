@@ -340,12 +340,12 @@ void Andersen::collectConstraintsForInstruction(const Instruction *inst) {
   // supported
   case Instruction::AtomicRMW:
   case Instruction::AtomicCmpXchg: {
-    errs() << *inst << "\n";
+    // errs() << *inst << "\n";
     // llvm_unreachable("not implemented yet");
   }
   default: {
     if (inst->getType()->isPointerTy()) {
-      errs() << *inst << "\n";
+      // errs() << *inst << "\n";
       // llvm_unreachable("pointer-related inst not handled!");
     }
     break;
