@@ -23,6 +23,13 @@ public:
 
         node->_handle = GraphManager::get()->getNodeFromOperand(I, 0);
         node->_routine = GraphManager::get()->getNodeFromOperand(I, 2);
+        errs() << node->_routine->getValue() << "\n";
+        errs() << *node->_routine->getValue() << "\n";
+
+        // this points to @vtable.0 
+        // which is right but this turns into a problem because this andersen impl. isnt field sensitive.
+        GraphManager::get()->getAliasResult()->printPointsToSet(node->_routine->getValue());
+
         node->_argNode = GraphManager::get()->getNodeFromOperand(I, 3);
 
         node->_edges.push_back(pair("HANDLE", node->_handle));

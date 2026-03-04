@@ -4,6 +4,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
 #include <llvm/IR/Function.h>
+#include <stdexcept>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -163,6 +164,26 @@ const inline OperationMapType ConcurrencyManager::_operationMap{
             ThreadOperation::UNLOCK,
             Type::IntegerTyID,
             Type::PointerTyID
+        )
+    },
+
+    // NOTE: To avoid LTO, we pattern-match Rust explicitly.
+    // I personally hate to do this as we now depend on Rust and each target
+    {"_ZN3std3sys4unix6thread6Thread3new17h534332f41da461dfE",
+        OperationInfo(
+            ThreadOperation::CREATE,
+            Type::VoidTyID,
+            // I suppose I'll note here that this is NOT what's in
+            // std/src/sys/thread/unix.rs. The return type is void in LLVM-IR,
+            // but Rust'll return Result<Thread>. This is set through the first parameter
+            // via sret.
+            //
+            // 2nd parameter is stack: usize
+            // The 3rd one is an alias of the vtable (Box<dyn FnOnce()>)
+            // The 4th one is (I think) the data sent into the dispatched function in param 3.
+            // 
+            // TODO: perhaps it's best to look at the debug information.
+            Type::PointerTyID, Type::IntegerTyID, Type::PointerTyID, Type::PointerTyID
         )
     },
 };
