@@ -18,9 +18,9 @@
 */
 class JoinNode : public CallNode {
 public:
-    JoinNode(const CallInst* I) : CallNode(I, "ThreadJoin") {}
+    JoinNode(const CallBase* I) : CallNode(I, "ThreadJoin") {}
 
-    static JoinNode* make(const CallInst *I) {
+    static JoinNode* make(const CallBase *I) {
         JoinNode *node = new JoinNode(I);
 
         node->addProperty("operation", "JOIN_THREAD");

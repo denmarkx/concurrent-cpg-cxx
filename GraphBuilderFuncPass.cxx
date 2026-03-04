@@ -26,8 +26,8 @@ bool GraphBuilderFuncPass::runOnFunction(Function &func) {
             blockNode->addDominator(dominatorNode);
             dominatorNode->addDominates(blockNode);
 
-            errs() << " Block " << block.getName() << " dominated by "
-                << iDomNode->getBlock()->getName() << "\n";
+            // errs() << " Block " << block.getName() << " dominated by "
+                // << iDomNode->getBlock()->getName() << "\n";
         }
     }
     return false;

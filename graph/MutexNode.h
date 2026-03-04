@@ -10,9 +10,9 @@
 */
 class MutexNode : public CallNode {
 public:
-    MutexNode(const CallInst* I) : CallNode(I, "ThreadOperation") {}
+    MutexNode(const CallBase* I) : CallNode(I, "ThreadOperation") {}
 
-    static MutexNode* make(const CallInst *I) {
+    static MutexNode* make(const CallBase *I) {
         auto cOp = ConcurrencyManager::get()->
             getConcurrencyOperation(I->getCalledFunction());
 

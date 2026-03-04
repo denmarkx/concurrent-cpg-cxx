@@ -13,9 +13,9 @@
 */
 class ThreadNode : public CallNode {
 public:
-    ThreadNode(const CallInst* I) : CallNode(I, "ThreadOperation") {}
+    ThreadNode(const CallBase* I) : CallNode(I, "ThreadOperation") {}
 
-    static ThreadNode* make(const CallInst *I) {
+    static ThreadNode* make(const CallBase *I) {
         ThreadNode *node = new ThreadNode(I);
 
         node->addProperty("operation", "CREATE_THREAD");

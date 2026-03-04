@@ -32,6 +32,7 @@
 #include "graph/MutexNode.h"
 #include "graph/SwitchNode.h"
 #include "llvm/Pass.h"
+#include <stdexcept>
 using namespace llvm;
 
 #include <type_traits>
@@ -91,6 +92,20 @@ namespace GraphParser {
         funcNode->addReturn(retNode);
         return nullptr;
     }
+    
+    inline Node* handleCallInvoke(const Instruction* instr) {
+        const CallBase *callBase = dyn_cast<CallBase>(instr);
+        if (auto cOp = ConcurrencyManager::get()->getConcurrencyOperation(callBase->getCalledFunction())) {
+            switch (cOp) {
+                case ThreadOperation::CREATE: return handleNode<ThreadNode, CallBase>(callBase);
+                case ThreadOperation::JOIN: return handleNode<JoinNode, CallBase>(callBase);
+                case ThreadOperation::LOCK: return handleNode<MutexNode, CallBase>(callBase);
+                case ThreadOperation::UNLOCK: return handleNode<MutexNode, CallBase>(callBase);
+                default: return handleNode<CallNode, CallInst>(callBase);
+            }
+        }
+        return handleNode<CallNode, CallBase>(instr);
+    }
 
 
     inline Node* handleNode(const Instruction* instr) {
@@ -99,20 +114,10 @@ namespace GraphParser {
             case Instruction::Alloca: return handleNode<StackAllocation, AllocaInst>(instr);
             case Instruction::Load: return handleNode<LoadNode, LoadInst>(instr);
             case Instruction::GetElementPtr: return handleNode<GetElementPtrNode, GetElementPtrInst>(instr);
-            case Instruction::Call: {
-                const CallInst *callInst = dyn_cast<CallInst>(instr);
-                if (auto cOp = ConcurrencyManager::get()->getConcurrencyOperation(callInst->getCalledFunction())) {
-                    switch (cOp) {
-                        case ThreadOperation::CREATE: return handleNode<ThreadNode, CallInst>(callInst);
-                        case ThreadOperation::JOIN: return handleNode<JoinNode, CallInst>(callInst);
-                        case ThreadOperation::LOCK: return handleNode<MutexNode, CallInst>(callInst);
-                        case ThreadOperation::UNLOCK: return handleNode<MutexNode, CallInst>(callInst);
-                        default: return handleNode<CallNode, CallInst>(callInst);
-                    }
-                }
-                return handleNode<CallNode, CallInst>(instr);
-            }
-            case Instruction::Invoke: return handleNode<CallNode, InvokeInst>(instr);
+
+            case Instruction::Call:
+            case Instruction::Invoke: return handleCallInvoke(instr);
+
             case Instruction::Store: return handleStore(instr);
             case Instruction::Ret: return handleReturn(instr);
             case Instruction::ICmp: return handleNode<ICompareNode, ICmpInst> (instr);
