@@ -5,6 +5,8 @@
 #include "graph/FunctionNode.h"
 #include "graph/GraphManager.h"
 #include "graph/Node.h"
+#include <stdexcept>
+#include <unordered_set>
 #include <utility>
 
 /**
@@ -23,14 +25,12 @@ public:
 
         node->_handle = GraphManager::get()->getNodeFromOperand(I, 0);
         node->_routine = GraphManager::get()->getNodeFromOperand(I, 2);
-        errs() << node->_routine->getValue() << "\n";
-        errs() << *node->_routine->getValue() << "\n";
-
-        // this points to @vtable.0 
-        // which is right but this turns into a problem because this andersen impl. isnt field sensitive.
-        GraphManager::get()->getAliasResult()->printPointsToSet(node->_routine->getValue());
-
         node->_argNode = GraphManager::get()->getNodeFromOperand(I, 3);
+
+        // There may be a point where we aren't given a direct function.
+        // In this case, we make an attempt to resolve the routine.
+        if (!node->_routine->getValue()->getType()->isFunctionTy())
+            node->revisitRoutine();
 
         node->_edges.push_back(pair("HANDLE", node->_handle));
         node->_edges.push_back(pair("ROUTINE", node->_routine));
@@ -42,6 +42,66 @@ public:
     Node* getDataNode() { return _argNode; }
     Node* getRoutine() { return _routine; }
     Node* getHandle() { return _handle; }
+
+private:
+    std::unordered_set<const Value*> seen;
+
+    void revisitRoutine() {
+        const Value *val = _routine->getValue();
+        getLogicalRoutine(val);
+    }
+
+    const Function* getLogicalRoutine(const Value *v) {
+        std::vector<const Value *> ptsSet;
+        GraphManager::get()->getAliasResult()->getPointsToSet(v, ptsSet);
+
+        // TODO: this sort of draws back to a CFG / domtree
+        // if there exists more than 1 function within ours ptsSet.
+        for (const Value *v : ptsSet) {
+            // this is a bit insane. i cant get the underlying type?
+            if (v->getType()->isFunctionTy()) {
+                // TODO: for now, we'll accept the first one i guess.
+                return dyn_cast<Function>(v);
+            }
+
+            // For global-scope-defined structs and arrs.
+            if (const GlobalVariable *global = dyn_cast<GlobalVariable>(v)) {
+                Type *vTy = global->getValueType();
+                if (vTy->isAggregateType() && global->hasInitializer()) {
+                    handleAggregateRoutineType(global->getInitializer(), vTy);
+                }
+            }
+        }
+
+        return nullptr;
+    }
+
+    bool handleSingleElement(const Value *v, const Function **f) {
+        errs() << v->getName() << "\n";
+        return false;
+    }
+
+    void handleFunctionRoutineType(const Value *value) {
+
+    }
+
+    const Function* handleAggregateRoutineType(const Constant *value, const Type* ty) {
+        const Function *f = nullptr;
+
+        if (ty->isStructTy()) {
+            const StructType *strct = dyn_cast<StructType>(ty);
+            for (int i = 0; i < ty->getStructNumElements(); i++) {
+                handleSingleElement(value->getAggregateElement(i), &f);
+            }
+        } else if (ty->isArrayTy()) {
+            const ArrayType *arrType = dyn_cast<ArrayType>(ty);
+            throw std::runtime_error("handleAggregateRoutineType[array]: not implemented");
+        } else {
+            throw std::runtime_error("value is not a struct or array, but is an aggregate ty.");
+        }
+
+        return f;
+    }
 
 private:
     Node* _handle = nullptr;
