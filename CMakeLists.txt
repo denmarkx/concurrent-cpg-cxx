@@ -4,7 +4,8 @@ project(analysis)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_COMPILER "clang++")
+set(CMAKE_CXX_COMPILER "clang++-17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 if (WANT_VALGRIND)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -gdwarf-4 -fno-omit-frame-pointer")
@@ -85,3 +86,15 @@ target_link_directories(analysis PRIVATE ${NEO4J_LIBRARY_DIR})
 target_include_directories(analysis PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(analysis PRIVATE ${NEO4J_INCLUDE_DIR})
 target_compile_definitions(analysis PUBLIC DEBUG=$<CONFIG:Debug>)
+
+include(CTest)
+include("_cmake/doctest.cmake")
+
+set(TEST_FILES
+    tests/test_andersen.cxx
+)
+
+add_executable(unit_test ${TEST_FILES})
+target_include_directories(unit_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(unit_test Andersen)
+doctest_discover_tests(unit_test)
