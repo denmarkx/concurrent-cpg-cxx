@@ -42,6 +42,12 @@ public:
   // Return true if the ptsset changes
   bool unionWith(const AndersPtsSet &other) { return bitvec |= other.bitvec; }
 
+  bool subtract(const AndersPtsSet &other, AndersPtsSet &out) const {
+    out = *this;
+    out.bitvec.intersectWithComplement(other.bitvec);
+    return !out.isEmpty();
+  }
+
   void clear() { bitvec.clear(); }
 
   unsigned getSize() const {

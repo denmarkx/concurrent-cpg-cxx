@@ -403,6 +403,9 @@ void Andersen::addConstraintForCall(const CallBase* cs) {
     }
   } else // Indirect call
   {
+    // Ignore asm calls.
+    if (cs->isInlineAsm()) return;
+
     // We do the simplest thing here: just assume the returned value can be
     // anything :)
     if (cs->getType()->isPointerTy()) {
@@ -448,8 +451,9 @@ void Andersen::addConstraintForCall(const CallBase* cs) {
             }
           }
         }
-      } else
+      } else {
         addArgumentConstraintForCall(cs, &f);
+      }
     }
   }
 }
