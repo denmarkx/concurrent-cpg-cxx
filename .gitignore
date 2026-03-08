@@ -10,11 +10,12 @@ callgrind.*
 *.json
 *.dylib
 *.clangd
-*.cmake
 *.so
 *.ll
 *.rs
 *.c
 *.out
 *.exe
-APIHelper.h
+*.tcl
+cmake_install.cmake
+CTestTestfile.cmake
