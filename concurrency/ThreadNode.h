@@ -29,6 +29,8 @@ public:
 
         // There may be a point where we aren't given a direct function.
         // In this case, we make an attempt to resolve the routine.
+        errs() << "threadnode\n";
+        errs() << *I << "\n";
         if (!node->_routine->getValue()->getType()->isFunctionTy())
             node->revisitRoutine();
 
@@ -48,7 +50,9 @@ private:
 
     void revisitRoutine() {
         const Value *val = _routine->getValue();
-        getLogicalRoutine(val);
+        const Function *f = getLogicalRoutine(val);
+        if (f)
+            _routine = GraphManager::get()->getNode(f);
     }
 
     const Function* getLogicalRoutine(const Value *v) {
@@ -68,7 +72,7 @@ private:
             if (const GlobalVariable *global = dyn_cast<GlobalVariable>(v)) {
                 Type *vTy = global->getValueType();
                 if (vTy->isAggregateType() && global->hasInitializer()) {
-                    handleAggregateRoutineType(global->getInitializer(), vTy);
+                    return handleAggregateRoutineType(global->getInitializer(), vTy);
                 }
             }
         }
@@ -91,6 +95,13 @@ private:
         if (ty->isStructTy()) {
             const StructType *strct = dyn_cast<StructType>(ty);
             for (int i = 0; i < ty->getStructNumElements(); i++) {
+                if (i == 2) {
+                    // TODO: i personally can't find anything that will differentiate between the routine
+                    // from the 2 funcs present in the vtable. for rust, its guaranteed that the routine
+                    // will be the last element in the vtable. for c++, it depends on ABI.
+                    errs() << "returning f\n";
+                    return dyn_cast<Function>(value->getAggregateElement(i));
+                }
                 handleSingleElement(value->getAggregateElement(i), &f);
             }
         } else if (ty->isArrayTy()) {

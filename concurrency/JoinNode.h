@@ -28,7 +28,7 @@ public:
 
         node->_threadID = GraphManager::get()->getNodeFromOperand(I, 0);
         node->_edges.push_back(pair("THREAD_ID", node->_threadID));
-        node->resolveThreadID();
+        // node->resolveThreadID();
         return node;
     }
 

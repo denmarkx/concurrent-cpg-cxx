@@ -38,7 +38,7 @@ int main() {
     PM.add(new GraphBuilderFuncPass());
     PM.add(new GraphBuilderProcessPass());
     PM.run(*module);
-    builder.persistAll();
+    // builder.persistAll();
     return 0;
 }
 

@@ -61,7 +61,8 @@ inline raw_ostream& operator<<(raw_ostream& out, const ThreadSummary& summary) {
     out << "  Args: " << *summary.threadNode->getDataNode()->getValue() << "\n";
     out << "  Functions:\n";
     for (const Function *f : summary.functions) {
-        out << "     " << f->getName() << "\n";
+        if (f)
+            out << "     " << f->getName() << "\n";
     }
 
     writeSummarySet(out, "Reads", summary.reads);
@@ -156,8 +157,8 @@ private:
                 summary->routineNode->getValue());
             summary->functions.insert(routine);
             collectFunctionUsage(summary, routine);
-            collectSharedUsage(summary);
-            associateLocks(summary);
+            // collectSharedUsage(summary);
+            // associateLocks(summary);
         }
     }
 
@@ -174,7 +175,9 @@ private:
     }
 
     void collectFunctionUsage(ThreadSummary *summary, const Function* f) {
-        if (f->isDeclaration()) return;
+        if (!f || f->isDeclaration()) return;
+        if (summary->functions.contains(f) && f != summary->routineNode->getValue()) return;
+
         auto callGraph = GraphManager::get()->getCallGraph();
         for (auto &cgNode : *callGraph->getOrInsertFunction(f)) {
             summary->functions.insert(cgNode.second->getFunction());

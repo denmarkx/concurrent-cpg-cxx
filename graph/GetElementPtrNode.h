@@ -46,6 +46,11 @@ public:
         if (srcType->isAggregateType()) {
             // Our GEP instruction is the address of the final field, so we keep track of that.
             FieldNode *lastField = nullptr;
+
+            // TODO: this breaks on when src is a phi instr
+            if (!srcNode || !srcNode->getAccessPath())
+                return node;
+
             
             // We can immediately start with our first path (if it exists):
             // ..this also satisfies the case where src pointer is non-GEP.
@@ -57,6 +62,10 @@ public:
                 // this avoids a lengthy traversal through each accesspath.
                 GetElementPtrNode *srcNodeGEP = 
                     dynamic_cast<GetElementPtrNode*>(srcNode);
+
+                // TODO
+                if (srcNodeGEP->getAddressToNode() == nullptr)
+                    return node;
 
                 current = srcNodeGEP->getAddressToNode()->getAccessPath();
             }
