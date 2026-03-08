@@ -5,6 +5,8 @@
 
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/MemoryLocation.h"
+#include "llvm/IR/GlobalAlias.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Use.h"
@@ -22,11 +24,53 @@ public:
         Value *funcPtrV = nullptr; // Corresponds to a loadinst.
 
         const Function *calledFunc = I->getCalledFunction();
-
         if (I->isInlineAsm()) return nullptr;
+
+        bool x = 0;
+
+        if (I->getFunction()->getName().str() == "_ZN3std3sys4unix6thread6Thread3new17h87f4070d7391b575E") {
+            if (!I->getCalledOperand()->hasName()) {
+
+                // GraphManager::get()->getAliasResult()->printPointsToSet(I->getFunction()->getArg(2));
+                // errs() << *I->getFunction()->getArg(2) << "\n";
+                x = 1;
+            }
+
+            // TODO: this one is such bullshit
+            //  only because the return statement aliases the call instruction
+            //  which assumes that we wish to ALSO alias every single person who calls rust_alloc.
+            //  and the best part is that it is a mustalias ?????????????????????
+            if (I->getCalledOperand()->getName() == "__rust_alloc") {
+                std::vector<const Value*> ptsSet;
+                GraphManager::get()->getAliasResult()->getPointsToSet(I, ptsSet);
+
+                MemoryLocation L1(I, MemoryLocation::UnknownSize);
+                for (const Value *v : ptsSet) {
+                    MemoryLocation L2(v, MemoryLocation::UnknownSize);
+                    errs() << GraphManager::get()->getAliasResult()->alias(L1, L1) << "\n";
+                }
+            }
+        }
+
+        // This can be an alias:
+        if (!calledFunc) {
+            if (GlobalAlias *alias = dyn_cast<GlobalAlias>(I->getCalledOperand())) {
+                // TODO: alias chain?
+                calledFunc = dyn_cast<Function>(alias->getAliasee());
+            }
+            else if (GlobalValue *globVal = dyn_cast<GlobalValue>(I->getCalledOperand())) {
+                // TODO: in this case, we're more than likely an extern
+                // though i'm not really sure how to handle this
+                return nullptr;
+            }
+        }
+
         if (!calledFunc) {
             // This always (maybe?) is a function pointer. We'll try to resolve it..
-            funcPtrV = I->getOperand(0);
+            funcPtrV = I->getCalledOperand();
+            if (x) {
+                LoadInst *load = dyn_cast<LoadInst>(funcPtrV);
+            }
             std::vector<const llvm::Value *> ptsSet{};
             AndersenAAResult *AA = GraphManager::get()->getAliasResult();
             AA->getPointsToSet(funcPtrV, ptsSet);
@@ -34,9 +78,13 @@ public:
             functions.reserve(ptsSet.size());
             for (auto &v : ptsSet) {
                 if (const Function* f = dyn_cast<Function>(v)) {
+                    // an additional litmus test is to check the arg count
+                    if (f->arg_size() != I->arg_size()) continue;
+                    if (f->getReturnType() != I->getType()) continue;
                     functions.push_back(f);
                 }
             }
+
             // If functions len is 0, we sort of don't have a possible path towards
             // any sort of function (which would actually be an oddity)
             // TODO: though, I wouldn't return null here..
@@ -101,6 +149,10 @@ public:
     }
 
     void addCalledFunction(const Function *function) {
+        if (
+            function->isExternalWeakLinkage(llvm::GlobalValue::LinkOnceAnyLinkage) ||
+            function->isDeclaration()) return;
+
         // CallNode's internal container of functions is a list..
         // only because the instruction here may be a function pointer
         // pointing to any number of functions.
@@ -109,14 +161,6 @@ public:
 
         _edges.push_back(pair("CALLS", funcNode));
         _functions.push_back(funcNode);
-
-        if (function->isDeclaration()) return;
-
-        // TODO: This is a bit of an oddity on our part in Rust IR at the moment.
-        // main is being called indirectly with arguments (but it received none?)
-        // this is only because core::ptr::drop_in_place::<core::result::Result<(), std::io::error::Error>>
-        // claims that main is a function pointer of one of its parameters (which may not be entirely true)
-        if (function->getNumOperands() != _arguments.size()) return;
 
         for (int i = 0; i < _arguments.size(); i++) {
             Node* argNode = _arguments[i];
