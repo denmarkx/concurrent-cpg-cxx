@@ -5,6 +5,8 @@ compile_commands.json
 analysis
 .cache
 callgrind.*
+unit_test*
+std_rs
 
 *.DS_Store
 *.json

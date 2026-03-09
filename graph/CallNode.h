@@ -28,14 +28,9 @@ public:
 
         bool x = 0;
 
+        // TODO: this is taking up too much time, but the issue comes from copy node propagation in the
+        // constraint solver.
         if (I->getFunction()->getName().str() == "_ZN3std3sys4unix6thread6Thread3new17h87f4070d7391b575E") {
-            if (!I->getCalledOperand()->hasName()) {
-
-                // GraphManager::get()->getAliasResult()->printPointsToSet(I->getFunction()->getArg(2));
-                // errs() << *I->getFunction()->getArg(2) << "\n";
-                x = 1;
-            }
-
             // TODO: this one is such bullshit
             //  only because the return statement aliases the call instruction
             //  which assumes that we wish to ALSO alias every single person who calls rust_alloc.
@@ -43,12 +38,6 @@ public:
             if (I->getCalledOperand()->getName() == "__rust_alloc") {
                 std::vector<const Value*> ptsSet;
                 GraphManager::get()->getAliasResult()->getPointsToSet(I, ptsSet);
-
-                MemoryLocation L1(I, MemoryLocation::UnknownSize);
-                for (const Value *v : ptsSet) {
-                    MemoryLocation L2(v, MemoryLocation::UnknownSize);
-                    errs() << GraphManager::get()->getAliasResult()->alias(L1, L1) << "\n";
-                }
             }
         }
 

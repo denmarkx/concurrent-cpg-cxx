@@ -29,8 +29,6 @@ public:
 
         // There may be a point where we aren't given a direct function.
         // In this case, we make an attempt to resolve the routine.
-        errs() << "threadnode\n";
-        errs() << *I << "\n";
         if (!node->_routine->getValue()->getType()->isFunctionTy())
             node->revisitRoutine();
 

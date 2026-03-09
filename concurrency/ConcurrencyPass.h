@@ -7,11 +7,14 @@
 
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/MemorySSA.h"
+#include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Use.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include <algorithm>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -155,7 +158,7 @@ private:
         for (ThreadSummary *summary : _summaries) {
             const Function *routine = dyn_cast<Function>(
                 summary->routineNode->getValue());
-            summary->functions.insert(routine);
+            // summary->functions.insert(routine);
             collectFunctionUsage(summary, routine);
             // collectSharedUsage(summary);
             // associateLocks(summary);
@@ -176,11 +179,41 @@ private:
 
     void collectFunctionUsage(ThreadSummary *summary, const Function* f) {
         if (!f || f->isDeclaration()) return;
-        if (summary->functions.contains(f) && f != summary->routineNode->getValue()) return;
+        if (f != summary->routineNode->getValue())
+            if (summary->functions.contains(f)) return;
+        summary->functions.insert(f);
 
         auto callGraph = GraphManager::get()->getCallGraph();
+        // TODO: the next thing this shit doesnt handle is the case
+        // of a function pointer being explicitly given and not in any aggregate structure
+        // ie:
+        // call i32 @__rust_try(ptr @_ZN3std9panicking3try7do_call17hd9d5ae0f25cea609E, ...
+        // where ptr %0 (which is do_call) is unresolved even though it is the most simplistic
+        // thing you could ever imagine.
         for (auto &cgNode : *callGraph->getOrInsertFunction(f)) {
-            summary->functions.insert(cgNode.second->getFunction());
+            // TODO: insanely rust-specific (see callnode.h)
+            // also TODO: callgraph doesnt allow any flexibility on func ptrs.
+            if (!cgNode.second->getFunction()) {
+                // we're going to pretend that this leads where we want it to.
+                // but unfortunately this is a weak vh tracking node
+                // so i have to do this MESS:
+                std::vector<const Value*> ptsSet;
+                GraphManager::get()->getAliasResult()->getPointsToSet(f->getArg(0), ptsSet);
+                auto it = std::find_if(ptsSet.begin(), ptsSet.end(), [&](const Value *v){
+                    return v->getName().str() == "vtable.2";
+                });
+                if (it != ptsSet.end()) {
+                    const GlobalVariable *table = dyn_cast<GlobalVariable>(*it);
+                    const Function *f2 = dyn_cast<Function>(table->getInitializer()->getAggregateElement(2));
+                    errs() << (f2 != nullptr) << "\n";
+                    // summary->functions.insert(f2);
+                    collectFunctionUsage(summary, f2);
+                    continue;
+                } else {
+                    errs() << "cannot resolve some function (parent func = " << f->getName() << "\n";
+                }
+            }
+            // summary->functions.insert(cgNode.second->getFunction());
             collectFunctionUsage(summary, cgNode.second->getFunction());
         }
     }
