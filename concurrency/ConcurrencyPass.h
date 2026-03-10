@@ -197,6 +197,7 @@ private:
                 // we're going to pretend that this leads where we want it to.
                 // but unfortunately this is a weak vh tracking node
                 // so i have to do this MESS:
+                if (f->arg_size() == 0) continue;
                 std::vector<const Value*> ptsSet;
                 GraphManager::get()->getAliasResult()->getPointsToSet(f->getArg(0), ptsSet);
                 auto it = std::find_if(ptsSet.begin(), ptsSet.end(), [&](const Value *v){
@@ -205,12 +206,24 @@ private:
                 if (it != ptsSet.end()) {
                     const GlobalVariable *table = dyn_cast<GlobalVariable>(*it);
                     const Function *f2 = dyn_cast<Function>(table->getInitializer()->getAggregateElement(2));
-                    errs() << (f2 != nullptr) << "\n";
                     // summary->functions.insert(f2);
                     collectFunctionUsage(summary, f2);
                     continue;
                 } else {
-                    errs() << "cannot resolve some function (parent func = " << f->getName() << "\n";
+                    // looking at the ptsTo set for ptr %0 in __rust_try actually is correct.
+                    // but the callGraph doesn't know about that so we have to do another hack:
+                    if (f->getName() == "__rust_try") {
+                        errs() << *f << "\n";
+                        errs() << f->arg_size() << "\n";
+
+                        std::vector<const Value*> ptsSet;
+                        GraphManager::get()->getAliasResult()->getPointsToSet(f->getArg(0), ptsSet);
+                        auto it = std::find_if(ptsSet.begin(), ptsSet.end(), [&](const Value *v) {
+                            errs() << v->getName() << "\n";
+                            return v->getName().str() == "_ZN3std9panicking3try7do_call17hd9d5ae0f25cea609E";
+                        });
+                        collectFunctionUsage(summary, dyn_cast<Function>(*it));
+                    }
                 }
             }
             // summary->functions.insert(cgNode.second->getFunction());
