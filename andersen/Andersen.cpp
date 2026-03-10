@@ -25,7 +25,7 @@ void Andersen::getAllAllocationSites(
 }
 
 bool Andersen::getPointsToSet(const llvm::Value *v,
-                              std::vector<const llvm::Value *> &ptsSet) const {
+                              std::vector<const llvm::Value *> &ptsSet) {
   NodeIndex ptrIndex = nodeFactory.getValueNodeFor(v);
   // We have no idea what v is...
   if (ptrIndex == AndersNodeFactory::InvalidIndex ||
@@ -54,7 +54,7 @@ bool Andersen::getPointsToSet(const llvm::Value *v,
 }
 
 bool Andersen::getPointsFromSet(const llvm::Value *v,
-                                std::vector<const llvm::Value *> &ptsSet) const {
+                                std::vector<const llvm::Value *> &ptsSet) {
   NodeIndex ptrIndex = nodeFactory.getValueNodeFor(v);
   if (ptrIndex == AndersNodeFactory::InvalidIndex ||
       ptrIndex == nodeFactory.getUniversalPtrNode())

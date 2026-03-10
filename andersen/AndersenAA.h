@@ -21,10 +21,10 @@ public:
   bool pointsToConstantMemory(const llvm::MemoryLocation &, bool);
   
   bool getPointsToSet(const llvm::Value *v,
-                      std::vector<const llvm::Value *> &ptsSet) const;
+                      std::vector<const llvm::Value *> &ptsSet);
 
   bool getPointsFromSet(const llvm::Value *v,
-                      std::vector<const llvm::Value *> &ptsSet) const;
+                      std::vector<const llvm::Value *> &ptsSet);
 
   void printPointsToSet(const llvm::Value *v);
 };

@@ -21,9 +21,9 @@ void Andersen::collectConstraints(const Module &M) {
   constraints.emplace_back(AndersConstraint::ADDR_OF,
                            nodeFactory.getUniversalPtrNode(),
                            nodeFactory.getUniversalObjNode());
-  constraints.emplace_back(AndersConstraint::STORE,
-                           nodeFactory.getUniversalObjNode(),
-                           nodeFactory.getUniversalObjNode());
+  // constraints.emplace_back(AndersConstraint::STORE,
+                           // nodeFactory.getUniversalObjNode(),
+                           // nodeFactory.getUniversalObjNode());
 
   // Next, the null pointer points to the null object.
   constraints.emplace_back(AndersConstraint::ADDR_OF,
@@ -68,6 +68,16 @@ void Andersen::collectConstraints(const Module &M) {
       collectConstraintsForInstruction(inst);
     }
   }
+}
+
+static bool typeContainsPointer(const Type *t) {
+    if (t->isPointerTy()) return true;
+    if (t->isArrayTy()) return typeContainsPointer(t->getArrayElementType());
+    if (t->isStructTy()) {
+        for (unsigned i = 0; i < t->getStructNumElements(); ++i)
+            if (typeContainsPointer(t->getStructElementType(i))) return true;
+    }
+    return false;
 }
 
 void Andersen::collectConstraintsForGlobals(const Module &M) {
@@ -127,8 +137,8 @@ void Andersen::collectConstraintsForGlobals(const Module &M) {
     } else {
       // If it doesn't have an initializer (i.e. it's defined in another
       // translation unit), it points to the universal set.
-      constraints.emplace_back(AndersConstraint::COPY, gObj,
-                               nodeFactory.getUniversalObjNode());
+      NodeIndex fObj = nodeFactory.createObjectNode(nullptr);
+      constraints.emplace_back(AndersConstraint::ADDR_OF, gObj, fObj);
     }
   }
 }
@@ -142,6 +152,10 @@ void Andersen::addGlobalInitializerConstraints(NodeIndex objNode,
       NodeIndex rhsNode = nodeFactory.getObjectNodeForConstant(c);
       assert(rhsNode != AndersNodeFactory::InvalidIndex &&
              "rhs node not found");
+      if (rhsNode == nodeFactory.getUniversalObjNode() ||
+          rhsNode == AndersNodeFactory::InvalidIndex) {
+          rhsNode = nodeFactory.createObjectNode(nullptr);
+      }
       constraints.emplace_back(AndersConstraint::ADDR_OF, objNode, rhsNode);
     }
   } else if (c->isNullValue()) {
@@ -277,7 +291,10 @@ void Andersen::collectConstraintsForInstruction(const Instruction *inst) {
       NodeIndex srcIndex = nodeFactory.getValueNodeFor(srcValue);
       assert(srcIndex != AndersNodeFactory::InvalidIndex &&
              "Failed to find inttoptr src node");
-      constraints.emplace_back(AndersConstraint::COPY, dstIndex, srcIndex);
+      NodeIndex freshObj = nodeFactory.createObjectNode(nullptr);
+      NodeIndex freshPtr = nodeFactory.createValueNode(nullptr);
+      constraints.emplace_back(AndersConstraint::ADDR_OF, freshPtr, freshObj);
+      constraints.emplace_back(AndersConstraint::COPY, dstIndex, freshPtr);
       break;
     }
 
@@ -371,21 +388,21 @@ void Andersen::addConstraintForCall(const CallBase* cs) {
           NodeIndex retIndex = nodeFactory.getValueNodeFor(cs);
           assert(retIndex != AndersNodeFactory::InvalidIndex &&
                  "Failed to find ret node!");
-          constraints.emplace_back(AndersConstraint::COPY, retIndex,
-                                   nodeFactory.getUniversalPtrNode());
+          NodeIndex fObj = nodeFactory.createObjectNode(cs);
+          constraints.emplace_back(AndersConstraint::ADDR_OF, retIndex, fObj);
         }
-        for (CallBase::const_op_iterator itr = cs->arg_begin(),
-                                             ite = cs->arg_end();
-             itr != ite; ++itr) {
-          Value *argVal = *itr;
-          if (argVal->getType()->isPointerTy()) {
-            NodeIndex argIndex = nodeFactory.getValueNodeFor(argVal);
-            assert(argIndex != AndersNodeFactory::InvalidIndex &&
-                   "Failed to find arg node!");
-            constraints.emplace_back(AndersConstraint::COPY, argIndex,
-                                     nodeFactory.getUniversalPtrNode());
-          }
-        }
+        // for (CallBase::const_op_iterator itr = cs->arg_begin(),
+        //                                      ite = cs->arg_end();
+        //      itr != ite; ++itr) {
+        //   Value *argVal = *itr;
+        //   if (argVal->getType()->isPointerTy()) {
+        //     NodeIndex argIndex = nodeFactory.getValueNodeFor(argVal);
+        //     assert(argIndex != AndersNodeFactory::InvalidIndex &&
+        //            "Failed to find arg node!");
+        //     NodeIndex fObj = nodeFactory.createObjectNode(cs);
+        //     constraints.emplace_back(AndersConstraint::ADDR_OF, argIndex, fObj);
+        //   }
+        // }
       }
     } else // Non-external function call
     {
@@ -412,8 +429,8 @@ void Andersen::addConstraintForCall(const CallBase* cs) {
       NodeIndex retIndex = nodeFactory.getValueNodeFor(cs);
       assert(retIndex != AndersNodeFactory::InvalidIndex &&
              "Failed to find ret node!");
-      constraints.emplace_back(AndersConstraint::COPY, retIndex,
-                               nodeFactory.getUniversalPtrNode());
+      NodeIndex fObj = nodeFactory.createObjectNode(cs);
+      constraints.emplace_back(AndersConstraint::ADDR_OF, retIndex, fObj);
     }
 
     // For argument constraints, first search through all addr-taken functions:
@@ -437,19 +454,19 @@ void Andersen::addConstraintForCall(const CallBase* cs) {
           continue;
         else {
           // Pollute everything
-          for (CallBase::User::const_op_iterator itr = cs->arg_begin(),
-                                               ite = cs->arg_end();
-               itr != ite; ++itr) {
-            Value *argVal = *itr;
+          // for (CallBase::User::const_op_iterator itr = cs->arg_begin(),
+          //                                      ite = cs->arg_end();
+          //      itr != ite; ++itr) {
+          //   Value *argVal = *itr;
 
-            if (argVal->getType()->isPointerTy()) {
-              NodeIndex argIndex = nodeFactory.getValueNodeFor(argVal);
-              assert(argIndex != AndersNodeFactory::InvalidIndex &&
-                     "Failed to find arg node!");
-              constraints.emplace_back(AndersConstraint::COPY, argIndex,
-                                       nodeFactory.getUniversalPtrNode());
-            }
-          }
+          //   if (argVal->getType()->isPointerTy()) {
+          //     NodeIndex argIndex = nodeFactory.getValueNodeFor(argVal);
+          //     assert(argIndex != AndersNodeFactory::InvalidIndex &&
+          //            "Failed to find arg node!");
+          //     constraints.emplace_back(AndersConstraint::COPY, argIndex,
+          //                              nodeFactory.getUniversalPtrNode());
+          //   }
+          // }
         }
       } else {
         addArgumentConstraintForCall(cs, &f);

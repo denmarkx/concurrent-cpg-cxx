@@ -135,7 +135,9 @@ bool Andersen::addConstraintForExternalLibrary(const CallBase *cs,
         ptrIndex = nodeFactory.getValueNodeFor(cs->getArgOperand(0));
         assert(ptrIndex != AndersNodeFactory::InvalidIndex &&
                "Failed to find arg0 node");
-        constraints.emplace_back(AndersConstraint::STORE, ptrIndex, objIndex);
+        NodeIndex fPtr = nodeFactory.createValueNode();
+        constraints.emplace_back(AndersConstraint::STORE, fPtr, objIndex);
+        constraints.emplace_back(AndersConstraint::STORE, ptrIndex, fPtr);
       } else {
         errs() << f->getName() << '\n';
         assert(false && "unrecognized malloc call");
@@ -249,7 +251,7 @@ bool Andersen::addConstraintForExternalLibrary(const CallBase *cs,
     NodeIndex paramIndex = nodeFactory.getValueNodeFor(routine->getArg(0));
     assert(paramIndex != AndersNodeFactory::InvalidIndex && "Failed to find paramIndex node");
 
-    constraints.emplace_back(AndersConstraint::ADDR_OF, paramIndex, argIndex);
+    constraints.emplace_back(AndersConstraint::COPY, paramIndex, argIndex);
     return true;
   }
   return false;

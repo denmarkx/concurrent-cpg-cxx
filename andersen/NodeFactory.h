@@ -87,8 +87,8 @@ public:
   NodeIndex createVarargNode(const llvm::Function *f);
 
   // Map lookup interfaces (return InvalidIndex if value not found)
-  NodeIndex getValueNodeFor(const llvm::Value *val) const;
-  NodeIndex getValueNodeForConstant(const llvm::Constant *c) const;
+  NodeIndex getValueNodeFor(const llvm::Value *val);
+  NodeIndex getValueNodeForConstant(const llvm::Constant *c);
   NodeIndex getObjectNodeFor(const llvm::Value *val) const;
   NodeIndex getObjectNodeForConstant(const llvm::Constant *c) const;
   NodeIndex getReturnNodeFor(const llvm::Function *f) const;

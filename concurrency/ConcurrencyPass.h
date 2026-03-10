@@ -207,6 +207,7 @@ private:
                     const GlobalVariable *table = dyn_cast<GlobalVariable>(*it);
                     const Function *f2 = dyn_cast<Function>(table->getInitializer()->getAggregateElement(2));
                     // summary->functions.insert(f2);
+                    // GraphManager::get()->getAliasResult()->printPointsToSet(f2->getArg(0));
                     collectFunctionUsage(summary, f2);
                     continue;
                 } else {

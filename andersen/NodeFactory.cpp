@@ -47,6 +47,7 @@ NodeIndex AndersNodeFactory::createObjectNode(const Value *val) {
   unsigned nextIdx = nodes.size();
   nodes.push_back(AndersNode(AndersNode::OBJ_NODE, nextIdx, val));
   if (val != nullptr) {
+    if (objNodeMap.contains(val)) return objNodeMap[val];
     assert(!objNodeMap.count(val) &&
            "Trying to insert two mappings to revObjNodeMap!");
     objNodeMap[val] = nextIdx;
@@ -75,7 +76,7 @@ NodeIndex AndersNodeFactory::createVarargNode(const llvm::Function *f) {
   return nextIdx;
 }
 
-NodeIndex AndersNodeFactory::getValueNodeFor(const Value *val) const {
+NodeIndex AndersNodeFactory::getValueNodeFor(const Value *val) {
   if (const Constant *c = dyn_cast<Constant>(val))
     if (!isa<GlobalValue>(c))
       return getValueNodeForConstant(c);
@@ -89,7 +90,7 @@ NodeIndex AndersNodeFactory::getValueNodeFor(const Value *val) const {
 }
 
 NodeIndex
-AndersNodeFactory::getValueNodeForConstant(const llvm::Constant *c) const {
+AndersNodeFactory::getValueNodeForConstant(const llvm::Constant *c) {
   assert(isa<PointerType>(c->getType()) && "Not a constant pointer!");
 
   if (isa<ConstantPointerNull>(c) || isa<UndefValue>(c))
@@ -104,7 +105,7 @@ AndersNodeFactory::getValueNodeForConstant(const llvm::Constant *c) const {
       return getValueNodeFor(c->getOperand(0));
     case Instruction::IntToPtr:
     case Instruction::PtrToInt:
-      return getUniversalPtrNode();
+      return createValueNode(nullptr);
     case Instruction::BitCast:
       return getValueNodeForConstant(ce->getOperand(0));
     default:

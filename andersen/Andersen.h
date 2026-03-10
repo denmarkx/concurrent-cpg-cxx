@@ -103,10 +103,10 @@ public:
   // - Return true otherwise, and the points-to set of v is put into the second
   // argument.
   bool getPointsToSet(const llvm::Value *v,
-                      std::vector<const llvm::Value *> &ptsSet) const;
+                      std::vector<const llvm::Value *> &ptsSet);
 
   bool getPointsFromSet(const llvm::Value *v,
-                      std::vector<const llvm::Value *> &ptsSet) const;
+                      std::vector<const llvm::Value *> &ptsSet);
 
   // Put all allocation sites (i.e. all memory objects identified by the
   // analysis) into the first arugment

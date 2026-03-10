@@ -89,13 +89,13 @@ bool AndersenAAResult::pointsToConstantMemory(const MemoryLocation &loc,
 }
 
 bool AndersenAAResult::getPointsToSet(const llvm::Value *v, 
-  std::vector<const llvm::Value *> &ptsSet) const {
+  std::vector<const llvm::Value *> &ptsSet) {
   return anders.getPointsToSet(v, ptsSet);
 }
 
 
 bool AndersenAAResult::getPointsFromSet(const llvm::Value *v,
-  std::vector<const llvm::Value *> &ptsSet) const {
+  std::vector<const llvm::Value *> &ptsSet) {
   return anders.getPointsFromSet(v, ptsSet);
 }
 
