@@ -21,9 +21,6 @@ void Andersen::collectConstraints(const Module &M) {
   constraints.emplace_back(AndersConstraint::ADDR_OF,
                            nodeFactory.getUniversalPtrNode(),
                            nodeFactory.getUniversalObjNode());
-  // constraints.emplace_back(AndersConstraint::STORE,
-                           // nodeFactory.getUniversalObjNode(),
-                           // nodeFactory.getUniversalObjNode());
 
   // Next, the null pointer points to the null object.
   constraints.emplace_back(AndersConstraint::ADDR_OF,
@@ -374,6 +371,9 @@ void Andersen::collectConstraintsForInstruction(const Instruction *inst) {
 // - ValueNode(callsite) = ReturnNode(call target)
 // - ValueNode(formal arg) = ValueNode(actual arg)
 void Andersen::addConstraintForCall(const CallBase* cs) {
+  // Ignore asm calls.
+  if (cs->isInlineAsm()) return;
+
   if (const Function *f = cs->getCalledFunction()) // Direct call
   {
     if (f->isDeclaration() || f->isIntrinsic()) // External library call
@@ -420,9 +420,6 @@ void Andersen::addConstraintForCall(const CallBase* cs) {
     }
   } else // Indirect call
   {
-    // Ignore asm calls.
-    if (cs->isInlineAsm()) return;
-
     // We do the simplest thing here: just assume the returned value can be
     // anything :)
     if (cs->getType()->isPointerTy()) {

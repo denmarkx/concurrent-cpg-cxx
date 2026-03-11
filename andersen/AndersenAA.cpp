@@ -105,11 +105,15 @@ void AndersenAAResult::printPointsToSet(const llvm::Value *v) {
 
   errs() << "Value: " << *v << "\n";
   if (ptsSet.size() == 0) {
-    errs() << "\tptsSet is empty.";
+    errs() << "\tptsSet is empty.\n";
     return;
   }
   for (const llvm::Value *v : ptsSet) {
-    errs() << "  ptsSet: " << *v << "\n";
+    if (dyn_cast<Function>(v)) {
+      errs() << "  ---> [F] " << v->getName() << "\n";
+    } else {
+      errs() << "  ---> " << *v << "\n";
+    }
   }
   errs() << "\n";
 }
