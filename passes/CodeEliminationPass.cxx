@@ -1,10 +1,13 @@
-#include "llvm/ADT/TypeSwitch.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/GlobalValue.h"
+#include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 using namespace llvm;
 
@@ -33,26 +36,86 @@ public:
 
     void checkUnusedGlobals(Module &M) {
         for (GlobalValue &global: M.globals()) {
-            // Our def-use tree is technically broken at this point.
-            if (!isGlobalUsed(global)) {
-                _unusedGlobals.push_back(&global);
-                errs() << global << "\n";
-                continue;
-            }
+            checkGlobalUsed(global);       
+        }
+
+        // Any globals within _globalUsageMap whose value set is empty is considered unused.
+        for (auto &[k, v] : _globalUsageMap) {
+            if (v.size() == 0 && !isUnusedGlobal(*k))
+                _unusedGlobals.push_back(k);
+        }
+
+        errs() << "===========================\n";
+        for (const GlobalValue *v : _unusedGlobals) {
+            errs() << *v << '\n';
         }
     }
 
-    bool isGlobalUsed(GlobalValue &global) {
-        return true; // TODO
+    void updateUnusedCount(unsigned int& count, const Function* f) {
+        if (isUnusedFunction(*f)) {
+            count++;
+            return;
+        }
     }
 
-    bool isUnusedFunction(Function& f) {
-        return std::find(_unusedFuncs.begin(), _unusedFuncs.end(), &f) != _unusedFuncs.end();
+    const GlobalVariable* findGlobalFromUser(const User* user) {
+        if (const Constant *constant = dyn_cast<Constant>(user)) {
+            for (const User *user : constant->users()) {
+                if (const GlobalVariable *global = dyn_cast<GlobalVariable>(user)) {
+                    return global;
+                }
+            }
+        }
+        return nullptr;
+    }
+
+    bool checkGlobalUsed(const GlobalValue &global) {
+        if (isUnusedGlobal(global)) return false;
+
+        unsigned int unusedCount = 0;
+        std::unordered_set<const GlobalValue*> globalUsers;
+
+        for (const User *user : global.users()) {
+            if (const GlobalValue *other = findGlobalFromUser(user)) {
+                // Another global apparently uses this one.
+                // We'll make note of that for later.
+                globalUsers.insert(other);
+            }
+            if (const Instruction *instr = dyn_cast<Instruction>(user)) {
+                updateUnusedCount(unusedCount, instr->getFunction());
+            }
+        }
+
+        if (unusedCount == global.getNumUses()) {
+            _unusedGlobals.push_back(&global);
+
+            // Remove ourselves from the values of any key in _globalUsageMap.
+            for (auto &[k, v] : _globalUsageMap) {
+                if (v.contains(&global))
+                    v.erase(&global);
+            }
+
+        } else if (global.getNumUses() == globalUsers.size()) {
+            // Some other global uses us, but we aren't yet sure if that global is used.
+            _globalUsageMap[&global] = globalUsers;
+        }
+        return unusedCount != global.getNumUses();
+    }
+
+    bool isUnusedFunction(const Function& f) {
+        return std::find(_unusedFuncs.begin(), _unusedFuncs.end(), &f)
+            != _unusedFuncs.end();
+    }
+
+    bool isUnusedGlobal(const GlobalValue& global) {
+        return std::find(_unusedGlobals.begin(), _unusedGlobals.end(), &global)
+            != _unusedGlobals.end();
     }
 
 private:
-    std::vector<Function*> _unusedFuncs;
-    std::vector<GlobalValue*> _unusedGlobals;
+    std::unordered_map<const GlobalValue*, std::unordered_set<const GlobalValue*>> _globalUsageMap;
+    std::vector<const Function*> _unusedFuncs;
+    std::vector<const GlobalValue*> _unusedGlobals;
 };
 
 extern "C" LLVM_ATTRIBUTE_WEAK ::llvm::PassPluginLibraryInfo
