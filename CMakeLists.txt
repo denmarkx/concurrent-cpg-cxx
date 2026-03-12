@@ -75,6 +75,7 @@ set(FILES
     GraphBuilderPass.cxx
     GraphBuilderFuncPass.cxx
     GraphBuilderProcessPass.cxx
+    LTOLibCManager.cxx
     APIHelper.h
     Debug.h
     main.cxx
@@ -98,6 +99,3 @@ add_executable(unit_test ${TEST_FILES})
 target_include_directories(unit_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(unit_test Andersen)
 doctest_discover_tests(unit_test)
-
-add_library(CEPass SHARED passes/CodeEliminationPass.cxx)
-target_link_libraries(CEPass PRIVATE LLVM)
