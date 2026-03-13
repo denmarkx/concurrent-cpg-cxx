@@ -63,6 +63,14 @@ private:
             // rust will inline the vtable at the final arg here.
             // i dont know about c++
             // ..and c is trivial
+
+            // for now, i'm going to force this:
+            _handle = GraphManager::get()->getNodeFromOperand(call, 0);
+            _argNode = GraphManager::get()->getNodeFromOperand(call, 2);
+
+            if (const GlobalVariable *global = dyn_cast<GlobalVariable>(v)) {
+                _routine = GraphManager::get()->getNode(global->getInitializer()->getAggregateElement(2));
+            }
         }
     }
 

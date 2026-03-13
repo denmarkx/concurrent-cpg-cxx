@@ -221,7 +221,7 @@ private:
                         GraphManager::get()->getAliasResult()->getPointsToSet(f->getArg(0), ptsSet);
                         auto it = std::find_if(ptsSet.begin(), ptsSet.end(), [&](const Value *v) {
                             errs() << v->getName() << "\n";
-                            return v->getName().str() == "_ZN3std9panicking3try7do_call17hd9d5ae0f25cea609E";
+                            return v->getName().str() == "_ZN3std9panicking3try7do_call17hc02da3b75297f041E";
                         });
                         collectFunctionUsage(summary, dyn_cast<Function>(*it));
                     }
