@@ -1,4 +1,5 @@
 #include "GraphManager.h"
+#include "LTOLibCManager.h"
 #include "LiteralNode.h"
 #include "APIHelper.h"
 #include "GraphParser.h"
@@ -87,5 +88,14 @@ void GraphManager::setCallGraph(BidirectionalCallGraph *callGraph) {
 BidirectionalCallGraph* GraphManager::getCallGraph() { 
     return _callGraph;
 };
+
+
+void GraphManager::setupLTOManager(Module &module) {
+    _ltoMgr = new LTOLibCManager(module);
+}
+
+LTOLibCManager* GraphManager::getLTOMgr() {
+    return _ltoMgr;
+}
 
 GraphManager* GraphManager::_graph = nullptr;

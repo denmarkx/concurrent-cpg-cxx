@@ -23,14 +23,21 @@ public:
         node->addProperty("operation", "CREATE_THREAD");
         ConcurrencyManager::get()->registerNode(node);
 
-        node->_handle = GraphManager::get()->getNodeFromOperand(I, 0);
-        node->_routine = GraphManager::get()->getNodeFromOperand(I, 2);
-        node->_argNode = GraphManager::get()->getNodeFromOperand(I, 3);
+        // If we're a higher-level call, our arguments probably don't
+        // match the order expected from pthread_create. We have to figure this out ourselves.
+        if (ConcurrencyManager::get()->isHigherLevelCall(I)) {
+            node->identifyArgumentSequence(I);
 
-        // There may be a point where we aren't given a direct function.
-        // In this case, we make an attempt to resolve the routine.
-        if (!node->_routine->getValue()->getType()->isFunctionTy())
-            node->revisitRoutine();
+        } else {
+            node->_handle = GraphManager::get()->getNodeFromOperand(I, 0);
+            node->_routine = GraphManager::get()->getNodeFromOperand(I, 2);
+            node->_argNode = GraphManager::get()->getNodeFromOperand(I, 3);
+
+            // There may be a point where we aren't given a direct function.
+            // In this case, we make an attempt to resolve the routine.
+            if (!node->_routine->getValue()->getType()->isFunctionTy())
+                node->revisitRoutine();
+        }
 
         node->_edges.push_back(pair("HANDLE", node->_handle));
         node->_edges.push_back(pair("ROUTINE", node->_routine));
@@ -44,7 +51,21 @@ public:
     Node* getHandle() { return _handle; }
 
 private:
-    std::unordered_set<const Value*> seen;
+    void identifyArgumentSequence(const CallBase *call) {
+        // This is a seriously sparse determination effort and it is all done by inference.
+        // TODO: there is a possible way to do this via pointer alias and def-use, but that's reserved for now.
+
+        for (int i = 0; i < call->arg_size(); i++) {
+            const Value *v = call->getOperand(i);
+            if (!v->getType()->isPointerTy()) continue;
+
+            // TODO:
+            // rust will inline the vtable at the final arg here.
+            // i dont know about c++
+            // ..and c is trivial
+        }
+    }
+
 
     void revisitRoutine() {
         const Value *val = _routine->getValue();
@@ -113,6 +134,8 @@ private:
     }
 
 private:
+    std::unordered_set<const Value*> seen;
+
     Node* _handle = nullptr;
     Node* _routine = nullptr;
     Node* _argNode = nullptr;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BidirectionalCallGraph.h"
+#include "LTOLibCManager.h"
 #include "Node.h"
 #include "llvm/Analysis/MemorySSA.h"
 #include "llvm/IR/Value.h"
@@ -46,6 +47,9 @@ public:
     void setCallGraph(BidirectionalCallGraph *callGraph);
     BidirectionalCallGraph* getCallGraph();
 
+    void setupLTOManager(Module &module);
+    LTOLibCManager* getLTOMgr();
+
     static GraphManager* get();
     static GraphManager* _graph;
 
@@ -57,4 +61,5 @@ private:
     AndersenAAResult* _AA;
     BidirectionalCallGraph* _callGraph;
     MSSAGet _mssaGetter = nullptr;
+    LTOLibCManager* _ltoMgr;
 };

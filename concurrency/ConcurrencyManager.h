@@ -1,5 +1,6 @@
 #pragma once
 
+#include "LTOLibCManager.h"
 #include "graph/Node.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
@@ -46,6 +47,16 @@ struct OperationInfo {
         }
         return true;
     }
+
+    bool checkFunction(const LightFunction *func) const {
+        if (!func) return false;
+        if (returnType != func->returnType) return false;
+        if (parameters.size() != func->argTypes.size()) return false;
+        for (size_t i=0; i < parameters.size(); i++) {
+            if (parameters[i] != func->argTypes[i]) return false;
+        }
+        return true;
+    }
 };
 
 typedef std::unordered_map<std::string, OperationInfo> OperationMapType;
@@ -84,6 +95,18 @@ public:
         return false;
     }
 
+    /*
+     * Returns boolean indicating if the concurrency operation was discovered
+     * through the LTOLibCManager (ie: std::sys::thread::Thread::new -> .. -> pthread_create).
+     * 
+     * This assumes that the call's function was already confirmed to be a concurrency operation.
+    */
+    bool isHigherLevelCall(const CallBase *call) {
+        const Function *f = call->getCalledFunction();
+        if (!f) return false;
+        return _operationMap.find(f->getName().str()) == _operationMap.end();
+    }
+
     static inline ConcurrencyManager* get();
     static inline ThreadOperation getConcurrencyOperation(const Function *F);
     static inline ThreadOperation getConcurrencyOperation(std::string &name);
@@ -120,11 +143,22 @@ inline ConcurrencyManager* ConcurrencyManager::get() {
 inline ThreadOperation ConcurrencyManager::getConcurrencyOperation(const Function *F) {
     if (!F) return ThreadOperation::NONE;
 
+    // Initial attempt: a direct call
     auto it = _operationMap.find(F->getName().str());
-    if (it == _operationMap.end()) return ThreadOperation::NONE;
+    if (it != _operationMap.end())
+        if (it->second.checkFunction(F))
+            return it->second.opCode;
 
-    if (it->second.checkFunction(F)) {
-        return it->second.opCode;
+    // Take 2: underlying call
+    std::vector<const LightFunction*> functions;
+    functions = LTOLibCManager::get()->getLibCFunctions(F);
+
+    for (const LightFunction* lightFunc : functions) {
+        it = _operationMap.find(lightFunc->name);
+        if (it != _operationMap.end() && _operationMap.find(lightFunc->name) != _operationMap.end())
+            if (it->second.checkFunction(lightFunc)) {
+                return it->second.opCode;
+            }
     }
 
     return ThreadOperation::NONE;
@@ -166,24 +200,4 @@ const inline OperationMapType ConcurrencyManager::_operationMap{
             Type::PointerTyID
         )
     },
-
-    // NOTE: To avoid LTO, we pattern-match Rust explicitly.
-    // I personally hate to do this as we now depend on Rust and each target
-    // {"_ZN3std3sys4unix6thread6Thread3new17h87f4070d7391b575E",
-    //     OperationInfo(
-    //         ThreadOperation::CREATE,
-    //         Type::VoidTyID,
-    //         // I suppose I'll note here that this is NOT what's in
-    //         // std/src/sys/thread/unix.rs. The return type is void in LLVM-IR,
-    //         // but Rust'll return Result<Thread>. This is set through the first parameter
-    //         // via sret.
-    //         //
-    //         // 2nd parameter is stack: usize
-    //         // The 3rd one is an alias of the vtable (Box<dyn FnOnce()>)
-    //         // The 4th one is (I think) the data sent into the dispatched function in param 3.
-    //         // 
-    //         // TODO: perhaps it's best to look at the debug information.
-    //         Type::PointerTyID, Type::IntegerTyID, Type::PointerTyID, Type::PointerTyID
-    //     )
-    // },
 };

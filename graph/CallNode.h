@@ -28,25 +28,6 @@ public:
 
         bool x = 0;
 
-        // TODO: this is taking up too much time, but the issue comes from copy node propagation in the
-        // constraint solver.
-        if (I->getFunction()->getName().str() == "_ZN3std3sys3pal4unix6thread6Thread3new17hb60c4a6ce601c493E") {
-            // TODO: this one is such bullshit
-            //  only because the return statement aliases the call instruction
-            //  which assumes that we wish to ALSO alias every single person who calls rust_alloc.
-            //  and the best part is that it is a mustalias ?????????????????????
-            if (I->getCalledOperand()->getName() == "__rust_alloc") {
-                // std::vector<const Value*> ptsSet;
-                GraphManager::get()->getAliasResult()->printPointsToSet(I);
-            }
-        }
-
-        if (I->getFunction()->getName().str() == "_ZN3std3sys3pal4unix6thread6Thread3new12thread_start17h2770ac7f8882db09E") {
-            if (!I->getCalledFunction()) {
-                GraphManager::get()->getAliasResult()->printPointsToSet(I->getCalledOperand());
-            }
-        }
-
         // This can be an alias:
         if (!calledFunc) {
             if (GlobalAlias *alias = dyn_cast<GlobalAlias>(I->getCalledOperand())) {

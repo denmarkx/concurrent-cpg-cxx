@@ -15,7 +15,7 @@
 #include "GraphBuilderPass.h"
 #include "GraphBuilderFuncPass.h"
 #include "GraphBuilderProcessPass.h"
-#include "LTOLibCManager.h"
+#include "graph/GraphManager.h"
 
 using namespace llvm;
 
@@ -30,8 +30,7 @@ int main() {
         return 0;
     }
 
-    LTOLibCManager *ltoMgr = new LTOLibCManager(*module);
-    return 0;
+    GraphManager::get()->setupLTOManager(*module);
     GraphBuilder builder("neo4j", "00000000");
 
     legacy::PassManager PM;
