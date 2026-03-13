@@ -12,6 +12,7 @@
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Use.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <algorithm>
@@ -158,8 +159,7 @@ private:
         for (ThreadSummary *summary : _summaries) {
             const Function *routine = dyn_cast<Function>(
                 summary->routineNode->getValue());
-            // summary->functions.insert(routine);
-            collectFunctionUsage(summary, routine);
+            collectFunctionUsage(summary, routine, {});
             // collectSharedUsage(summary);
             // associateLocks(summary);
         }
@@ -177,59 +177,79 @@ private:
         }
     }
 
-    void collectFunctionUsage(ThreadSummary *summary, const Function* f) {
+    void collectFunctionUsage(ThreadSummary *summary, const Function* f, std::optional<WeakTrackingVH> prevInstr) {
         if (!f || f->isDeclaration()) return;
         if (f != summary->routineNode->getValue())
             if (summary->functions.contains(f)) return;
         summary->functions.insert(f);
 
         auto callGraph = GraphManager::get()->getCallGraph();
-        // TODO: the next thing this shit doesnt handle is the case
-        // of a function pointer being explicitly given and not in any aggregate structure
-        // ie:
-        // call i32 @__rust_try(ptr @_ZN3std9panicking3try7do_call17hd9d5ae0f25cea609E, ...
-        // where ptr %0 (which is do_call) is unresolved even though it is the most simplistic
-        // thing you could ever imagine.
         for (auto &cgNode : *callGraph->getOrInsertFunction(f)) {
-            // TODO: insanely rust-specific (see callnode.h)
-            // also TODO: callgraph doesnt allow any flexibility on func ptrs.
-            if (!cgNode.second->getFunction()) {
-                // we're going to pretend that this leads where we want it to.
-                // but unfortunately this is a weak vh tracking node
-                // so i have to do this MESS:
-                if (f->arg_size() == 0) continue;
-                std::vector<const Value*> ptsSet;
-                GraphManager::get()->getAliasResult()->getPointsToSet(f->getArg(0), ptsSet);
-                auto it = std::find_if(ptsSet.begin(), ptsSet.end(), [&](const Value *v){
-                    return v->getName().str() == "vtable.2";
-                });
-                if (it != ptsSet.end()) {
-                    const GlobalVariable *table = dyn_cast<GlobalVariable>(*it);
-                    const Function *f2 = dyn_cast<Function>(table->getInitializer()->getAggregateElement(2));
-                    // summary->functions.insert(f2);
-                    // GraphManager::get()->getAliasResult()->printPointsToSet(f2->getArg(0));
-                    collectFunctionUsage(summary, f2);
-                    continue;
-                } else {
-                    // looking at the ptsTo set for ptr %0 in __rust_try actually is correct.
-                    // but the callGraph doesn't know about that so we have to do another hack:
-                    if (f->getName() == "__rust_try") {
-                        errs() << *f << "\n";
-                        errs() << f->arg_size() << "\n";
+            if (!cgNode.second->getFunction() && prevInstr) {
+                // It's more intuitive to have a flow/field/context sensitive Andersen's alias implementation.
+                // Though, we may be able to get by without that for now.
+                const CallBase *originalCall = dyn_cast<CallBase>(*prevInstr);
+                if (!originalCall) continue;
 
-                        std::vector<const Value*> ptsSet;
-                        GraphManager::get()->getAliasResult()->getPointsToSet(f->getArg(0), ptsSet);
-                        auto it = std::find_if(ptsSet.begin(), ptsSet.end(), [&](const Value *v) {
-                            errs() << v->getName() << "\n";
-                            return v->getName().str() == "_ZN3std9panicking3try7do_call17hc02da3b75297f041E";
-                        });
-                        collectFunctionUsage(summary, dyn_cast<Function>(*it));
+                const CallBase *currentCall = dyn_cast<CallBase>(*cgNode.first);
+                if (!currentCall) continue;
+
+                // We're going to make a very naive attempt to resolve this indirect call.
+                const Function *next = attemptIndirectCallResolution(originalCall, currentCall);
+                if (next) {
+                    collectFunctionUsage(summary, next, cgNode.first);
+                    continue;
+                }
+
+                // If we're down here, we couldn't resolve this indirect call.
+                // Our next attempt will be to see if this points to anything.
+                std::vector<const Value*> ptsSet;
+                GraphManager::get()->getAliasResult()->getPointsToSet(currentCall->getCalledOperand(), ptsSet);
+
+                for (const Value* val : ptsSet) {
+                    if (const Function *next = dyn_cast<Function>(val)) {
+                        // For any function within our ptsTo set, we'll say that we may go here next.
+                        // Obviously an over-approximation, but this is our last resort.
+                        collectFunctionUsage(summary, next, cgNode.first);
                     }
                 }
             }
-            // summary->functions.insert(cgNode.second->getFunction());
-            collectFunctionUsage(summary, cgNode.second->getFunction());
+            collectFunctionUsage(summary, cgNode.second->getFunction(), cgNode.first);
         }
+    }
+
+    // TODO: this doesn't belong in this class
+    /*
+     * Attempts to resolve the function of an indirect call in the most simple case:
+     *  the function is directly passed as a function's argument
+     *  and that parameter is directly used as-is.
+     *
+     * Example: I = call @__rust_try(ptr @_ZN3std9panicking3try7do_call17h8f189a79418b1601E,...
+     * @__rust_try(ptr %0..)
+     *  call %0 -> call @_ZN3std9panicking3try7do_call17h8f189a79418b1601 for call I
+    */
+    const Function* attemptIndirectCallResolution(const CallBase *originalCall, const CallBase *currCall) {
+        int correspondingParam = -1;
+        const Value *indirect = currCall->getCalledOperand();
+
+        // Check if the operand we are calling is a parameter.
+        for (size_t i=0; i < currCall->arg_size(); i++) {
+            if (currCall->getFunction()->getArg(i) == indirect) {
+                correspondingParam = i;
+                break;
+            }
+        }
+
+        // We don't consider traversing backwards on def-use since we ONLY
+        // handle cases of functions being directly passed. 
+        if (correspondingParam < 0) return nullptr;
+
+        // Check to make sure the corresponding argument passed to original is a function type.
+        const Value *candidate = originalCall->getOperand(correspondingParam);
+        if (const Function *candidateFunc = dyn_cast<Function>(candidate))
+            return candidateFunc;
+
+        return nullptr;
     }
 
     void collectSharedUsage(ThreadSummary *summary) {
