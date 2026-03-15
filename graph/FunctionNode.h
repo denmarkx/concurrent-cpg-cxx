@@ -54,9 +54,7 @@ public:
                 }
             }
 
-            MemoryLocation m1(a, MemoryLocation::UnknownSize);
-            MemoryLocation m2(b, MemoryLocation::UnknownSize);
-            errs() << GraphManager::get()->getAliasResult()->alias(nullptr, nullptr, m1, m2) << "\n";
+            errs() << GraphManager::get()->getAliasResult()->alias(a, b) << "\n";
         }
         return node;
     }

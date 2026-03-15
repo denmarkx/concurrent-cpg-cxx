@@ -1,5 +1,7 @@
 #include "AndersenAA.h"
 
+#include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/MemoryLocation.h"
 #include "llvm/IR/Module.h"
 
 using namespace llvm;
@@ -45,9 +47,10 @@ AliasResult AndersenAAResult::andersenAlias(const CallBase *c1, const CallBase *
   return AliasResult::Kind::NoAlias;
 }
 
-AliasResult AndersenAAResult::alias(const CallBase *c1, const CallBase *c2, 
-                                    const MemoryLocation &l1,
-                                    const MemoryLocation &l2) {
+AliasResult AndersenAAResult::alias(const MemoryLocation &l1,
+                                    const MemoryLocation &l2,
+                                    const CallBase *c1,
+                                    const CallBase *c2) {
   if (l1.Size == 0 || l2.Size == 0)
     return AliasResult::Kind::NoAlias;
 
@@ -61,6 +64,17 @@ AliasResult AndersenAAResult::alias(const CallBase *c1, const CallBase *c2,
     return AliasResult::Kind::MustAlias;
 
   return andersenAlias(c1, c2, v1, v2);
+}
+
+AliasResult AndersenAAResult::alias(const Value *v1,
+                                    const Value *v2,
+                                    const CallBase *c1,
+                                    const CallBase *c2) {
+  if (!v1 || !v2) return AliasResult::Kind::NoAlias;
+
+  MemoryLocation m1(v1, MemoryLocation::UnknownSize);
+  MemoryLocation m2(v2, MemoryLocation::UnknownSize);
+  return alias(m1, m2, c1, c2);
 }
 
 bool AndersenAAResult::pointsToConstantMemory(const MemoryLocation &loc,
@@ -89,19 +103,24 @@ bool AndersenAAResult::pointsToConstantMemory(const MemoryLocation &loc,
   return true;
 }
 
-bool AndersenAAResult::getPointsToSet(const llvm::CallBase *cs, const llvm::Value *v, 
-  std::vector<const llvm::Value *> &ptsSet) {
+bool AndersenAAResult::getPointsToSet(const CallBase *cs, const Value *v, PtsSetType &ptsSet) {
   return anders.getPointsToSet(cs, v, ptsSet);
 }
 
+bool AndersenAAResult::getPointsToSet(const Value *v, PtsSetType &ptsSet) {
+  return anders.getPointsToSet(nullptr, v, ptsSet);
+}
 
-bool AndersenAAResult::getPointsFromSet(const llvm::CallBase *cs, const llvm::Value *v,
-  std::vector<const llvm::Value *> &ptsSet) {
+bool AndersenAAResult::getPointsFromSet(const CallBase *cs, const Value *v, PtsSetType &ptsSet) {
   return anders.getPointsFromSet(cs, v, ptsSet);
 }
 
-void AndersenAAResult::printPointsToSet(const llvm::CallBase *cs, const llvm::Value *v) {
-  std::vector<const llvm::Value *> ptsSet{};
+bool AndersenAAResult::getPointsFromSet(const Value *v, PtsSetType &ptsSet) {
+  return anders.getPointsFromSet(nullptr, v, ptsSet);
+}
+
+void AndersenAAResult::printPointsToSet(const CallBase *cs, const Value *v) {
+  PtsSetType ptsSet{};
   getPointsToSet(cs, v, ptsSet);
 
   errs() << "Value: " << *v << "\n";

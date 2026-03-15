@@ -67,7 +67,7 @@ AndersenAAResult* GraphManager::getAliasResult() const {
 bool GraphManager::alias(const Value* v1, const Value* v2) {
     MemoryLocation L1(v1, MemoryLocation::UnknownSize);
     MemoryLocation L2(v1, MemoryLocation::UnknownSize);
-    return _AA->alias(nullptr, nullptr, L1, L2) != AliasResult::NoAlias;
+    return _AA->alias(L1, L2) != AliasResult::NoAlias;
 }
 
 

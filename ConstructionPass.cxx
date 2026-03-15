@@ -25,7 +25,7 @@ Usage ConstructionPass::identifyDataUsage(std::shared_ptr<ThreadContext> thread)
             switch (I.getOpcode()) {
                 case Instruction::Load: {
                     MemoryLocation L2(&I, MemoryLocation::UnknownSize);
-                    AliasResult r2 = AA.alias(nullptr, nullptr, L1, L2);
+                    AliasResult r2 = AA.alias(L1, L2);
 
                     if (r2 != AliasResult::NoAlias) usage = Usage::Read;
                     break;
@@ -34,7 +34,7 @@ Usage ConstructionPass::identifyDataUsage(std::shared_ptr<ThreadContext> thread)
                     StoreInst *store = dyn_cast<StoreInst>(&I);
                     Value *v = store->getOperand(1);
                     MemoryLocation L2(v, MemoryLocation::UnknownSize);
-                    AliasResult r = AA.alias(nullptr, nullptr, L1, L2);
+                    AliasResult r = AA.alias(L1, L2);
 
                     if (r != AliasResult::NoAlias) return Usage::Write;
                 }
@@ -89,7 +89,7 @@ bool ConstructionPass::runOnModule(Module &M) {
         bool inserted = false;
         for (auto &[k, v] : _sharedDataMap) {
             MemoryLocation L1(k, MemoryLocation::UnknownSize);
-            AliasResult res = AA.alias(nullptr, nullptr, L1, L2);
+            AliasResult res = AA.alias(L1, L2);
             if (res != AliasResult::NoAlias) {
                 v[usageIdx].insert(thread);
                 inserted = true;
@@ -118,7 +118,7 @@ bool ConstructionPass::runOnModule(Module &M) {
                     MemoryLocation L2(pointer, MemoryLocation::UnknownSize);
                     for (auto &T : _threads) {
                         MemoryLocation L1(T->handle, MemoryLocation::UnknownSize);
-                        AliasResult res = AA.alias(nullptr, nullptr, L1, L2);
+                        AliasResult res = AA.alias(L1, L2);
                         if (res != AliasResult::NoAlias) {
                             // It is possible that this aliases to more than 1 thread.
                             // ..but that is technically incorrect user code for pthread_create.
@@ -217,7 +217,7 @@ void ConstructionPass::processInstruction(Instruction *instr) {
         MemoryLocation L1(store->getOperand(1), MemoryLocation::UnknownSize);
         for (auto &[k, v] : _sharedDataMap) {
             MemoryLocation L2(k, MemoryLocation::UnknownSize);
-            if (AA.alias(nullptr, nullptr, L1, L2) != AliasResult::NoAlias) {
+            if (AA.alias(L1, L2) != AliasResult::NoAlias) {
                 std::cout << "write action on shared data.\n";
             }  
         }
