@@ -50,7 +50,10 @@ void Andersen::collectConstraints(const Module &M) {
     std::vector<const CallBase*> callers;
     for (const User *user : f.users()) {
       if (const CallBase *call = dyn_cast<CallBase>(user)) {
-        callers.push_back(call);
+        if (call->getCalledFunction() == &f) {
+          callers.push_back(call);
+          errs() << " - " << *call << "\n";
+        }
       }
     }
 
