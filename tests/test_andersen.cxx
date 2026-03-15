@@ -15,7 +15,7 @@
 
 using namespace llvm;
 
-/*TEST_CASE("Andersen[PtsSetTest]") {
+TEST_CASE("Andersen[PtsSetTest]") {
     // CHECK(factorial(1) == 1);
     AndersPtsSet pSet1, pSet2;
     CHECK(pSet1.isEmpty());
@@ -155,20 +155,20 @@ TEST_CASE("Andersen[NodeFactoryTest]") {
     auto w = &*++itr;
 
     AndersNodeFactory factory;
-    auto vx = factory.createValueNode(x);
-    auto vy = factory.createValueNode(y);
-    auto oz = factory.createObjectNode(z);
-    auto ow = factory.createObjectNode(w);
+    auto vx = factory.createValueNode(nullptr, x);
+    auto vy = factory.createValueNode(nullptr, y);
+    auto oz = factory.createObjectNode(nullptr, z);
+    auto ow = factory.createObjectNode(nullptr, w);
 
     CHECK_EQ(x, factory.getValueForNode(vx));
     CHECK_EQ(y, factory.getValueForNode(vy));
     CHECK(factory.isObjectNode(oz));
     CHECK(factory.isObjectNode(ow));
-    CHECK_EQ(factory.getValueNodeFor(x), vx);
-    CHECK_EQ(factory.getValueNodeFor(y), vy);
-    CHECK_EQ(factory.getValueNodeFor(z), AndersNodeFactory::InvalidIndex);
-    CHECK_EQ(factory.getValueNodeFor(w), AndersNodeFactory::InvalidIndex);
-    CHECK_EQ(factory.getObjectNodeFor(z), oz);
+    CHECK_EQ(factory.getValueNodeFor(nullptr, x), vx);
+    CHECK_EQ(factory.getValueNodeFor(nullptr, y), vy);
+    CHECK_EQ(factory.getValueNodeFor(nullptr, z), AndersNodeFactory::InvalidIndex);
+    CHECK_EQ(factory.getValueNodeFor(nullptr, w), AndersNodeFactory::InvalidIndex);
+    CHECK_EQ(factory.getObjectNodeFor(nullptr, z), oz);
 }
 
 static std::unique_ptr<Andersen> runAndersen(llvm::Module &M) {
@@ -208,7 +208,7 @@ TEST_CASE("Andersen[Alloca]") {
     CHECK_NE(qLoad, nullptr);
 
     std::vector<const Value*> pts;
-    anders->getPointsToSet(qLoad, pts);
+    anders->getPointsToSet(nullptr, qLoad, pts);
     CHECK_EQ(pts.size(), 1u);
     CHECK_EQ(pts[0], xAlloca);
 }
@@ -231,8 +231,8 @@ TEST_CASE("Andersen[UnrelatedAlloca_NoAlias]") {
     REQUIRE(yAlloca != nullptr);
 
     std::vector<const Value*> xPts, yPts;
-    anders->getPointsToSet(xAlloca, xPts);
-    anders->getPointsToSet(yAlloca, yPts);
+    anders->getPointsToSet(nullptr, xAlloca, xPts);
+    anders->getPointsToSet(nullptr, yAlloca, yPts);
     CHECK_FALSE(ptsContains(xPts, yAlloca));
     CHECK_FALSE(ptsContains(yPts, xAlloca));
 }
@@ -264,13 +264,13 @@ TEST_CASE("Andersen[DoubleIndirection]") {
     CHECK_NE(rLoad, nullptr);
 
     std::vector<const Value*> qPts;
-    anders->getPointsToSet(qLoad, qPts);
-    CHECK_EQ(qPts.size(), 1u);
+    REQUIRE_EQ(anders->getPointsToSet(nullptr, qLoad, qPts), true);
+    REQUIRE_EQ(qPts.size(), 1u);
     CHECK_EQ(qPts[0], pAlloca);
 
     std::vector<const Value*> rPts;
-    anders->getPointsToSet(rLoad, rPts);
-    CHECK_EQ(rPts.size(), 1u);
+    REQUIRE_EQ(anders->getPointsToSet(nullptr, rLoad, rPts), true);
+    REQUIRE_EQ(rPts.size(), 1u);
     CHECK_EQ(rPts[0], xAlloca);
 }
 
@@ -297,7 +297,7 @@ TEST_CASE("Andersen[StoreIndirection]") {
     CHECK_NE(rLoad, nullptr);
 
     std::vector<const Value*> pts;
-    anders->getPointsToSet(rLoad, pts);
+    anders->getPointsToSet(nullptr, rLoad, pts);
     CHECK_EQ(pts.size(), 1u);
     CHECK_EQ(pts[0], xAlloca);
 }
@@ -327,7 +327,7 @@ TEST_CASE("Andersen[GEP_FieldInsensitivity]") {
     CHECK_NE(vLoad, nullptr);
 
     std::vector<const Value*> pts;
-    anders->getPointsToSet(vLoad, pts);
+    anders->getPointsToSet(nullptr, vLoad, pts);
     CHECK(ptsContains(pts, xAlloca));
 }
 
@@ -352,7 +352,7 @@ TEST_CASE("Andersen[Call_ReturnValue]") {
     REQUIRE(retVal  != nullptr);
 
     std::vector<const Value*> pts;
-    anders->getPointsToSet(retVal, pts);
+    anders->getPointsToSet(nullptr, retVal, pts);
     CHECK(ptsContains(pts, xAlloca));
 }
 
@@ -376,7 +376,7 @@ TEST_CASE("Andersen[NullPtr_NoAlias]") {
     REQUIRE(qLoad   != nullptr);
 
     std::vector<const Value*> pts;
-    anders->getPointsToSet(qLoad, pts);
+    anders->getPointsToSet(nullptr, qLoad, pts);
     CHECK_FALSE(ptsContains(pts, xAlloca));
 }
 
@@ -416,7 +416,7 @@ TEST_CASE("Andersen[IndirectCall_Via_Global_Fptr]") {
     REQUIRE(fptrLoad != nullptr);
 
     std::vector<const Value*> pts;
-    anders->getPointsToSet(fptrLoad, pts);
+    anders->getPointsToSet(nullptr, fptrLoad, pts);
 
     const Function *target = module->getFunction("target");
     CHECK(ptsContains(pts, target));
@@ -451,9 +451,8 @@ TEST_CASE("Andersen[Phi_Merge]") {
     REQUIRE(phiVal  != nullptr);
 
     std::vector<const Value*> pts;
-    anders->getPointsToSet(phiVal, pts);
+    anders->getPointsToSet(nullptr, phiVal, pts);
     CHECK_EQ(pts.size(), 2u);
     CHECK(ptsContains(pts, xAlloca));
     CHECK(ptsContains(pts, yAlloca));
 }
-*/
