@@ -49,7 +49,6 @@ void Andersen::collectConstraints(const Module &M) {
 
     std::vector<const CallBase*> callers;
     for (const User *user : f.users()) {
-      errs() << "  - " << *user << "\n";
       if (const CallBase *call = dyn_cast<CallBase>(user)) {
         callers.push_back(call);
       }
@@ -115,14 +114,12 @@ void Andersen::collectConstraintsForGlobals(const Module &M) {
   for (auto const &f : M) {
     std::vector<const CallBase*> callers;
     for (const User *user : f.users()) {
-      errs() << "  - " << *user << "\n";
       if (const CallBase *call = dyn_cast<CallBase>(user)) {
         callers.push_back(call);
       }
     }
 
     for (const CallBase *cs : callers) {
-
       // If f is an addr-taken function, create a pointer and an object for it
       if (f.hasAddressTaken()) {
         // 创建一个值节点和一个对象节点
@@ -150,6 +147,10 @@ void Andersen::collectConstraintsForGlobals(const Module &M) {
           nodeFactory.createValueNode(cs, &*itr);
       }
     }
+
+    // Since funcs are global, their callsite is null (for the case of func ptrs).
+    nodeFactory.createValueNode(nullptr, &f);
+    nodeFactory.createObjectNode(nullptr, &f);
   }
 
   // Init globals here since an initializer may refer to a global var/func below
@@ -507,13 +508,13 @@ void Andersen::addArgumentConstraintForCall(const CallBase *parentCS,
                                             const Function *f) {
   Function::const_arg_iterator fItr = f->arg_begin();
   CallBase::User::const_op_iterator aItr = cs->arg_begin();
-  errs() << "addArgumentConstraintForCall [F=" << f->getName() << "]\n";
-  errs() << " [REG CS]: " << *cs << "\n";
+  // errs() << "addArgumentConstraintForCall [F=" << f->getName() << "]\n";
+  // errs() << " [REG CS]: " << *cs << "\n";
   while (fItr != f->arg_end() && aItr != cs->arg_end()) {
     const Argument *formal = &*fItr;
     const Value *actual = *aItr;
-    errs() << "  formal arg = " << *formal << "\n";
-    errs() << "  actual arg = " << *actual << "\n";
+    // errs() << "  formal arg = " << *formal << "\n";
+    // errs() << "  actual arg = " << *actual << "\n";
 
     if (formal->getType()->isPointerTy()) {
       NodeIndex fIndex = nodeFactory.getValueNodeFor(cs, formal);
