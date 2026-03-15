@@ -92,7 +92,7 @@ public:
 
   // Map lookup interfaces (return InvalidIndex if value not found)
   NodeIndex getValueNodeFor(const llvm::CallBase *cs, const llvm::Value *val);
-  NodeIndex getValueNodeForConstant(const llvm::CallBase *cs, const llvm::Constant *c);
+  NodeIndex getValueNodeForConstant(const llvm::Constant *c);
   NodeIndex getObjectNodeFor(const llvm::CallBase *cs, const llvm::Value *val) const;
   NodeIndex getObjectNodeForConstant(const llvm::CallBase *cs, const llvm::Constant *c) const;
   NodeIndex getReturnNodeFor(const llvm::CallBase *cs, const llvm::Function *f) const;

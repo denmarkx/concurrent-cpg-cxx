@@ -151,6 +151,13 @@ void Andersen::collectConstraintsForGlobals(const Module &M) {
     // Since funcs are global, their callsite is null (for the case of func ptrs).
     nodeFactory.createValueNode(nullptr, &f);
     nodeFactory.createObjectNode(nullptr, &f);
+
+    // TODO: not entirely sure if this is correct:
+    for (Function::const_arg_iterator itr = f.arg_begin(), ite = f.arg_end();
+         itr != ite; ++itr) {
+      if (isa<PointerType>(itr->getType()))
+        nodeFactory.createValueNode(nullptr, &*itr);
+    }
   }
 
   // Init globals here since an initializer may refer to a global var/func below
@@ -451,6 +458,7 @@ void Andersen::addConstraintForCall(const CallBase *parentCS, const CallBase* cs
     }
   } else // Indirect call
   {
+    return; // TODO
     // We do the simplest thing here: just assume the returned value can be
     // anything :)
     if (cs->getType()->isPointerTy()) {

@@ -31,12 +31,12 @@ AndersNodeFactory::AndersNodeFactory() {
 }
 
 NodeIndex AndersNodeFactory::createValueNode(const CallBase *cs, const Value *val) {
-  errs() << "inserting " << *val << "\n";
-  errs() << "   callsite = ";
-  if (cs)
-    errs() << *cs << "\n\n";
-  else
-    errs() << "null\n\n";
+  // errs() << "inserting " << *val << "\n";
+  // errs() << "   callsite = ";
+  // if (cs)
+    // errs() << *cs << "\n\n";
+  // else
+    // errs() << "null\n\n";
   unsigned nextIdx = nodes.size();
   nodes.push_back(AndersNode(AndersNode::VALUE_NODE, nextIdx, val));
   if (val != nullptr) {
@@ -67,7 +67,7 @@ NodeIndex AndersNodeFactory::createReturnNode(const llvm::CallBase *cs, const ll
   nodes.push_back(AndersNode(AndersNode::VALUE_NODE, nextIdx, f));
 
   assert(!returnMap.count({cs, f}) && "Trying to insert two mappings to returnMap!");
-  errs() << "createReturnNode [" << nextIdx << "](\n" << "  cs = " << *cs << "\n  func = " << f->getName() << "\n\n";
+  // errs() << "createReturnNode [" << nextIdx << "](\n" << "  cs = " << *cs << "\n  func = " << f->getName() << "\n\n";
   returnMap[{cs, f}] = nextIdx;
 
   return nextIdx;
@@ -84,11 +84,13 @@ NodeIndex AndersNodeFactory::createVarargNode(const llvm::Function *f) {
 }
 
 NodeIndex AndersNodeFactory::getValueNodeFor(const CallBase *cs, const Value *val) {
-  if (const Constant *c = dyn_cast<Constant>(val))
+  if (const Constant *c = dyn_cast<Constant>(val)) {
     if (!isa<GlobalValue>(c))
-      return getValueNodeForConstant(cs, c);
+      return getValueNodeForConstant(c);
+    else
+      cs = nullptr;
+  }
 
-  // errs() << "looking up " << *val << "\n";
   auto itr = valueNodeMap.find({cs, val});
   if (itr == valueNodeMap.end())
     return InvalidIndex;
@@ -96,25 +98,24 @@ NodeIndex AndersNodeFactory::getValueNodeFor(const CallBase *cs, const Value *va
     return itr->second;
 }
 
-NodeIndex
-AndersNodeFactory::getValueNodeForConstant(const CallBase* cs, const llvm::Constant *c) {
+NodeIndex AndersNodeFactory::getValueNodeForConstant(const llvm::Constant *c) {
   assert(isa<PointerType>(c->getType()) && "Not a constant pointer!");
 
   if (isa<ConstantPointerNull>(c) || isa<UndefValue>(c))
     return getNullPtrNode();
   else if (const GlobalValue *gv = dyn_cast<GlobalValue>(c))
-    return getValueNodeFor(cs, gv);
+    return getValueNodeFor(nullptr, gv);
   else if (const ConstantExpr *ce = dyn_cast<ConstantExpr>(c)) {
     switch (ce->getOpcode()) {
     // Pointer to any field within a struct is treated as a pointer to the first
     // field
     case Instruction::GetElementPtr:
-      return getValueNodeFor(cs, c->getOperand(0));
+      return getValueNodeFor(nullptr, c->getOperand(0));
     case Instruction::IntToPtr:
     case Instruction::PtrToInt:
       return createValueNode(nullptr);
     case Instruction::BitCast:
-      return getValueNodeForConstant(cs, ce->getOperand(0));
+      return getValueNodeForConstant(ce->getOperand(0));
     default:
       errs() << "Constant Expr not yet handled: " << *ce << "\n";
       llvm_unreachable(0);
@@ -167,8 +168,8 @@ AndersNodeFactory::getObjectNodeForConstant(const CallBase* cs, const llvm::Cons
 }
 
 NodeIndex AndersNodeFactory::getReturnNodeFor(const llvm::CallBase *cs, const llvm::Function *f) const {
-  errs() << "getReturnNodeFor\n" << "  cs = " << *cs << "\n  func = " << f->getName() << "\n\n";
-  errs() << cs << ", " << f << "\n";
+  // errs() << "getReturnNodeFor\n" << "  cs = " << *cs << "\n  func = " << f->getName() << "\n\n";
+  // errs() << cs << ", " << f << "\n";
 
   // errs() << "returnMap[keys]:\n";
   // for (const auto &[k, v] : returnMap) {
