@@ -20,13 +20,13 @@ cl::opt<bool> DumpConstraintInfo("dump-cons",
 Andersen::Andersen(const Module &module) { runOnModule(module); }
 
 void Andersen::getAllAllocationSites(
-    std::vector<const llvm::Value *> &allocSites) const {
+    std::vector<std::pair<const llvm::CallBase*, const llvm::Value *>> &allocSites) const {
   nodeFactory.getAllocSites(allocSites);
 }
 
-bool Andersen::getPointsToSet(const llvm::Value *v,
+bool Andersen::getPointsToSet(const llvm::CallBase *cs, const llvm::Value *v,
                               std::vector<const llvm::Value *> &ptsSet) {
-  NodeIndex ptrIndex = nodeFactory.getValueNodeFor(v);
+  NodeIndex ptrIndex = nodeFactory.getValueNodeFor(cs, v);
   // We have no idea what v is...
   if (ptrIndex == AndersNodeFactory::InvalidIndex ||
       ptrIndex == nodeFactory.getUniversalPtrNode())
@@ -53,9 +53,9 @@ bool Andersen::getPointsToSet(const llvm::Value *v,
   return true;
 }
 
-bool Andersen::getPointsFromSet(const llvm::Value *v,
+bool Andersen::getPointsFromSet(const llvm::CallBase *cs, const llvm::Value *v,
                                 std::vector<const llvm::Value *> &ptsSet) {
-  NodeIndex ptrIndex = nodeFactory.getValueNodeFor(v);
+  NodeIndex ptrIndex = nodeFactory.getValueNodeFor(cs, v);
   if (ptrIndex == AndersNodeFactory::InvalidIndex ||
       ptrIndex == nodeFactory.getUniversalPtrNode())
     return false;
@@ -78,13 +78,13 @@ bool Andersen::getPointsFromSet(const llvm::Value *v,
 bool Andersen::runOnModule(const Module &M) {
   collectConstraints(M);
 
-  if (DumpDebugInfo)
-    dumpConstraintsPlainVanilla();
+  // if (DumpDebugInfo)
+  dumpConstraintsPlainVanilla();
 
   optimizeConstraints();
 
-  if (DumpConstraintInfo)
-    dumpConstraints();
+  // if (DumpConstraintInfo)
+  dumpConstraints();
 
   solveConstraints();
 
@@ -93,11 +93,11 @@ bool Andersen::runOnModule(const Module &M) {
     dumpPtsGraphPlainVanilla();
   }
 
-  if (DumpResultInfo) {
-    nodeFactory.dumpNodeInfo();
-    errs() << "\n";
-    dumpPtsGraphPlainVanilla();
-  }
+  // if (DumpResultInfo) {
+  nodeFactory.dumpNodeInfo();
+  errs() << "\n";
+  dumpPtsGraphPlainVanilla();
+  // }
 
   return false;
 }

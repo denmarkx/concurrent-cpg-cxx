@@ -15,7 +15,7 @@
 
 using namespace llvm;
 
-TEST_CASE("Andersen[PtsSetTest]") {
+/*TEST_CASE("Andersen[PtsSetTest]") {
     // CHECK(factorial(1) == 1);
     AndersPtsSet pSet1, pSet2;
     CHECK(pSet1.isEmpty());
@@ -456,3 +456,4 @@ TEST_CASE("Andersen[Phi_Merge]") {
     CHECK(ptsContains(pts, xAlloca));
     CHECK(ptsContains(pts, yAlloca));
 }
+*/

@@ -131,7 +131,7 @@ public:
 private:
     void handleThreadNode(ThreadNode *node) {
         std::vector<const llvm::Value *> ptsSet{};
-        GraphManager::get()->getAliasResult()->getPointsToSet(
+        GraphManager::get()->getAliasResult()->getPointsToSet(nullptr,
             node->getDataNode()->getValue(), ptsSet);
 
         for (const Value *v : ptsSet) {
@@ -204,7 +204,7 @@ private:
                 // If we're down here, we couldn't resolve this indirect call.
                 // Our next attempt will be to see if this points to anything.
                 std::vector<const Value*> ptsSet;
-                GraphManager::get()->getAliasResult()->getPointsToSet(currentCall->getCalledOperand(), ptsSet);
+                GraphManager::get()->getAliasResult()->getPointsToSet(nullptr, currentCall->getCalledOperand(), ptsSet);
 
                 for (const Value* val : ptsSet) {
                     if (const Function *next = dyn_cast<Function>(val)) {
@@ -257,11 +257,11 @@ private:
         const Value *data = routine->getArg(0);
 
         std::vector<const Value *> ptsSet{};
-        GraphManager::get()->getAliasResult()->getPointsToSet(data, ptsSet);
+        GraphManager::get()->getAliasResult()->getPointsToSet(nullptr, data, ptsSet);
 
         for (const Value *v : ptsSet) {
             std::vector<const Value *> innerSet{};
-            GraphManager::get()->getAliasResult()->getPointsFromSet(v, innerSet);
+            GraphManager::get()->getAliasResult()->getPointsFromSet(nullptr, v, innerSet);
             for (const Value *w : innerSet) {
                 if (auto *instr = dyn_cast<Instruction>(w)) {
                     handleUsageInstruction(instr, summary);

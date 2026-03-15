@@ -23,7 +23,7 @@ int main() {
     LLVMContext ctx;
     SMDiagnostic error;
 
-    std::unique_ptr<Module> module = parseIRFile("std_rs.ll", error, ctx);
+    std::unique_ptr<Module> module = parseIRFile("simple.ll", error, ctx);
 
     if (module == nullptr) {
         error.print("", errs());

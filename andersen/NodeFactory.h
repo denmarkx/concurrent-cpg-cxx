@@ -5,9 +5,11 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Value.h"
 
 #include <vector>
+#include <utility>
 
 // AndersNode class - This class is used to represent a node in the constraint
 // graph.  Due to various optimizations, it is not always the case that there is
@@ -42,6 +44,8 @@ public:
 // std::unique_ptr and heap allocations. Therefore, we use plain integers to
 // represent nodes for public functions like createXXX and getXXX. This is ugly,
 // but it is efficient.
+typedef llvm::DenseMap<std::pair<const llvm::CallBase*, const llvm::Value*>, NodeIndex> NodeMapType;
+
 class AndersNodeFactory {
 public:
   // The largest unsigned int is reserved for invalid index
@@ -59,17 +63,17 @@ private:
 
   // valueNodeMap - This map indicates the AndersNode* that a particular Value*
   // corresponds to
-  llvm::DenseMap<const llvm::Value *, NodeIndex> valueNodeMap;
+  NodeMapType valueNodeMap;
 
   // ObjectNodes - This map contains entries for each memory object in the
   // program: globals, alloca's and mallocs. We are able to represent them as
   // llvm::Value* because we're modeling the heap with the simplest
   // allocation-site approach
-  llvm::DenseMap<const llvm::Value *, NodeIndex> objNodeMap;
+  NodeMapType objNodeMap;
 
   // returnMap - This map contains an entry for each function in the program
   // that returns a ptr.
-  llvm::DenseMap<const llvm::Function *, NodeIndex> returnMap;
+  llvm::DenseMap<std::pair<const llvm::CallBase*, const llvm::Function *>, NodeIndex> returnMap;
 
   // varargMap - This map contains the entry used to represent all pointers
   // passed through the varargs portion of a function call for a particular
@@ -81,17 +85,17 @@ public:
   AndersNodeFactory();
 
   // Factory methods
-  NodeIndex createValueNode(const llvm::Value *val = nullptr);
-  NodeIndex createObjectNode(const llvm::Value *val = nullptr);
-  NodeIndex createReturnNode(const llvm::Function *f);
+  NodeIndex createValueNode(const llvm::CallBase *cs = nullptr, const llvm::Value *val = nullptr);
+  NodeIndex createObjectNode(const llvm::CallBase *cs = nullptr, const llvm::Value *val = nullptr);
+  NodeIndex createReturnNode(const llvm::CallBase *cs, const llvm::Function *f);
   NodeIndex createVarargNode(const llvm::Function *f);
 
   // Map lookup interfaces (return InvalidIndex if value not found)
-  NodeIndex getValueNodeFor(const llvm::Value *val);
-  NodeIndex getValueNodeForConstant(const llvm::Constant *c);
-  NodeIndex getObjectNodeFor(const llvm::Value *val) const;
-  NodeIndex getObjectNodeForConstant(const llvm::Constant *c) const;
-  NodeIndex getReturnNodeFor(const llvm::Function *f) const;
+  NodeIndex getValueNodeFor(const llvm::CallBase *cs, const llvm::Value *val);
+  NodeIndex getValueNodeForConstant(const llvm::CallBase *cs, const llvm::Constant *c);
+  NodeIndex getObjectNodeFor(const llvm::CallBase *cs, const llvm::Value *val) const;
+  NodeIndex getObjectNodeForConstant(const llvm::CallBase *cs, const llvm::Constant *c) const;
+  NodeIndex getReturnNodeFor(const llvm::CallBase *cs, const llvm::Function *f) const;
   NodeIndex getVarargNodeFor(const llvm::Function *f) const;
 
   // Node merge interfaces
@@ -118,10 +122,12 @@ public:
   const llvm::Value *getValueForNode(NodeIndex i) const {
     return nodes.at(i).getValue();
   }
-  void getAllocSites(std::vector<const llvm::Value *> &) const;
+  void getAllocSites(std::vector<std::pair<const llvm::CallBase*, const llvm::Value *>> &) const;
 
   // Value remover
-  void removeNodeForValue(const llvm::Value *val) { valueNodeMap.erase(val); }
+  void removeNodeForValue(const llvm::CallBase *callSite, const llvm::Value *val) { 
+    valueNodeMap.erase({callSite, val}); 
+  }
 
   // Size getters
   unsigned getNumNodes() const { return nodes.size(); }

@@ -2,10 +2,12 @@
 #include "Node.h"
 #include "BasicBlockNode.h"
 #include "ParamNode.h"
+#include "graph/GraphManager.h"
 #include "graph/GroupNode.h"
 
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/Demangle/Demangle.h>
+#include "llvm/Analysis/MemoryLocation.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"
 #include <vector>
@@ -37,6 +39,25 @@ public:
             i++;
         }
 
+        const CallBase *a = nullptr;
+        const CallBase *b = nullptr;
+        if (F->getName().str() == "main") {
+            for (auto &bb : *F) {
+                for (auto &i : bb) {
+                    if (const CallBase *c = dyn_cast<CallBase>(&i)) {
+                        if (a == nullptr) {
+                            a = const_cast<CallBase*>(c);
+                        } else {
+                            b = const_cast<CallBase*>(c);
+                        }
+                    }
+                }
+            }
+
+            MemoryLocation m1(a, MemoryLocation::UnknownSize);
+            MemoryLocation m2(b, MemoryLocation::UnknownSize);
+            errs() << GraphManager::get()->getAliasResult()->alias(nullptr, nullptr, m1, m2) << "\n";
+        }
         return node;
     }
 

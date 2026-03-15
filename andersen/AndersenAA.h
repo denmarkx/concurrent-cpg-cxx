@@ -11,22 +11,22 @@ private:
   friend llvm::AAResultBase;
 
   Andersen anders;
-  llvm::AliasResult andersenAlias(const llvm::Value *, const llvm::Value *);
+  llvm::AliasResult andersenAlias(const llvm::CallBase *c1, const llvm::CallBase *c2, const llvm::Value *, const llvm::Value *);
 
 public:
   AndersenAAResult(const llvm::Module &);
 
-  llvm::AliasResult alias(const llvm::MemoryLocation &,
+  llvm::AliasResult alias(const llvm::CallBase *c1, const llvm::CallBase *c2, const llvm::MemoryLocation &,
                           const llvm::MemoryLocation &);
   bool pointsToConstantMemory(const llvm::MemoryLocation &, bool);
   
-  bool getPointsToSet(const llvm::Value *v,
+  bool getPointsToSet(const llvm::CallBase *cs, const llvm::Value *v,
                       std::vector<const llvm::Value *> &ptsSet);
 
-  bool getPointsFromSet(const llvm::Value *v,
+  bool getPointsFromSet(const llvm::CallBase *cs, const llvm::Value *v,
                       std::vector<const llvm::Value *> &ptsSet);
 
-  void printPointsToSet(const llvm::Value *v);
+  void printPointsToSet(const llvm::CallBase *cs, const llvm::Value *v);
 };
 
 class AndersenAAWrapperPass : public llvm::ModulePass {

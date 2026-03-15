@@ -73,13 +73,16 @@ private:
 
   // Helper functions for constraint collection
   void collectConstraintsForGlobals(const llvm::Module &);
-  void collectConstraintsForInstruction(const llvm::Instruction *);
+  void collectConstraintsForInstruction(const llvm::CallBase *, const llvm::Instruction *);
   void addGlobalInitializerConstraints(NodeIndex, const llvm::Constant *);
-  void addConstraintForCall(const llvm::CallBase* cs);
-  bool addConstraintForExternalLibrary(const llvm::CallBase* cs,
+  void addConstraintForCall(const llvm::CallBase*, const llvm::CallBase* cs);
+  bool addConstraintForExternalLibrary(const llvm::CallBase *parentCS,
+                                       const llvm::CallBase* cs,
                                        const llvm::Function *f);
-  void addArgumentConstraintForCall(const llvm::CallBase* cs,
+  void addArgumentConstraintForCall(const llvm::CallBase *parentCS,
+                                    const llvm::CallBase* cs,
                                     const llvm::Function *f);
+  void scanFunction(const llvm::CallBase *, const llvm::Function *f);
 
   // Helper functions for constraint optimization
   NodeIndex getRefNodeIndex(NodeIndex n) const;
@@ -102,16 +105,16 @@ public:
   // words, the client must conservatively assume v can points to everything.
   // - Return true otherwise, and the points-to set of v is put into the second
   // argument.
-  bool getPointsToSet(const llvm::Value *v,
+  bool getPointsToSet(const llvm::CallBase *cs, const llvm::Value *v,
                       std::vector<const llvm::Value *> &ptsSet);
 
-  bool getPointsFromSet(const llvm::Value *v,
+  bool getPointsFromSet(const llvm::CallBase *cs, const llvm::Value *v,
                       std::vector<const llvm::Value *> &ptsSet);
 
   // Put all allocation sites (i.e. all memory objects identified by the
   // analysis) into the first arugment
   void
-  getAllAllocationSites(std::vector<const llvm::Value *> &allocSites) const;
+  getAllAllocationSites(std::vector<std::pair<const llvm::CallBase*, const llvm::Value *>> &allocSites) const;
 
   friend class AndersenAAResult;
 };
