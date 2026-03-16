@@ -83,6 +83,7 @@ private:
                                     const llvm::CallBase* cs,
                                     const llvm::Function *f);
   void scanFunction(const llvm::CallBase *, const llvm::Function *f);
+  void setupFunctionConstraints(const llvm::CallBase*, const llvm::Function *f);
 
   // Helper functions for constraint optimization
   NodeIndex getRefNodeIndex(NodeIndex n) const;

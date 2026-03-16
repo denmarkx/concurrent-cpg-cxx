@@ -1,3 +1,4 @@
+#include "llvm/Analysis/AliasAnalysis.h"
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 
@@ -455,4 +456,152 @@ TEST_CASE("Andersen[Phi_Merge]") {
     CHECK_EQ(pts.size(), 2u);
     CHECK(ptsContains(pts, xAlloca));
     CHECK(ptsContains(pts, yAlloca));
+}
+
+TEST_CASE("Andersen[ContextGlobalNoAlias]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        @g = global i32 100, align 4
+        @h = global i32 500, align 4
+
+        define ptr @get(ptr noundef %0) #0 {
+          %2 = alloca ptr, align 8
+          store ptr %0, ptr %2, align 8
+          %3 = load ptr, ptr %2, align 8
+          ret ptr %3
+        }
+
+        define dso_local i32 @main() #0 {
+          %1 = alloca i32, align 4
+          %2 = alloca ptr, align 8
+          %3 = alloca ptr, align 8
+          store i32 0, ptr %1, align 4
+          %x = call ptr @get(ptr noundef @g)
+          store ptr %x, ptr %2, align 8
+          %y = call ptr @get(ptr noundef @h)
+          store ptr %y, ptr %3, align 8
+          ret i32 0
+        }
+    )");
+
+    auto anders = std::make_unique<AndersenAAResult>(AndersenAAResult(*module));
+    const Function *F = module->getFunction("main");
+
+    const Value *xAlloca = findInstr(F, "x");
+    const Value *yAlloca = findInstr(F, "y");
+    REQUIRE(xAlloca != nullptr);
+    REQUIRE(yAlloca != nullptr);
+
+    AliasResult result = anders->alias(xAlloca, yAlloca);
+    CHECK_EQ(result, AliasResult::NoAlias);
+}
+
+
+TEST_CASE("Andersen[ContextGlobalAlias]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        @g = global i32 100, align 4
+        @h = global i32 500, align 4
+
+        define ptr @get(ptr noundef %0) #0 {
+          %2 = alloca ptr, align 8
+          store ptr %0, ptr %2, align 8
+          %3 = load ptr, ptr %2, align 8
+          ret ptr %3
+        }
+
+        define dso_local i32 @main() #0 {
+          %1 = alloca i32, align 4
+          %2 = alloca ptr, align 8
+          %3 = alloca ptr, align 8
+          store i32 0, ptr %1, align 4
+          %x = call ptr @get(ptr noundef @g)
+          store ptr %x, ptr %2, align 8
+          %y = call ptr @get(ptr noundef @g)
+          store ptr %y, ptr %3, align 8
+          ret i32 0
+        }
+    )");
+
+    auto anders = std::make_unique<AndersenAAResult>(AndersenAAResult(*module));
+    const Function *F = module->getFunction("main");
+
+    const Value *xAlloca = findInstr(F, "x");
+    const Value *yAlloca = findInstr(F, "y");
+    REQUIRE(xAlloca != nullptr);
+    REQUIRE(yAlloca != nullptr);
+
+    AliasResult result = anders->alias(xAlloca, yAlloca);
+    errs() << result << "\n";
+    CHECK_EQ(result, AliasResult::MustAlias);
+}
+
+// TODO: fails; mayalias.
+TEST_CASE("Andersen[ContextSensitiveTwoLevelCall]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        @g = global i32 3
+        @h = global i32 4
+
+        define ptr @inner(ptr %p) {
+          ret ptr %p
+        }
+
+        define ptr @outer(ptr %q) {
+          %1 = call ptr @inner(ptr %q)
+          ret ptr %1
+        }
+
+        define i32 @main() {
+          %x = call ptr @outer(ptr @g)
+          %y = call ptr @outer(ptr @h)
+          ret i32 0
+        }
+    )");
+
+    auto anders = std::make_unique<AndersenAAResult>(*module);
+    const Function *F = module->getFunction("main");
+
+    const Value *x = findInstr(F, "x");
+    const Value *y = findInstr(F, "y");
+
+    REQUIRE(x != nullptr);
+    REQUIRE(y != nullptr);
+
+    AliasResult result = anders->alias(x, y);
+    errs() << result << "\n";
+    CHECK_EQ(result, AliasResult::NoAlias);
+}
+
+TEST_CASE("Andersen[ContextSensitiveMixed]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        @g = global i32 1
+        @h = global i32 2
+
+        define ptr @id(ptr %p) {
+          ret ptr %p
+        }
+
+        define i32 @main() {
+          %x = call ptr @id(ptr @g)
+          %y = call ptr @id(ptr @h)
+          %z = call ptr @id(ptr @g)
+          ret i32 0
+        }
+    )");
+
+    auto anders = std::make_unique<AndersenAAResult>(*module);
+    const Function *F = module->getFunction("main");
+
+    const Value *x = findInstr(F, "x");
+    const Value *y = findInstr(F, "y");
+    const Value *z = findInstr(F, "z");
+
+    REQUIRE(x);
+    REQUIRE(y);
+    REQUIRE(z);
+
+    CHECK_EQ(anders->alias(x, y), AliasResult::NoAlias);
+    CHECK_EQ(anders->alias(x, z), AliasResult::MustAlias);
 }

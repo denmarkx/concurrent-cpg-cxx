@@ -14,9 +14,6 @@ Testing*
 *.dylib
 *.clangd
 *.so
-*.ll
-*.rs
-*.c
 *.out
 *.exe
 *.tcl

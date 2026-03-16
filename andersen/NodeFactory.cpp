@@ -179,7 +179,6 @@ NodeIndex AndersNodeFactory::getReturnNodeFor(const llvm::CallBase *cs, const ll
   if (itr == returnMap.end())
     return InvalidIndex;
   else {
-    errs() << "getReturnNodeFor --> " << itr->second << "\n";
     return itr->second;
   }
 }

@@ -40,30 +40,8 @@ void Andersen::collectConstraints(const Module &M) {
   // analysis result first
 
   for (auto const &f : M) {
-    if (f.isDeclaration() || f.isIntrinsic())
-      continue;
-
-    errs() << "Usages of " << f.getName() << ":\n";
-    if (f.users().empty())
-      errs() << "  (empty)\n";
-
-    std::vector<const CallBase*> callers;
-    for (const User *user : f.users()) {
-      if (const CallBase *call = dyn_cast<CallBase>(user)) {
-        if (call->getCalledFunction() == &f) {
-          callers.push_back(call);
-          errs() << " - " << *call << "\n";
-        }
-      }
-    }
-
-    // Scan the function body for each callsite.
-    for (const CallBase *callSite : callers) {
-      scanFunction(callSite, &f);
-    }
-
-    if (callers.empty())
-      scanFunction(nullptr, &f);
+    if (f.isDeclaration() || f.isIntrinsic()) continue;
+    scanFunction(nullptr, &f);
   }
 }
 
@@ -77,6 +55,15 @@ void Andersen::scanFunction(const llvm::CallBase * cs, const llvm::Function *f) 
     auto inst = &*itr.getInstructionIterator();
     if (inst->getType()->isPointerTy())
       nodeFactory.createValueNode(cs, inst);
+
+    // If this is a call, we scan that function:
+    if (const CallBase *cs = dyn_cast<CallBase>(inst)) {
+      if (cs->getCalledFunction()) {
+        errs() << "calling scanFunction on cs' func: \n" << "  cs = " << *cs << "\n  func = " << cs->getCalledFunction()->getName() << "\n\n";
+        setupFunctionConstraints(cs, cs->getCalledFunction());
+        scanFunction(cs, cs->getCalledFunction());
+      }
+    }
   }
   
   // Now, collect constraint for each relevant instruction
@@ -114,53 +101,9 @@ void Andersen::collectConstraintsForGlobals(const Module &M) {
   }
 
   // Functions and function pointers are also considered global
+  // These may be cloned, but that is done on-the-fly rather than here.
   for (auto const &f : M) {
-    std::vector<const CallBase*> callers;
-    for (const User *user : f.users()) {
-      if (const CallBase *call = dyn_cast<CallBase>(user)) {
-        callers.push_back(call);
-      }
-    }
-
-    for (const CallBase *cs : callers) {
-      // If f is an addr-taken function, create a pointer and an object for it
-      if (f.hasAddressTaken()) {
-        // 创建一个值节点和一个对象节点
-        NodeIndex fVal = nodeFactory.createValueNode(cs, &f);
-        NodeIndex fObj = nodeFactory.createObjectNode(cs, &f);
-        constraints.emplace_back(AndersConstraint::ADDR_OF, fVal, fObj);
-      }
-
-      if (f.isDeclaration() || f.isIntrinsic())
-        continue;
-
-      // Create return node
-      if (f.getFunctionType()->getReturnType()->isPointerTy()) {
-        nodeFactory.createReturnNode(cs, &f);
-      }
-
-      // Create vararg node
-      if (f.getFunctionType()->isVarArg())
-        nodeFactory.createVarargNode(&f);
-
-      // Add nodes for all formal arguments.
-      for (Function::const_arg_iterator itr = f.arg_begin(), ite = f.arg_end();
-           itr != ite; ++itr) {
-        if (isa<PointerType>(itr->getType()))
-          nodeFactory.createValueNode(cs, &*itr);
-      }
-    }
-
-    // Since funcs are global, their callsite is null (for the case of func ptrs).
-    nodeFactory.createValueNode(nullptr, &f);
-    nodeFactory.createObjectNode(nullptr, &f);
-
-    // TODO: not entirely sure if this is correct:
-    for (Function::const_arg_iterator itr = f.arg_begin(), ite = f.arg_end();
-         itr != ite; ++itr) {
-      if (isa<PointerType>(itr->getType()))
-        nodeFactory.createValueNode(nullptr, &*itr);
-    }
+    setupFunctionConstraints(nullptr, &f);
   }
 
   // Init globals here since an initializer may refer to a global var/func below
@@ -178,6 +121,42 @@ void Andersen::collectConstraintsForGlobals(const Module &M) {
       NodeIndex fObj = nodeFactory.createObjectNode(nullptr);
       constraints.emplace_back(AndersConstraint::ADDR_OF, gObj, fObj);
     }
+  }
+}
+
+void Andersen::setupFunctionConstraints(const CallBase *cs, const Function *f) {
+  errs() << "setupFunctionConstraints {\n";
+  errs() << "   f = " << f->getName() << "\n";
+  errs() << "   cs = ";
+  if (cs)
+    errs() << *cs << "\n";
+  else
+    errs() << "null\n";
+  errs() << "}\n\n";
+  // If f is an addr-taken function, create a pointer and an object for it
+  if (f->hasAddressTaken()) {
+    // 创建一个值节点和一个对象节点
+    NodeIndex fVal = nodeFactory.createValueNode(cs, f);
+    NodeIndex fObj = nodeFactory.createObjectNode(cs, f);
+    constraints.emplace_back(AndersConstraint::ADDR_OF, fVal, fObj);
+  }
+
+  if (f->isDeclaration() || f->isIntrinsic()) return;
+
+  // Create return node
+  if (f->getFunctionType()->getReturnType()->isPointerTy()) {
+    nodeFactory.createReturnNode(cs, f);
+  }
+
+  // Create vararg node
+  if (f->getFunctionType()->isVarArg())
+    nodeFactory.createVarargNode(f);
+
+  // Add nodes for all formal arguments.
+  for (Function::const_arg_iterator itr = f->arg_begin(), ite = f->arg_end();
+       itr != ite; ++itr) {
+    if (isa<PointerType>(itr->getType()))
+      nodeFactory.createValueNode(cs, &*itr);
   }
 }
 
