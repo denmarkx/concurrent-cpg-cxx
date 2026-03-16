@@ -17,5 +17,5 @@ private:
 
 private:
     neo4j_connection_t* conn;
-    const size_t batchSize = 100;
+    const size_t batchSize = 1000;
 };

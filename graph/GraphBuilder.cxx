@@ -38,7 +38,6 @@ void GraphBuilder::persistAll() {
 
     std::vector<Node*> nodes = GraphManager::get()->getNodes();
     size_t numBatches = (nodes.size() + batchSize - 1) / batchSize;
-
     for (size_t batch = 0; batch < numBatches; batch++) {
         size_t start = batch * batchSize;
         size_t end = std::min(start + batchSize, nodes.size());
@@ -65,7 +64,7 @@ void GraphBuilder::persistAll() {
                 batchData << Util::parseNeo4jKey(k) << ": '" << v << "', ";
                 propSize++;
             }
-            batchData << "name: '" << nodes[i]->getName() << "'}";
+            batchData << "name: '" << Util::escapeCypherString(nodes[i]->getName()) << "'}";
         }
         batchData << "]";
 

@@ -4,8 +4,25 @@
 #include "llvm/Support/raw_ostream.h"
 #include <sstream>
 #include <iostream>
+#include <array>
 
 namespace Util {
+    inline std::string escapeCypherString(const std::string& s) {
+        std::string out;
+        out.reserve(s.size());
+
+        for (char c : s) {
+            if (c == '\'')
+                out += "\\'";
+            else if (c == '\\')
+                out += "\\\\";
+            else
+                out += c;
+        }
+
+        return out;
+    }
+
     inline std::string getName(const llvm::Value* value) {
         if (value == nullptr) return "";
 

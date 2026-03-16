@@ -17,7 +17,7 @@ public:
             name = "";
             llvm::raw_string_ostream stream(name);
             B->print(stream);
-            name = name.substr(0, name.find_first_of(':'));
+            name = name.substr(1, name.find_first_of(':')-1);
         }
         node->_name = name;
         return node;
