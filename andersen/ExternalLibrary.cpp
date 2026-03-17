@@ -105,7 +105,7 @@ static bool lookupName(const char *table[], const char *str) {
 // and add constraint correspondingly If this is a call to a "known" function,
 // add the constraints and return true. If this is a call to an unknown
 // function, return false.
-bool Andersen::addConstraintForExternalLibrary(const llvm::CallBase *parentCS,
+bool Andersen::addConstraintForExternalLibrary(Context* context,
                                                const CallBase *cs,
                                                const Function *f) {
   assert(f != nullptr && "called function is nullptr!");
@@ -126,14 +126,14 @@ bool Andersen::addConstraintForExternalLibrary(const llvm::CallBase *parentCS,
       (isReallocLike && !isa<ConstantPointerNull>(cs->getArgOperand(0)))) {
     const Instruction *inst = cs;
     // Create the obj node
-    NodeIndex objIndex = nodeFactory.createObjectNode(parentCS, inst);
+    NodeIndex objIndex = nodeFactory.createObjectNode(context, inst);
 
     // Get the pointer node
-    NodeIndex ptrIndex = nodeFactory.getValueNodeFor(parentCS, inst);
+    NodeIndex ptrIndex = nodeFactory.getValueNodeFor(context, inst);
     if (ptrIndex == AndersNodeFactory::InvalidIndex) {
       // Must be something like posix_memalign()
       if (f->getName() == "posix_memalign") {
-        ptrIndex = nodeFactory.getValueNodeFor(parentCS, cs->getArgOperand(0));
+        ptrIndex = nodeFactory.getValueNodeFor(context, cs->getArgOperand(0));
         assert(ptrIndex != AndersNodeFactory::InvalidIndex &&
                "Failed to find arg0 node");
         NodeIndex fPtr = nodeFactory.createValueNode();
@@ -153,9 +153,9 @@ bool Andersen::addConstraintForExternalLibrary(const llvm::CallBase *parentCS,
 
   if (lookupName(retArg0Funcs, f->getName().data()) ||
       (isReallocLike && isa<ConstantPointerNull>(cs->getArgOperand(0)))) {
-    NodeIndex retIndex = nodeFactory.getValueNodeFor(parentCS, cs);
+    NodeIndex retIndex = nodeFactory.getValueNodeFor(context, cs);
     if (retIndex != AndersNodeFactory::InvalidIndex) {
-      NodeIndex arg0Index = nodeFactory.getValueNodeFor(parentCS, cs->getArgOperand(0));
+      NodeIndex arg0Index = nodeFactory.getValueNodeFor(context, cs->getArgOperand(0));
       assert(arg0Index != AndersNodeFactory::InvalidIndex &&
              "Failed to find arg0 node");
       constraints.emplace_back(AndersConstraint::COPY, retIndex, arg0Index);
@@ -166,10 +166,10 @@ bool Andersen::addConstraintForExternalLibrary(const llvm::CallBase *parentCS,
 
   if (lookupName(retArg1Funcs, f->getName().data())) {
     return false; // TODO; signal()
-    NodeIndex retIndex = nodeFactory.getValueNodeFor(parentCS, cs);
+    NodeIndex retIndex = nodeFactory.getValueNodeFor(context, cs);
     assert(retIndex != AndersNodeFactory::InvalidIndex &&
            "Failed to find call site node");
-    NodeIndex arg1Index = nodeFactory.getValueNodeFor(parentCS, cs->getArgOperand(1));
+    NodeIndex arg1Index = nodeFactory.getValueNodeFor(context, cs->getArgOperand(1));
     assert(arg1Index != AndersNodeFactory::InvalidIndex &&
            "Failed to find arg1 node");
     constraints.emplace_back(AndersConstraint::COPY, retIndex, arg1Index);
@@ -177,10 +177,10 @@ bool Andersen::addConstraintForExternalLibrary(const llvm::CallBase *parentCS,
   }
 
   if (lookupName(retArg2Funcs, f->getName().data())) {
-    NodeIndex retIndex = nodeFactory.getValueNodeFor(parentCS, cs);
+    NodeIndex retIndex = nodeFactory.getValueNodeFor(context, cs);
     assert(retIndex != AndersNodeFactory::InvalidIndex &&
            "Failed to find call site node");
-    NodeIndex arg2Index = nodeFactory.getValueNodeFor(parentCS, cs->getArgOperand(2));
+    NodeIndex arg2Index = nodeFactory.getValueNodeFor(context, cs->getArgOperand(2));
     assert(arg2Index != AndersNodeFactory::InvalidIndex &&
            "Failed to find arg2 node");
     constraints.emplace_back(AndersConstraint::COPY, retIndex, arg2Index);
@@ -188,10 +188,10 @@ bool Andersen::addConstraintForExternalLibrary(const llvm::CallBase *parentCS,
   }
 
   if (lookupName(memcpyFuncs, f->getName().data())) {
-    NodeIndex arg0Index = nodeFactory.getValueNodeFor(parentCS, cs->getArgOperand(0));
+    NodeIndex arg0Index = nodeFactory.getValueNodeFor(context, cs->getArgOperand(0));
     assert(arg0Index != AndersNodeFactory::InvalidIndex &&
            "Failed to find arg0 node");
-    NodeIndex arg1Index = nodeFactory.getValueNodeFor(parentCS, cs->getArgOperand(1));
+    NodeIndex arg1Index = nodeFactory.getValueNodeFor(context, cs->getArgOperand(1));
     assert(arg1Index != AndersNodeFactory::InvalidIndex &&
            "Failed to find arg1 node");
 
@@ -200,7 +200,7 @@ bool Andersen::addConstraintForExternalLibrary(const llvm::CallBase *parentCS,
     constraints.emplace_back(AndersConstraint::STORE, arg0Index, tempIndex);
 
     // Don't forget the return value
-    NodeIndex retIndex = nodeFactory.getValueNodeFor(parentCS, cs);
+    NodeIndex retIndex = nodeFactory.getValueNodeFor(context, cs);
     if (retIndex != AndersNodeFactory::InvalidIndex)
       constraints.emplace_back(AndersConstraint::COPY, retIndex, arg0Index);
 
@@ -209,10 +209,10 @@ bool Andersen::addConstraintForExternalLibrary(const llvm::CallBase *parentCS,
 
   if (lookupName(convertFuncs, f->getName().data())) {
     if (!isa<ConstantPointerNull>(cs->getArgOperand(1))) {
-      NodeIndex arg0Index = nodeFactory.getValueNodeFor(parentCS, cs->getArgOperand(0));
+      NodeIndex arg0Index = nodeFactory.getValueNodeFor(context, cs->getArgOperand(0));
       assert(arg0Index != AndersNodeFactory::InvalidIndex &&
              "Failed to find arg0 node");
-      NodeIndex arg1Index = nodeFactory.getValueNodeFor(parentCS, cs->getArgOperand(1));
+      NodeIndex arg1Index = nodeFactory.getValueNodeFor(context, cs->getArgOperand(1));
       assert(arg1Index != AndersNodeFactory::InvalidIndex &&
              "Failed to find arg1 node");
       constraints.emplace_back(AndersConstraint::STORE, arg0Index, arg1Index);
@@ -225,7 +225,7 @@ bool Andersen::addConstraintForExternalLibrary(const llvm::CallBase *parentCS,
     const Instruction *inst = cs;
     const Function *parentF = inst->getParent()->getParent();
     assert(parentF->getFunctionType()->isVarArg());
-    NodeIndex arg0Index = nodeFactory.getValueNodeFor(parentCS, cs->getArgOperand(0));
+    NodeIndex arg0Index = nodeFactory.getValueNodeFor(context, cs->getArgOperand(0));
     assert(arg0Index != AndersNodeFactory::InvalidIndex &&
            "Failed to find arg0 node");
     NodeIndex vaIndex = nodeFactory.getVarargNodeFor(parentF);
@@ -243,13 +243,13 @@ bool Andersen::addConstraintForExternalLibrary(const llvm::CallBase *parentCS,
     const Value* data = cs->getArgOperand(3);
     if (data == nullptr) return false; // Not always given data, e.g., globals.
 
-    NodeIndex argIndex = nodeFactory.getValueNodeFor(parentCS, data);
+    NodeIndex argIndex = nodeFactory.getValueNodeFor(context, data);
     assert(argIndex != AndersNodeFactory::InvalidIndex && "Failed to find argIndex node");
 
     Function *routine = dyn_cast<Function>(cs->getArgOperand(2));
     if (routine == nullptr) return false; // Thread with no routine? Nonsense!
 
-    NodeIndex paramIndex = nodeFactory.getValueNodeFor(parentCS, routine->getArg(0));
+    NodeIndex paramIndex = nodeFactory.getValueNodeFor(context, routine->getArg(0));
     assert(paramIndex != AndersNodeFactory::InvalidIndex && "Failed to find paramIndex node");
 
     constraints.emplace_back(AndersConstraint::COPY, paramIndex, argIndex);

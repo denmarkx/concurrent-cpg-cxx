@@ -20,59 +20,63 @@ cl::opt<bool> DumpConstraintInfo("dump-cons",
 Andersen::Andersen(const Module &module) { runOnModule(module); }
 
 void Andersen::getAllAllocationSites(
-    std::vector<std::pair<const llvm::CallBase*, const llvm::Value *>> &allocSites) const {
+    std::vector<std::pair<Context*, const llvm::Value *>> &allocSites) const {
   nodeFactory.getAllocSites(allocSites);
 }
 
 bool Andersen::getPointsToSet(const llvm::CallBase *cs, const llvm::Value *v,
                               std::vector<const llvm::Value *> &ptsSet) {
-  NodeIndex ptrIndex = nodeFactory.getValueNodeFor(cs, v);
-  // We have no idea what v is...
-  if (ptrIndex == AndersNodeFactory::InvalidIndex ||
-      ptrIndex == nodeFactory.getUniversalPtrNode())
-    return false;
+  return false; // TODO
+  // NodeIndex ptrIndex = nodeFactory.getValueNodeFor(cs, v);
+  // // We have no idea what v is...
+  // if (ptrIndex == AndersNodeFactory::InvalidIndex ||
+  //     ptrIndex == nodeFactory.getUniversalPtrNode())
+  //   return false;
 
-  NodeIndex ptrTgt = nodeFactory.getMergeTarget(ptrIndex);
-  ptsSet.clear();
+  // NodeIndex ptrTgt = nodeFactory.getMergeTarget(ptrIndex);
+  // ptsSet.clear();
 
-  auto ptsItr = ptsGraph.find(ptrTgt);
-  if (ptsItr == ptsGraph.end()) {
-    // Can't find ptrTgt. The reason might be that ptrTgt is an undefined
-    // pointer. Dereferencing it is undefined behavior anyway, so we might just
-    // want to treat it as a nullptr pointer
-    return true;
-  }
-  for (auto v : ptsItr->second) {
-    if (v == nodeFactory.getNullObjectNode())
-      continue;
+  // auto ptsItr = ptsGraph.find(ptrTgt);
+  // if (ptsItr == ptsGraph.end()) {
+  //   // Can't find ptrTgt. The reason might be that ptrTgt is an undefined
+  //   // pointer. Dereferencing it is undefined behavior anyway, so we might just
+  //   // want to treat it as a nullptr pointer
+  //   return true;
+  // }
+  // for (auto v : ptsItr->second) {
+  //   if (v == nodeFactory.getNullObjectNode())
+  //     continue;
 
-    const llvm::Value *val = nodeFactory.getValueForNode(v);
-    if (val != nullptr)
-      ptsSet.push_back(val);
-  }
-  return true;
+  //   const llvm::Value *val = nodeFactory.getValueForNode(v);
+  //   if (val != nullptr)
+  //     ptsSet.push_back(val);
+  // }
+  // return true;
 }
 
 bool Andersen::getPointsFromSet(const llvm::CallBase *cs, const llvm::Value *v,
                                 std::vector<const llvm::Value *> &ptsSet) {
-  NodeIndex ptrIndex = nodeFactory.getValueNodeFor(cs, v);
-  if (ptrIndex == AndersNodeFactory::InvalidIndex ||
-      ptrIndex == nodeFactory.getUniversalPtrNode())
-    return false;
+  // NodeIndex ptrIndex = nodeFactory.getValueNodeFor(cs, v);
+  // if (ptrIndex == AndersNodeFactory::InvalidIndex ||
+  //     ptrIndex == nodeFactory.getUniversalPtrNode())
+  //   return false;
 
-  NodeIndex ptrTgt = nodeFactory.getMergeTarget(ptrIndex);
-  ptsSet.clear();
+  // NodeIndex ptrTgt = nodeFactory.getMergeTarget(ptrIndex);
+  // ptsSet.clear();
 
-  for (unsigned i = 0, e = nodeFactory.getNumNodes(); i < e; ++i) {
-    NodeIndex rep = nodeFactory.getMergeTarget(i);
-    auto ptsItr = ptsGraph.find(rep);
-    if (ptsItr != ptsGraph.end() && ptsItr->second.has(ptrIndex)) {
-      const llvm::Value *val = nodeFactory.getValueForNode(ptsItr->first);
-      if (val != nullptr)
-        ptsSet.push_back(val);
-    }
-  }
-  return true;
+  // for (unsigned i = 0, e = nodeFactory.getNumNodes(); i < e; ++i) {
+  //   NodeIndex rep = nodeFactory.getMergeTarget(i);
+  //   auto ptsItr = ptsGraph.find(rep);
+  //   if (ptsItr != ptsGraph.end() && ptsItr->second.has(ptrIndex)) {
+  //     const llvm::Value *val = nodeFactory.getValueForNode(ptsItr->first);
+  //     if (val != nullptr)
+  //       ptsSet.push_back(val);
+  //   }
+  // }
+  // return true;
+
+  // TODO
+  return false;
 }
 
 bool Andersen::runOnModule(const Module &M) {

@@ -54,6 +54,7 @@
 
 #include <vector>
 #include <map>
+
 class Andersen {
 private:
   // A factory object that knows how to manage AndersNodes
@@ -73,17 +74,17 @@ private:
 
   // Helper functions for constraint collection
   void collectConstraintsForGlobals(const llvm::Module &);
-  void collectConstraintsForInstruction(const llvm::CallBase *, const llvm::Instruction *);
+  void collectConstraintsForInstruction(Context*, const llvm::Instruction *);
   void addGlobalInitializerConstraints(NodeIndex, const llvm::Constant *);
-  void addConstraintForCall(const llvm::CallBase*, const llvm::CallBase* cs);
-  bool addConstraintForExternalLibrary(const llvm::CallBase *parentCS,
+  void addConstraintForCall(Context*, const llvm::CallBase* cs);
+  bool addConstraintForExternalLibrary(Context*,
                                        const llvm::CallBase* cs,
                                        const llvm::Function *f);
-  void addArgumentConstraintForCall(const llvm::CallBase *parentCS,
+  void addArgumentConstraintForCall(Context*,
                                     const llvm::CallBase* cs,
                                     const llvm::Function *f);
-  void scanFunction(const llvm::CallBase *, const llvm::Function *f);
-  void setupFunctionConstraints(const llvm::CallBase*, const llvm::Function *f);
+  void scanFunction(Context*, const llvm::Function *f);
+  void setupFunctionConstraints(Context*, const llvm::Function *f);
 
   // Helper functions for constraint optimization
   NodeIndex getRefNodeIndex(NodeIndex n) const;
@@ -106,6 +107,9 @@ public:
   // words, the client must conservatively assume v can points to everything.
   // - Return true otherwise, and the points-to set of v is put into the second
   // argument.
+
+  // TODO: this is a bit too unfriendly, but how else do
+  //   we know what context given the value?
   bool getPointsToSet(const llvm::CallBase *cs, const llvm::Value *v,
                       std::vector<const llvm::Value *> &ptsSet);
 
@@ -115,7 +119,7 @@ public:
   // Put all allocation sites (i.e. all memory objects identified by the
   // analysis) into the first arugment
   void
-  getAllAllocationSites(std::vector<std::pair<const llvm::CallBase*, const llvm::Value *>> &allocSites) const;
+  getAllAllocationSites(std::vector<std::pair<Context*, const llvm::Value *>> &allocSites) const;
 
   friend class AndersenAAResult;
 };

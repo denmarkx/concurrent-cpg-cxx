@@ -30,45 +30,43 @@ AndersNodeFactory::AndersNodeFactory() {
   assert(nodes.size() == 4);
 }
 
-NodeIndex AndersNodeFactory::createValueNode(const CallBase *cs, const Value *val) {
-  // errs() << "inserting " << *val << "\n";
-  // errs() << "   callsite = ";
-  // if (cs)
-    // errs() << *cs << "\n\n";
-  // else
-    // errs() << "null\n\n";
+NodeIndex AndersNodeFactory::createValueNode(Context *context, const Value *val) {
+  errs() << "inserting " << *val << "\n";
+  errs() << "   "; context->print();
   unsigned nextIdx = nodes.size();
   nodes.push_back(AndersNode(AndersNode::VALUE_NODE, nextIdx, val));
   if (val != nullptr) {
-    assert(!valueNodeMap.count({cs, val}) &&
+    assert(!valueNodeMap.count({context, val}) &&
            "Trying to insert two mappings to revValueNodeMap!");
-    valueNodeMap[{cs, val}] = nextIdx;
+    valueNodeMap[{context, val}] = nextIdx;
   }
 
   return nextIdx;
 }
 
-NodeIndex AndersNodeFactory::createObjectNode(const CallBase *cs, const Value *val) {
+NodeIndex AndersNodeFactory::createObjectNode(Context *context, const Value *val) {
   unsigned nextIdx = nodes.size();
   nodes.push_back(AndersNode(AndersNode::OBJ_NODE, nextIdx, val));
   if (val != nullptr) {
-    if (objNodeMap.contains({cs, val})) return objNodeMap[{cs, val}];
-    assert(!objNodeMap.count({cs, val}) &&
+    if (objNodeMap.contains({context, val})) return objNodeMap[{context, val}];
+    assert(!objNodeMap.count({context, val}) &&
            "Trying to insert two mappings to revObjNodeMap!");
-    objNodeMap[{cs, val}] = nextIdx;
+    objNodeMap[{context, val}] = nextIdx;
   }
 
   return nextIdx;
 }
 
 // TODO: this is imprecise for functions that have >1 return stmt.
-NodeIndex AndersNodeFactory::createReturnNode(const llvm::CallBase *cs, const llvm::Function *f) {
+NodeIndex AndersNodeFactory::createReturnNode(Context *context, const llvm::Function *f) {
   unsigned nextIdx = nodes.size();
   nodes.push_back(AndersNode(AndersNode::VALUE_NODE, nextIdx, f));
 
-  assert(!returnMap.count({cs, f}) && "Trying to insert two mappings to returnMap!");
+  assert(!returnMap.count({context, f}) && "Trying to insert two mappings to returnMap!");
+  errs() << "createReturnNode: [" << f->getName() << "]\n";
+  errs() << "   "; context->print();
   // errs() << "createReturnNode [" << nextIdx << "](\n" << "  cs = " << *cs << "\n  func = " << f->getName() << "\n\n";
-  returnMap[{cs, f}] = nextIdx;
+  returnMap[{context, f}] = nextIdx;
 
   return nextIdx;
 }
@@ -83,15 +81,15 @@ NodeIndex AndersNodeFactory::createVarargNode(const llvm::Function *f) {
   return nextIdx;
 }
 
-NodeIndex AndersNodeFactory::getValueNodeFor(const CallBase *cs, const Value *val) {
+NodeIndex AndersNodeFactory::getValueNodeFor(Context *context, const Value *val) {
   if (const Constant *c = dyn_cast<Constant>(val)) {
     if (!isa<GlobalValue>(c))
       return getValueNodeForConstant(c);
     else
-      cs = nullptr;
+      context = nullptr;
   }
 
-  auto itr = valueNodeMap.find({cs, val});
+  auto itr = valueNodeMap.find({context, val});
   if (itr == valueNodeMap.end())
     return InvalidIndex;
   else
@@ -126,12 +124,12 @@ NodeIndex AndersNodeFactory::getValueNodeForConstant(const llvm::Constant *c) {
   return InvalidIndex;
 }
 
-NodeIndex AndersNodeFactory::getObjectNodeFor(const CallBase *cs, const Value *val) const {
+NodeIndex AndersNodeFactory::getObjectNodeFor(Context *context, const Value *val) const {
   if (const Constant *c = dyn_cast<Constant>(val))
     if (!isa<GlobalValue>(c))
-      return getObjectNodeForConstant(cs, c);
+      return getObjectNodeForConstant(context, c);
 
-  auto itr = objNodeMap.find({cs, val});
+  auto itr = objNodeMap.find({context, val});
   if (itr == objNodeMap.end())
     return InvalidIndex;
   else
@@ -139,24 +137,24 @@ NodeIndex AndersNodeFactory::getObjectNodeFor(const CallBase *cs, const Value *v
 }
 
 NodeIndex
-AndersNodeFactory::getObjectNodeForConstant(const CallBase* cs, const llvm::Constant *c) const {
+AndersNodeFactory::getObjectNodeForConstant(Context *context, const llvm::Constant *c) const {
   assert(isa<PointerType>(c->getType()) && "Not a constant pointer!");
 
   if (isa<ConstantPointerNull>(c))
     return getNullObjectNode();
   else if (const GlobalValue *gv = dyn_cast<GlobalValue>(c))
-    return getObjectNodeFor(cs, gv);
+    return getObjectNodeFor(context, gv);
   else if (const ConstantExpr *ce = dyn_cast<ConstantExpr>(c)) {
     switch (ce->getOpcode()) {
     // Pointer to any field within a struct is treated as a pointer to the first
     // field
     case Instruction::GetElementPtr:
-      return getObjectNodeForConstant(cs, ce->getOperand(0));
+      return getObjectNodeForConstant(context, ce->getOperand(0));
     case Instruction::IntToPtr:
     case Instruction::PtrToInt:
       return getUniversalObjNode();
     case Instruction::BitCast:
-      return getObjectNodeForConstant(cs, ce->getOperand(0));
+      return getObjectNodeForConstant(context, ce->getOperand(0));
     default:
       errs() << "Constant Expr not yet handled: " << *ce << "\n";
       llvm_unreachable(0);
@@ -167,15 +165,18 @@ AndersNodeFactory::getObjectNodeForConstant(const CallBase* cs, const llvm::Cons
   return InvalidIndex;
 }
 
-NodeIndex AndersNodeFactory::getReturnNodeFor(const llvm::CallBase *cs, const llvm::Function *f) const {
-  // errs() << "getReturnNodeFor\n" << "  cs = " << *cs << "\n  func = " << f->getName() << "\n\n";
+NodeIndex AndersNodeFactory::getReturnNodeFor(Context *context, const llvm::Function *f) const {
+  errs() << "getReturnNodeFor\n" << "func = " << f->getName() << "\n";
+  errs() << "   "; context->print();
+  errs() << "\n\n";
+
   // errs() << cs << ", " << f << "\n";
 
   // errs() << "returnMap[keys]:\n";
   // for (const auto &[k, v] : returnMap) {
     // errs() << "  key pair: \n" << "    cs:[" << k.first << "] " << *k.first << "\n    fn[" << k.second << "]: " << k.second->getName() << "\n";
   // }
-  auto itr = returnMap.find({cs, f});
+  auto itr = returnMap.find({context, f});
   if (itr == returnMap.end())
     return InvalidIndex;
   else {
@@ -221,7 +222,7 @@ NodeIndex AndersNodeFactory::getMergeTarget(NodeIndex n) const {
 }
 
 void AndersNodeFactory::getAllocSites(
-    std::vector<std::pair<const CallBase*, const llvm::Value *>> &allocSites) const {
+    std::vector<std::pair<Context*, const llvm::Value *>> &allocSites) const {
   allocSites.clear();
   allocSites.reserve(objNodeMap.size());
   for (auto const &mapping : objNodeMap)
