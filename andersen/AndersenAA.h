@@ -13,26 +13,31 @@ private:
   friend llvm::AAResultBase;
 
   Andersen anders;
-  llvm::AliasResult andersenAlias(const llvm::CallBase *c1, const llvm::CallBase *c2, const llvm::Value *, const llvm::Value *);
+  llvm::AliasResult andersenAlias(Context*, Context*, const llvm::Value *, const llvm::Value *);
 
 public:
   AndersenAAResult(const llvm::Module &);
 
   llvm::AliasResult alias(const llvm::MemoryLocation &, const llvm::MemoryLocation &,
-    const llvm::CallBase *c1 = nullptr, const llvm::CallBase *c2 = nullptr);
+    Context* ctxA, Context* ctxB);
 
   llvm::AliasResult alias(const llvm::Value *, const llvm::Value *,
-    const llvm::CallBase *c1 = nullptr, const llvm::CallBase *c2 = nullptr);
+    Context* ctxA, Context* ctxB);
+  llvm::AliasResult alias(const llvm::Value *, const llvm::Value *,
+    unsigned int ctxIdA, unsigned int ctxIdB);
 
   bool pointsToConstantMemory(const llvm::MemoryLocation &, bool);
   
-  bool getPointsToSet(const llvm::CallBase *cs, const llvm::Value *v, PtsSetType &ptsSet);
+  bool getPointsToSet(Context*, const llvm::Value *v, PtsSetType &ptsSet);
+  bool getPointsToSet(unsigned int, const llvm::Value *v, PtsSetType &ptsSet);
   bool getPointsToSet(const llvm::Value *v, PtsSetType &ptsSet);
 
-  bool getPointsFromSet(const llvm::CallBase *cs, const llvm::Value *v, PtsSetType&ptsSet);
+  bool getPointsFromSet(Context*, const llvm::Value *v, PtsSetType&ptsSet);
+  bool getPointsFromSet(unsigned int, const llvm::Value *v, PtsSetType &ptsSet);
   bool getPointsFromSet(const llvm::Value *v, PtsSetType &ptsSet);
 
-  void printPointsToSet(const llvm::CallBase *cs, const llvm::Value *v);
+  void printPointsToSet(Context*, const llvm::Value *v);
+  void printPointsToSet(unsigned int, const llvm::Value *v);
 };
 
 class AndersenAAWrapperPass : public llvm::ModulePass {

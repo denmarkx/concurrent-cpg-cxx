@@ -261,3 +261,65 @@ void AndersNodeFactory::dumpRepInfo() const {
   }
   errs() << "----- End of Print -----\n";
 }
+
+/**
+ * Creates a new Context object given a previous context and callsite. 
+*/
+Context* AndersNodeFactory::createContext(Context* _prevCtx, const llvm::CallBase* callSite) {
+  Context* context = new Context(_prevCtx, callSite);
+  _contexts.push_back(context);
+  return context;
+}
+
+/**
+ * Creates a new Context object without an associated previous context or callsite. 
+*/
+Context* AndersNodeFactory::createContext() {
+  Context* context = new Context(nullptr, nullptr);
+  _contexts.push_back(context);
+  return context;
+}
+
+/**
+ * Returns the global context (ie: context[0]).
+ * Initial constraint collection for globals must already be completed. 
+*/
+const Context* AndersNodeFactory::getGlobalCtx() const {
+  assert(_contexts.size() > 0);
+  return _contexts[0];
+}
+
+const Context* AndersNodeFactory::getContext(unsigned int ctxId) const {
+  assert(ctxId < _contexts.size());
+  return _contexts[ctxId];
+}
+
+/**
+ * Given a nodeId, return a list of all associated contexts.
+*/
+std::vector<const Context*> AndersNodeFactory::getAssociatedContexts(NodeIndex n) const {
+  std::vector<const Context*> contexts;
+  for (auto &[k, v] : valueNodeMap) {
+    if (v == n) {
+      contexts.push_back(k.first);
+    }
+  }
+  return contexts;
+}
+
+/**
+ * Given a Value*, return a list of all associated contexts.
+*/
+std::vector<const Context*> AndersNodeFactory::getAssociatedContexts(const Value *value) const {
+  std::vector<const Context*> contexts;
+  for (auto &[k, v] : valueNodeMap) {
+    if (k.second == value) {
+      contexts.push_back(k.first);
+    }
+  }
+  return contexts;
+}
+
+unsigned int AndersNodeFactory::getNumContexts() {
+  return _contexts.size();
+}

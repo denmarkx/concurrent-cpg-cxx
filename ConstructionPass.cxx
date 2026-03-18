@@ -25,18 +25,18 @@ Usage ConstructionPass::identifyDataUsage(std::shared_ptr<ThreadContext> thread)
             switch (I.getOpcode()) {
                 case Instruction::Load: {
                     MemoryLocation L2(&I, MemoryLocation::UnknownSize);
-                    AliasResult r2 = AA.alias(L1, L2);
+                    // AliasResult r2 = AA.alias(L1, L2);
 
-                    if (r2 != AliasResult::NoAlias) usage = Usage::Read;
+                    // if (r2 != AliasResult::NoAlias) usage = Usage::Read;
                     break;
                 }
                 case Instruction::Store: {
                     StoreInst *store = dyn_cast<StoreInst>(&I);
                     Value *v = store->getOperand(1);
                     MemoryLocation L2(v, MemoryLocation::UnknownSize);
-                    AliasResult r = AA.alias(L1, L2);
+                    // AliasResult r = AA.alias(L1, L2);
 
-                    if (r != AliasResult::NoAlias) return Usage::Write;
+                    // if (r != AliasResult::NoAlias) return Usage::Write;
                 }
                 // case Instruction::Call: {}
             }
@@ -89,11 +89,11 @@ bool ConstructionPass::runOnModule(Module &M) {
         bool inserted = false;
         for (auto &[k, v] : _sharedDataMap) {
             MemoryLocation L1(k, MemoryLocation::UnknownSize);
-            AliasResult res = AA.alias(L1, L2);
-            if (res != AliasResult::NoAlias) {
-                v[usageIdx].insert(thread);
-                inserted = true;
-            }
+            // AliasResult res = AA.alias(L1, L2);
+            // if (res != AliasResult::NoAlias) {
+                // v[usageIdx].insert(thread);
+                // inserted = true;
+            // }
         }
 
         if (!inserted) {
@@ -118,14 +118,14 @@ bool ConstructionPass::runOnModule(Module &M) {
                     MemoryLocation L2(pointer, MemoryLocation::UnknownSize);
                     for (auto &T : _threads) {
                         MemoryLocation L1(T->handle, MemoryLocation::UnknownSize);
-                        AliasResult res = AA.alias(L1, L2);
-                        if (res != AliasResult::NoAlias) {
+                        // AliasResult res = AA.alias(L1, L2);
+                        // if (res != AliasResult::NoAlias) {
                             // It is possible that this aliases to more than 1 thread.
                             // ..but that is technically incorrect user code for pthread_create.
                             // and such, the last thread create is actually the "correct one", but
                             // there is nothing stopping the other threads from executing in the short interim.
-                            (*T).join = call;
-                        }
+                            // (*T).join = call;
+                        // }
                     }
                 }
             }
@@ -217,9 +217,9 @@ void ConstructionPass::processInstruction(Instruction *instr) {
         MemoryLocation L1(store->getOperand(1), MemoryLocation::UnknownSize);
         for (auto &[k, v] : _sharedDataMap) {
             MemoryLocation L2(k, MemoryLocation::UnknownSize);
-            if (AA.alias(L1, L2) != AliasResult::NoAlias) {
-                std::cout << "write action on shared data.\n";
-            }  
+            // if (AA.alias(L1, L2) != AliasResult::NoAlias) {
+                // std::cout << "write action on shared data.\n";
+            // }  
         }
     }
 }

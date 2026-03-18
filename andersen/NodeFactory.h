@@ -7,35 +7,22 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Value.h"
-#include "llvm/Support/raw_ostream.h"
+using namespace llvm;
 
 #include <vector>
 #include <utility>
 
-// NOTE: If this becomes too heavy, this can probably become integer based.
-
-// debug only
-static int cnt = -1;
+static unsigned int ctxCounter = 0;
 
 struct Context {
+  unsigned int id;
   Context* prevCtx;
   Context* nextCtx;
   const llvm::CallBase* callSite;
   llvm::DenseMap<const llvm::CallBase*, Context*> children;
 
-  // debug only
-  int dbgId = -1;
-
   Context(Context* _prevCtx, const llvm::CallBase* _callSite) {
-    cnt++;
-    dbgId = cnt;
-    if (_callSite) {
-      llvm::errs() << "New Context [" << dbgId << "] {" << "\n";
-      llvm::errs() << "  cs = " << *_callSite << "\n";
-      llvm::errs() << "}\n\n";
-    } else {
-      llvm::errs() << "Creating Global Context.\n\n";
-    }
+    id = ctxCounter++;
     prevCtx = _prevCtx;
     callSite = _callSite;
 
@@ -49,7 +36,7 @@ struct Context {
   }
 
   std::string str() {
-    return "Context[" + std::to_string(dbgId) + "]";
+    return "Context[" + std::to_string(id) + "]";
   }
 };
 
@@ -123,6 +110,8 @@ private:
   // take variable arguments.
   llvm::DenseMap<const llvm::Function *, NodeIndex> varargMap;
 
+  std::vector<const Context*> _contexts;
+
 public:
   AndersNodeFactory();
 
@@ -175,6 +164,17 @@ public:
 
   // Size getters
   unsigned getNumNodes() const { return nodes.size(); }
+
+  // Context management:
+  Context* createContext(Context* _prevCtx, const llvm::CallBase* callSite);
+  Context* createContext();
+
+  const Context* getGlobalCtx() const;
+  const Context* getContext(unsigned int id) const;
+  unsigned int getNumContexts();
+
+  std::vector<const Context*> getAssociatedContexts(NodeIndex n) const;
+  std::vector<const Context*> getAssociatedContexts(const Value* val) const;
 
   // For debugging purpose
   void dumpNode(NodeIndex) const;

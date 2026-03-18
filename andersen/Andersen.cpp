@@ -24,71 +24,123 @@ void Andersen::getAllAllocationSites(
   nodeFactory.getAllocSites(allocSites);
 }
 
-bool Andersen::getPointsToSet(const llvm::CallBase *cs, const llvm::Value *v,
+// TODO: context should be const
+bool Andersen::getPointsToSet(Context *ctx, const llvm::Value *v,
                               std::vector<const llvm::Value *> &ptsSet) {
-  return false; // TODO
-  // NodeIndex ptrIndex = nodeFactory.getValueNodeFor(cs, v);
-  // // We have no idea what v is...
-  // if (ptrIndex == AndersNodeFactory::InvalidIndex ||
-  //     ptrIndex == nodeFactory.getUniversalPtrNode())
-  //   return false;
+  NodeIndex ptrIndex = nodeFactory.getValueNodeFor(ctx, v);
+  // We have no idea what v is...
+  if (ptrIndex == AndersNodeFactory::InvalidIndex ||
+      ptrIndex == nodeFactory.getUniversalPtrNode())
+    return false;
 
-  // NodeIndex ptrTgt = nodeFactory.getMergeTarget(ptrIndex);
-  // ptsSet.clear();
+  NodeIndex ptrTgt = nodeFactory.getMergeTarget(ptrIndex);
+  ptsSet.clear();
 
-  // auto ptsItr = ptsGraph.find(ptrTgt);
-  // if (ptsItr == ptsGraph.end()) {
-  //   // Can't find ptrTgt. The reason might be that ptrTgt is an undefined
-  //   // pointer. Dereferencing it is undefined behavior anyway, so we might just
-  //   // want to treat it as a nullptr pointer
-  //   return true;
-  // }
-  // for (auto v : ptsItr->second) {
-  //   if (v == nodeFactory.getNullObjectNode())
-  //     continue;
+  auto ptsItr = ptsGraph.find(ptrTgt);
+  if (ptsItr == ptsGraph.end()) {
+    // Can't find ptrTgt. The reason might be that ptrTgt is an undefined
+    // pointer. Dereferencing it is undefined behavior anyway, so we might just
+    // want to treat it as a nullptr pointer
+    return true;
+  }
+  for (auto v : ptsItr->second) {
+    if (v == nodeFactory.getNullObjectNode())
+      continue;
 
-  //   const llvm::Value *val = nodeFactory.getValueForNode(v);
-  //   if (val != nullptr)
-  //     ptsSet.push_back(val);
-  // }
-  // return true;
+    const llvm::Value *val = nodeFactory.getValueForNode(v);
+    if (val != nullptr)
+      ptsSet.push_back(val);
+  }
+  return true;
 }
 
-bool Andersen::getPointsFromSet(const llvm::CallBase *cs, const llvm::Value *v,
+bool Andersen::getPointsToSet(unsigned int ctxId, const llvm::Value *v,
+                              std::vector<const llvm::Value *> &ptsSet) {
+  assert(ctxId < nodeFactory.getNumContexts());
+  // TODO: need to fix the rest of the isgnatures. const_cast here is bad
+  Context* ctx = const_cast<Context*>(nodeFactory.getContext(ctxId));
+  return getPointsToSet(ctx, v, ptsSet);
+}
+
+/**
+ * Given a value, populates ptsSet with all possible pointsTo
+ * values among ALL associated contexts.
+*/
+bool Andersen::getPointsToSet(const llvm::Value *v, std::vector<const llvm::Value *> &ptsSet) {
+  std::vector<const Context*> contexts = nodeFactory.getAssociatedContexts(v);
+
+  for (const Context *ctx : contexts) {
+    // TODO: need to fix signatures and kill const_cast here
+    Context* tmp = const_cast<Context*>(ctx);
+    std::vector<const llvm::Value*> childSet;
+    if (getPointsToSet(tmp, v, childSet)) {
+      for (const llvm::Value *v : childSet)
+        ptsSet.push_back(v);
+    }
+  }
+  return ptsSet.size() > 0;
+}
+
+// TODO: context should be const
+bool Andersen::getPointsFromSet(Context* ctx, const llvm::Value *v,
                                 std::vector<const llvm::Value *> &ptsSet) {
-  // NodeIndex ptrIndex = nodeFactory.getValueNodeFor(cs, v);
-  // if (ptrIndex == AndersNodeFactory::InvalidIndex ||
-  //     ptrIndex == nodeFactory.getUniversalPtrNode())
-  //   return false;
+  NodeIndex ptrIndex = nodeFactory.getValueNodeFor(ctx, v);
+  if (ptrIndex == AndersNodeFactory::InvalidIndex ||
+      ptrIndex == nodeFactory.getUniversalPtrNode())
+    return false;
 
-  // NodeIndex ptrTgt = nodeFactory.getMergeTarget(ptrIndex);
-  // ptsSet.clear();
+  NodeIndex ptrTgt = nodeFactory.getMergeTarget(ptrIndex);
+  ptsSet.clear();
 
-  // for (unsigned i = 0, e = nodeFactory.getNumNodes(); i < e; ++i) {
-  //   NodeIndex rep = nodeFactory.getMergeTarget(i);
-  //   auto ptsItr = ptsGraph.find(rep);
-  //   if (ptsItr != ptsGraph.end() && ptsItr->second.has(ptrIndex)) {
-  //     const llvm::Value *val = nodeFactory.getValueForNode(ptsItr->first);
-  //     if (val != nullptr)
-  //       ptsSet.push_back(val);
-  //   }
-  // }
-  // return true;
+  for (unsigned i = 0, e = nodeFactory.getNumNodes(); i < e; ++i) {
+    NodeIndex rep = nodeFactory.getMergeTarget(i);
+    auto ptsItr = ptsGraph.find(rep);
+    if (ptsItr != ptsGraph.end() && ptsItr->second.has(ptrIndex)) {
+      const llvm::Value *val = nodeFactory.getValueForNode(ptsItr->first);
+      if (val != nullptr)
+        ptsSet.push_back(val);
+    }
+  }
+  return true;
+}
 
-  // TODO
-  return false;
+bool Andersen::getPointsFromSet(unsigned int ctxId, const llvm::Value *v,
+                              std::vector<const llvm::Value *> &ptsSet) {
+  assert(ctxId < nodeFactory.getNumContexts());
+  // TODO: need to fix the rest of the isgnatures. const_cast here is bad
+  Context* ctx = const_cast<Context*>(nodeFactory.getContext(ctxId));
+  return getPointsFromSet(ctx, v, ptsSet);
+}
+
+/**
+ * Given a value, populates ptsSet with all possible pointsTo
+ * values among ALL associated contexts.
+*/
+bool Andersen::getPointsFromSet(const llvm::Value *v, std::vector<const llvm::Value *> &ptsSet) {
+  std::vector<const Context*> contexts = nodeFactory.getAssociatedContexts(v);
+
+  for (const Context *ctx : contexts) {
+    // TODO: need to fix signatures and kill const_cast here
+    Context* tmp = const_cast<Context*>(ctx);
+    std::vector<const llvm::Value*> childSet;
+    if (getPointsFromSet(tmp, v, childSet)) {
+      for (const llvm::Value *v : childSet)
+        ptsSet.push_back(v);
+    }
+  }
+  return ptsSet.size() > 0;
 }
 
 bool Andersen::runOnModule(const Module &M) {
   collectConstraints(M);
 
-  // if (DumpDebugInfo)
-  dumpConstraintsPlainVanilla();
+  if (DumpDebugInfo)
+    dumpConstraintsPlainVanilla();
 
   optimizeConstraints();
 
-  // if (DumpConstraintInfo)
-  dumpConstraints();
+  if (DumpConstraintInfo)
+    dumpConstraints();
 
   solveConstraints();
 
@@ -97,11 +149,11 @@ bool Andersen::runOnModule(const Module &M) {
     dumpPtsGraphPlainVanilla();
   }
 
-  // if (DumpResultInfo) {
-  nodeFactory.dumpNodeInfo();
-  errs() << "\n";
-  dumpPtsGraphPlainVanilla();
-  // }
+  if (DumpResultInfo) {
+    nodeFactory.dumpNodeInfo();
+    errs() << "\n";
+    dumpPtsGraphPlainVanilla();
+  }
 
   return false;
 }

@@ -54,7 +54,7 @@ public:
                 }
             }
 
-            errs() << GraphManager::get()->getAliasResult()->alias(a, b) << "\n";
+            // errs() << GraphManager::get()->getAliasResult()->alias(a, b) << "\n";
         }
         return node;
     }

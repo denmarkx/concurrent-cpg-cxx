@@ -59,7 +59,7 @@ void Andersen::scanFunction(Context *context, const llvm::Function *f) {
     // If this is a call, we scan that function:
     if (const CallBase *cs = dyn_cast<CallBase>(inst)) {
       if (cs->getCalledFunction()) {
-        Context *child = new Context(context, cs);
+        Context *child = nodeFactory.createContext(context, cs);
 
         setupFunctionConstraints(child, cs->getCalledFunction());
         scanFunction(child, cs->getCalledFunction());
@@ -87,7 +87,7 @@ static bool typeContainsPointer(const Type *t) {
 }
 
 Context* Andersen::collectConstraintsForGlobals(const Module &M) {
-  _globalCtx = new Context(nullptr, nullptr);
+  _globalCtx = nodeFactory.createContext();
   nodeFactory._globalCtx = _globalCtx;
   // Create a pointer and an object for each global variable
   for (auto const &globalVal : M.globals()) {

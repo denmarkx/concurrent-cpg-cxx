@@ -109,13 +109,22 @@ public:
   // words, the client must conservatively assume v can points to everything.
   // - Return true otherwise, and the points-to set of v is put into the second
   // argument.
-
-  // TODO: this is a bit too unfriendly, but how else do
-  //   we know what context given the value?
-  bool getPointsToSet(const llvm::CallBase *cs, const llvm::Value *v,
+  bool getPointsToSet(Context *ctx, const llvm::Value *v,
                       std::vector<const llvm::Value *> &ptsSet);
 
-  bool getPointsFromSet(const llvm::CallBase *cs, const llvm::Value *v,
+  bool getPointsToSet(unsigned int ctxId, const llvm::Value *v,
+                      std::vector<const llvm::Value *> &ptsSet);
+
+  bool getPointsToSet(const llvm::Value *v,
+                      std::vector<const llvm::Value *> &ptsSet);
+
+  bool getPointsFromSet(Context *ctx, const llvm::Value *v,
+                      std::vector<const llvm::Value *> &ptsSet);
+
+  bool getPointsFromSet(unsigned int ctxId, const llvm::Value *v,
+                      std::vector<const llvm::Value *> &ptsSet);
+
+  bool getPointsFromSet(const llvm::Value *v,
                       std::vector<const llvm::Value *> &ptsSet);
 
   // Put all allocation sites (i.e. all memory objects identified by the
