@@ -87,30 +87,31 @@ static bool typeContainsPointer(const Type *t) {
 }
 
 Context* Andersen::collectConstraintsForGlobals(const Module &M) {
-  Context *globalCtx = new Context(nullptr, nullptr);  
+  _globalCtx = new Context(nullptr, nullptr);
+  nodeFactory._globalCtx = _globalCtx;
   // Create a pointer and an object for each global variable
   for (auto const &globalVal : M.globals()) {
-    NodeIndex gVal = nodeFactory.createValueNode(globalCtx, &globalVal);
-    NodeIndex gObj = nodeFactory.createObjectNode(globalCtx, &globalVal);
+    NodeIndex gVal = nodeFactory.createValueNode(_globalCtx, &globalVal);
+    NodeIndex gObj = nodeFactory.createObjectNode(_globalCtx, &globalVal);
     constraints.emplace_back(AndersConstraint::ADDR_OF, gVal, gObj);
   }
 
   // Aliases are considered their own thing I suppose.
   for (auto const &alias : M.aliases()) {
-    NodeIndex aVal = nodeFactory.createValueNode(globalCtx, &alias);
-    NodeIndex aObj = nodeFactory.createObjectNode(globalCtx, &alias);
+    NodeIndex aVal = nodeFactory.createValueNode(_globalCtx, &alias);
+    NodeIndex aObj = nodeFactory.createObjectNode(_globalCtx, &alias);
     constraints.emplace_back(AndersConstraint::ADDR_OF, aVal, aObj);
   }
 
   // Functions and function pointers are also considered global
   for (auto const &f : M) {
-    setupFunctionConstraints(globalCtx, &f);
+    setupFunctionConstraints(_globalCtx, &f);
   }
 
   // Init globals here since an initializer may refer to a global var/func below
   // it
   for (auto const &globalVal : M.globals()) {
-    NodeIndex gObj = nodeFactory.getObjectNodeFor(globalCtx, &globalVal);
+    NodeIndex gObj = nodeFactory.getObjectNodeFor(_globalCtx, &globalVal);
     assert(gObj != AndersNodeFactory::InvalidIndex &&
            "Cannot find global object!");
 
@@ -119,11 +120,11 @@ Context* Andersen::collectConstraintsForGlobals(const Module &M) {
     } else {
       // If it doesn't have an initializer (i.e. it's defined in another
       // translation unit), it points to the universal set.
-      NodeIndex fObj = nodeFactory.createObjectNode(globalCtx);
+      NodeIndex fObj = nodeFactory.createObjectNode(_globalCtx);
       constraints.emplace_back(AndersConstraint::ADDR_OF, gObj, fObj);
     }
   }
-  return globalCtx;
+  return _globalCtx;
 }
 
 void Andersen::setupFunctionConstraints(Context *context, const Function *f) {
@@ -160,12 +161,12 @@ void Andersen::addGlobalInitializerConstraints(NodeIndex objNode,
   // "\n";
   if (c->getType()->isSingleValueType()) {
     if (isa<PointerType>(c->getType())) {
-      NodeIndex rhsNode = nodeFactory.getObjectNodeForConstant(nullptr, c);
+      NodeIndex rhsNode = nodeFactory.getObjectNodeForConstant(_globalCtx, c);
       assert(rhsNode != AndersNodeFactory::InvalidIndex &&
              "rhs node not found");
       if (rhsNode == nodeFactory.getUniversalObjNode() ||
           rhsNode == AndersNodeFactory::InvalidIndex) {
-          rhsNode = nodeFactory.createObjectNode(nullptr);
+          rhsNode = nodeFactory.createObjectNode(_globalCtx);
       }
       constraints.emplace_back(AndersConstraint::ADDR_OF, objNode, rhsNode);
     }
@@ -536,4 +537,8 @@ void Andersen::addArgumentConstraintForCall(Context *calleeCtx,
       ++aItr;
     }
   }
+}
+
+Context* Andersen::getGlobalCtx() const {
+  return _globalCtx;
 }

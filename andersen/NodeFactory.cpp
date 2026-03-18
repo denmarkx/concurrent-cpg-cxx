@@ -81,6 +81,8 @@ NodeIndex AndersNodeFactory::getValueNodeFor(Context *context, const Value *val)
   if (const Constant *c = dyn_cast<Constant>(val)) {
     if (!isa<GlobalValue>(c))
       return getValueNodeForConstant(context, c);
+    else
+      context = _globalCtx; // TODO: may not be sound
   }
 
   auto itr = valueNodeMap.find({context, val});

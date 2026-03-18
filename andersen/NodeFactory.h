@@ -126,6 +126,8 @@ private:
 public:
   AndersNodeFactory();
 
+  Context* _globalCtx;
+
   // Factory methods
   NodeIndex createValueNode(Context *context = nullptr, const llvm::Value *val = nullptr);
   NodeIndex createObjectNode(Context *context = nullptr, const llvm::Value *val = nullptr);
