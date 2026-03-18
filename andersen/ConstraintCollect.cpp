@@ -29,7 +29,7 @@ void Andersen::collectConstraints(const Module &M) {
 
   // Next, add any constraints on global variables. Associate the address of the
   // global object as pointing to the memory for the global: &G = <G memory>
-  collectConstraintsForGlobals(M);
+  Context *globalCtx = collectConstraintsForGlobals(M);
 
   // Here is a notable point before we proceed:
   // For functions with non-local linkage type, theoretically we should not
@@ -41,8 +41,7 @@ void Andersen::collectConstraints(const Module &M) {
 
   for (auto const &f : M) {
     if (f.isDeclaration() || f.isIntrinsic()) continue;
-    Context *context = new Context(nullptr, nullptr);
-    scanFunction(context, &f);
+    scanFunction(globalCtx, &f);
   }
 }
 
@@ -61,7 +60,6 @@ void Andersen::scanFunction(Context *context, const llvm::Function *f) {
     if (const CallBase *cs = dyn_cast<CallBase>(inst)) {
       if (cs->getCalledFunction()) {
         Context *child = new Context(context, cs);
-        Context::setNextContext(context, child);
 
         setupFunctionConstraints(child, cs->getCalledFunction());
         scanFunction(child, cs->getCalledFunction());
@@ -88,7 +86,7 @@ static bool typeContainsPointer(const Type *t) {
     return false;
 }
 
-void Andersen::collectConstraintsForGlobals(const Module &M) {
+Context* Andersen::collectConstraintsForGlobals(const Module &M) {
   Context *globalCtx = new Context(nullptr, nullptr);  
   // Create a pointer and an object for each global variable
   for (auto const &globalVal : M.globals()) {
@@ -105,7 +103,6 @@ void Andersen::collectConstraintsForGlobals(const Module &M) {
   }
 
   // Functions and function pointers are also considered global
-  // These may be cloned, but that is done on-the-fly rather than here.
   for (auto const &f : M) {
     setupFunctionConstraints(globalCtx, &f);
   }
@@ -126,6 +123,7 @@ void Andersen::collectConstraintsForGlobals(const Module &M) {
       constraints.emplace_back(AndersConstraint::ADDR_OF, gObj, fObj);
     }
   }
+  return globalCtx;
 }
 
 void Andersen::setupFunctionConstraints(Context *context, const Function *f) {
@@ -208,7 +206,6 @@ void Andersen::collectConstraintsForInstruction(Context *context, const Instruct
   case Instruction::Ret: {
     if (inst->getNumOperands() > 0 &&
         inst->getOperand(0)->getType()->isPointerTy()) {
-      context->print(); errs() << "\n";
       NodeIndex retIndex =
           nodeFactory.getReturnNodeFor(context, inst->getParent()->getParent());
       assert(retIndex != AndersNodeFactory::InvalidIndex &&
@@ -423,17 +420,18 @@ void Andersen::addConstraintForCall(Context *context, const CallBase* cs) {
       }
     } else // Non-external function call
     {
+      Context* calleeCtx = context->getChild(cs);
       if (cs->getCalledFunction()->getReturnType()->isPointerTy()) {
         NodeIndex retIndex = nodeFactory.getValueNodeFor(context, cs);
         assert(retIndex != AndersNodeFactory::InvalidIndex &&
                "Failed to find ret node!");
-        NodeIndex fRetIndex = nodeFactory.getReturnNodeFor(context, f); // TODO may not be right
+        NodeIndex fRetIndex = nodeFactory.getReturnNodeFor(calleeCtx, f);
         assert(fRetIndex != AndersNodeFactory::InvalidIndex &&
                "Failed to find function ret node!");
         constraints.emplace_back(AndersConstraint::COPY, retIndex, fRetIndex);
       }
       // The argument constraints
-      addArgumentConstraintForCall(context, cs, f);
+      addArgumentConstraintForCall(calleeCtx, context, cs, f);
     }
   } else // Indirect call
   {
@@ -484,13 +482,14 @@ void Andersen::addConstraintForCall(Context *context, const CallBase* cs) {
           // }
         }
       } else {
-        addArgumentConstraintForCall(context, cs, &f);
+        // addArgumentConstraintForCall(context, cs, &f);
       }
     }
   }
 }
 
-void Andersen::addArgumentConstraintForCall(Context *context,
+void Andersen::addArgumentConstraintForCall(Context *calleeCtx,
+                                            Context *context,
                                             const CallBase *cs,
                                             const Function *f) {
   Function::const_arg_iterator fItr = f->arg_begin();
@@ -504,7 +503,7 @@ void Andersen::addArgumentConstraintForCall(Context *context,
     // errs() << "  actual arg = " << *actual << "\n";
 
     if (formal->getType()->isPointerTy()) {
-      NodeIndex fIndex = nodeFactory.getValueNodeFor(context, formal); // TODO: may be worng
+      NodeIndex fIndex = nodeFactory.getValueNodeFor(calleeCtx, formal);
       assert(fIndex != AndersNodeFactory::InvalidIndex &&
              "Failed to find formal arg node!");
       if (actual->getType()->isPointerTy()) {

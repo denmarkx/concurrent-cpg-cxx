@@ -73,14 +73,14 @@ private:
   void solveConstraints();
 
   // Helper functions for constraint collection
-  void collectConstraintsForGlobals(const llvm::Module &);
+  Context* collectConstraintsForGlobals(const llvm::Module &);
   void collectConstraintsForInstruction(Context*, const llvm::Instruction *);
   void addGlobalInitializerConstraints(NodeIndex, const llvm::Constant *);
   void addConstraintForCall(Context*, const llvm::CallBase* cs);
   bool addConstraintForExternalLibrary(Context*,
                                        const llvm::CallBase* cs,
                                        const llvm::Function *f);
-  void addArgumentConstraintForCall(Context*,
+  void addArgumentConstraintForCall(Context*, Context*,
                                     const llvm::CallBase* cs,
                                     const llvm::Function *f);
   void scanFunction(Context*, const llvm::Function *f);

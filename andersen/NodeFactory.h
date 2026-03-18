@@ -13,25 +13,43 @@
 #include <utility>
 
 // NOTE: If this becomes too heavy, this can probably become integer based.
+
+// debug only
+static int cnt = -1;
+
 struct Context {
   Context* prevCtx;
   Context* nextCtx;
   const llvm::CallBase* callSite;
+  llvm::DenseMap<const llvm::CallBase*, Context*> children;
+
+  // debug only
+  int dbgId = -1;
 
   Context(Context* _prevCtx, const llvm::CallBase* _callSite) {
+    cnt++;
+    dbgId = cnt;
+    if (_callSite) {
+      llvm::errs() << "New Context [" << dbgId << "] {" << "\n";
+      llvm::errs() << "  cs = " << *_callSite << "\n";
+      llvm::errs() << "}\n\n";
+    } else {
+      llvm::errs() << "Creating Global Context.\n\n";
+    }
     prevCtx = _prevCtx;
     callSite = _callSite;
+
+    if (prevCtx)
+      prevCtx->children[_callSite] = this;
   }
 
-  static void setNextContext(Context *prev, Context *next) {
-    if (!prev) return;
-    prev->prevCtx = next;
+  Context* getChild(const llvm::CallBase *cs) {
+    auto it = children.find(cs);
+    return it != children.end() ? it->second : nullptr;
   }
 
-  void print() {
-    llvm::errs() << "Context[";
-    if (callSite) llvm::errs() << *callSite; else llvm::errs() << "null";
-    llvm::errs() << "]\n";
+  std::string str() {
+    return "Context[" + std::to_string(dbgId) + "]";
   }
 };
 
@@ -116,7 +134,7 @@ public:
 
   // Map lookup interfaces (return InvalidIndex if value not found)
   NodeIndex getValueNodeFor(Context *context, const llvm::Value *val);
-  NodeIndex getValueNodeForConstant(const llvm::Constant *c);
+  NodeIndex getValueNodeForConstant(Context *context, const llvm::Constant *c);
   NodeIndex getObjectNodeFor(Context *context, const llvm::Value *val) const;
   NodeIndex getObjectNodeForConstant(Context *context, const llvm::Constant *c) const;
   NodeIndex getReturnNodeFor(Context *context, const llvm::Function *f) const;

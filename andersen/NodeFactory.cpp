@@ -31,8 +31,6 @@ AndersNodeFactory::AndersNodeFactory() {
 }
 
 NodeIndex AndersNodeFactory::createValueNode(Context *context, const Value *val) {
-  errs() << "inserting " << *val << "\n";
-  errs() << "   "; context->print();
   unsigned nextIdx = nodes.size();
   nodes.push_back(AndersNode(AndersNode::VALUE_NODE, nextIdx, val));
   if (val != nullptr) {
@@ -63,9 +61,6 @@ NodeIndex AndersNodeFactory::createReturnNode(Context *context, const llvm::Func
   nodes.push_back(AndersNode(AndersNode::VALUE_NODE, nextIdx, f));
 
   assert(!returnMap.count({context, f}) && "Trying to insert two mappings to returnMap!");
-  errs() << "createReturnNode: [" << f->getName() << "]\n";
-  errs() << "   "; context->print();
-  // errs() << "createReturnNode [" << nextIdx << "](\n" << "  cs = " << *cs << "\n  func = " << f->getName() << "\n\n";
   returnMap[{context, f}] = nextIdx;
 
   return nextIdx;
@@ -82,11 +77,10 @@ NodeIndex AndersNodeFactory::createVarargNode(const llvm::Function *f) {
 }
 
 NodeIndex AndersNodeFactory::getValueNodeFor(Context *context, const Value *val) {
+  errs() << *val << "\n";
   if (const Constant *c = dyn_cast<Constant>(val)) {
     if (!isa<GlobalValue>(c))
-      return getValueNodeForConstant(c);
-    else
-      context = nullptr;
+      return getValueNodeForConstant(context, c);
   }
 
   auto itr = valueNodeMap.find({context, val});
@@ -96,24 +90,24 @@ NodeIndex AndersNodeFactory::getValueNodeFor(Context *context, const Value *val)
     return itr->second;
 }
 
-NodeIndex AndersNodeFactory::getValueNodeForConstant(const llvm::Constant *c) {
+NodeIndex AndersNodeFactory::getValueNodeForConstant(Context *context, const llvm::Constant *c) {
   assert(isa<PointerType>(c->getType()) && "Not a constant pointer!");
 
   if (isa<ConstantPointerNull>(c) || isa<UndefValue>(c))
     return getNullPtrNode();
   else if (const GlobalValue *gv = dyn_cast<GlobalValue>(c))
-    return getValueNodeFor(nullptr, gv);
+    return getValueNodeFor(context, gv);
   else if (const ConstantExpr *ce = dyn_cast<ConstantExpr>(c)) {
     switch (ce->getOpcode()) {
     // Pointer to any field within a struct is treated as a pointer to the first
     // field
     case Instruction::GetElementPtr:
-      return getValueNodeFor(nullptr, c->getOperand(0));
+      return getValueNodeFor(context, c->getOperand(0));
     case Instruction::IntToPtr:
     case Instruction::PtrToInt:
-      return createValueNode(nullptr);
+      return createValueNode(context);
     case Instruction::BitCast:
-      return getValueNodeForConstant(ce->getOperand(0));
+      return getValueNodeForConstant(context, ce->getOperand(0));
     default:
       errs() << "Constant Expr not yet handled: " << *ce << "\n";
       llvm_unreachable(0);
@@ -166,16 +160,6 @@ AndersNodeFactory::getObjectNodeForConstant(Context *context, const llvm::Consta
 }
 
 NodeIndex AndersNodeFactory::getReturnNodeFor(Context *context, const llvm::Function *f) const {
-  errs() << "getReturnNodeFor\n" << "func = " << f->getName() << "\n";
-  errs() << "   "; context->print();
-  errs() << "\n\n";
-
-  // errs() << cs << ", " << f << "\n";
-
-  // errs() << "returnMap[keys]:\n";
-  // for (const auto &[k, v] : returnMap) {
-    // errs() << "  key pair: \n" << "    cs:[" << k.first << "] " << *k.first << "\n    fn[" << k.second << "]: " << k.second->getName() << "\n";
-  // }
   auto itr = returnMap.find({context, f});
   if (itr == returnMap.end())
     return InvalidIndex;
