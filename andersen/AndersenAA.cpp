@@ -175,6 +175,16 @@ void AndersenAAResult::printPointsToSet(unsigned int ctxId, const Value *v) {
   return printPointsToSet(anders.nodeFactory.getContext(ctxId), v);
 }
 
+void AndersenAAResult::printPointsToSet(const Value *v) {
+  std::vector<const Context*> contextPtrs = anders.nodeFactory.getAssociatedContexts(v);
+  errs() << "===================== printPointsToSet =====================\n";
+  for (const Context *ctx : contextPtrs) {
+    errs() << "Context: " << ctx->id << "\n";
+    printPointsToSet(ctx, v);
+  }
+  errs() << "===================== printPointsToSet =====================\n";
+}
+
 AndersenAAResult::AndersenAAResult(const Module &m) : anders(m) {}
 
 void AndersenAAWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {

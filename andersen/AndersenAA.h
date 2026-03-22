@@ -38,6 +38,7 @@ public:
 
   void printPointsToSet(const Context*, const llvm::Value *v);
   void printPointsToSet(unsigned int, const llvm::Value *v);
+  void printPointsToSet(const llvm::Value *v);
 
   std::vector<unsigned int> getContextIDs(const llvm::Value* v);
 };
