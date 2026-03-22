@@ -3,6 +3,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/MemoryLocation.h"
 #include "llvm/IR/Module.h"
+#include <vector>
 
 using namespace llvm;
 
@@ -86,7 +87,7 @@ AliasResult AndersenAAResult::alias(const Value *v1,
 
   // todo: kill const cast
   Context* ctxA = const_cast<Context*>(anders.nodeFactory.getContext(ctxIdA));
-  Context* ctxB = const_cast<Context*>(anders.nodeFactory.getContext(ctxIdA));
+  Context* ctxB = const_cast<Context*>(anders.nodeFactory.getContext(ctxIdB));
   return alias(v1, v2, ctxA, ctxB);
 }
 
@@ -138,6 +139,16 @@ bool AndersenAAResult::getPointsFromSet(const Value *v, PtsSetType &ptsSet) {
 
 bool AndersenAAResult::getPointsFromSet(unsigned int ctxId, const Value *v, PtsSetType &ptsSet) {
   return anders.getPointsFromSet(ctxId, v, ptsSet);
+}
+
+std::vector<unsigned int> AndersenAAResult::getContextIDs(const Value *v) {
+  std::vector<unsigned int> contexts;
+
+  std::vector<const Context*> contextPtrs = anders.nodeFactory.getAssociatedContexts(v);
+  for (const Context *ctx : contextPtrs) {
+    contexts.push_back(ctx->id);
+  }
+  return contexts;
 }
 
 void AndersenAAResult::printPointsToSet(Context* cs, const Value *v) {

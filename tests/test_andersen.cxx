@@ -591,7 +591,7 @@ TEST_CASE("Andersen[ContextSensitiveTwoLevelCall]") {
     AliasResult result3 = anders->alias(innerCall, innerCall, 2u, 4u);
     CHECK_EQ(result, AliasResult::NoAlias);
 
-    AliasResult result4 = anders->alias(innerCall, innerCall, 2u, 5u);
+    AliasResult result4 = anders->alias(innerCall, innerCall, 2u, 3u);
     CHECK_EQ(result, AliasResult::NoAlias);
 }
 

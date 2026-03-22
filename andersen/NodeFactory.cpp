@@ -3,6 +3,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/InstrTypes.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <limits>
@@ -57,12 +58,12 @@ NodeIndex AndersNodeFactory::createObjectNode(Context *context, const Value *val
 
 // TODO: this is imprecise for functions that have >1 return stmt.
 NodeIndex AndersNodeFactory::createReturnNode(Context *context, const llvm::Function *f) {
+  auto existing = returnMap.find({context, f});
+  if (existing != returnMap.end()) return existing->second;
+
   unsigned nextIdx = nodes.size();
   nodes.push_back(AndersNode(AndersNode::VALUE_NODE, nextIdx, f));
-
-  assert(!returnMap.count({context, f}) && "Trying to insert two mappings to returnMap!");
   returnMap[{context, f}] = nextIdx;
-
   return nextIdx;
 }
 
@@ -77,7 +78,6 @@ NodeIndex AndersNodeFactory::createVarargNode(const llvm::Function *f) {
 }
 
 NodeIndex AndersNodeFactory::getValueNodeFor(Context *context, const Value *val) {
-  errs() << *val << "\n";
   if (const Constant *c = dyn_cast<Constant>(val)) {
     if (!isa<GlobalValue>(c))
       return getValueNodeForConstant(context, c);
@@ -266,6 +266,10 @@ void AndersNodeFactory::dumpRepInfo() const {
  * Creates a new Context object given a previous context and callsite. 
 */
 Context* AndersNodeFactory::createContext(Context* _prevCtx, const llvm::CallBase* callSite) {
+  if (_prevCtx) {
+    Context* existing = _prevCtx->getChild(callSite);
+    if (existing) return existing;
+  }
   Context* context = new Context(_prevCtx, callSite);
   _contexts.push_back(context);
   return context;

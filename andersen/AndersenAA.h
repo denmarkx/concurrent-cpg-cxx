@@ -38,6 +38,8 @@ public:
 
   void printPointsToSet(Context*, const llvm::Value *v);
   void printPointsToSet(unsigned int, const llvm::Value *v);
+
+  std::vector<unsigned int> getContextIDs(const llvm::Value* v);
 };
 
 class AndersenAAWrapperPass : public llvm::ModulePass {

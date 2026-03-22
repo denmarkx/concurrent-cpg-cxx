@@ -41,8 +41,28 @@ void Andersen::collectConstraints(const Module &M) {
 
   for (auto const &f : M) {
     if (f.isDeclaration() || f.isIntrinsic()) continue;
-    scanFunction(globalCtx, &f);
+    bool hasInternalCaller = false;
+    for (const Use &use : f.uses()) {
+      if (const auto *cb = dyn_cast<CallBase>(use.getUser())) {
+        if (cb->getCalledFunction() == &f && !cb->getFunction()->isDeclaration()) {
+          hasInternalCaller = true;
+          break;
+        }
+      }
+    }
+    if (!hasInternalCaller)
+      scanFunction(globalCtx, &f);
   }
+}
+
+static bool typeContainsPointer(const Type *t) {
+    if (t->isPointerTy()) return true;
+    if (t->isArrayTy()) return typeContainsPointer(t->getArrayElementType());
+    if (t->isStructTy()) {
+        for (unsigned i = 0; i < t->getStructNumElements(); ++i)
+            if (typeContainsPointer(t->getStructElementType(i))) return true;
+    }
+    return false;
 }
 
 void Andersen::scanFunction(Context *context, const llvm::Function *f) {
@@ -55,7 +75,11 @@ void Andersen::scanFunction(Context *context, const llvm::Function *f) {
     auto inst = &*itr.getInstructionIterator();
     if (inst->getType()->isPointerTy())
       nodeFactory.createValueNode(context, inst);
-
+    // i want to say this can be simplified somehow
+    else if (isa<CallBase>(inst) && typeContainsPointer(inst->getType()))
+        nodeFactory.createValueNode(context, inst);
+    else if (isa<InsertValueInst>(inst) && typeContainsPointer(inst->getType()))
+      nodeFactory.createValueNode(context, inst);
     // If this is a call, we scan that function:
     if (const CallBase *cs = dyn_cast<CallBase>(inst)) {
       if (cs->getCalledFunction()) {
@@ -73,17 +97,6 @@ void Andersen::scanFunction(Context *context, const llvm::Function *f) {
     auto inst = &*itr.getInstructionIterator();
     collectConstraintsForInstruction(context, inst);
   }
-}
-
-
-static bool typeContainsPointer(const Type *t) {
-    if (t->isPointerTy()) return true;
-    if (t->isArrayTy()) return typeContainsPointer(t->getArrayElementType());
-    if (t->isStructTy()) {
-        for (unsigned i = 0; i < t->getStructNumElements(); ++i)
-            if (typeContainsPointer(t->getStructElementType(i))) return true;
-    }
-    return false;
 }
 
 Context* Andersen::collectConstraintsForGlobals(const Module &M) {
@@ -139,8 +152,9 @@ void Andersen::setupFunctionConstraints(Context *context, const Function *f) {
   if (f->isDeclaration() || f->isIntrinsic()) return;
 
   // Create return node
-  if (f->getFunctionType()->getReturnType()->isPointerTy()) {
-    nodeFactory.createReturnNode(context, f);
+  const Type *retTy = f->getFunctionType()->getReturnType();
+  if (retTy->isPointerTy() || typeContainsPointer(retTy)) {
+      nodeFactory.createReturnNode(context, f);
   }
 
   // Create vararg node
@@ -205,18 +219,19 @@ void Andersen::collectConstraintsForInstruction(Context *context, const Instruct
     break;
   }
   case Instruction::Ret: {
-    if (inst->getNumOperands() > 0 &&
-        inst->getOperand(0)->getType()->isPointerTy()) {
-      NodeIndex retIndex =
-          nodeFactory.getReturnNodeFor(context, inst->getParent()->getParent());
-      assert(retIndex != AndersNodeFactory::InvalidIndex &&
-             "Failed to find return node");
+      if (inst->getNumOperands() == 0) break;
+      const Type *retTy = inst->getOperand(0)->getType();
+      if (!retTy->isPointerTy() && !typeContainsPointer(retTy)) break;
+
+      NodeIndex retIndex = nodeFactory.getReturnNodeFor(
+          context, inst->getParent()->getParent());
+      if (retIndex == AndersNodeFactory::InvalidIndex) break;
+
       NodeIndex valIndex = nodeFactory.getValueNodeFor(context, inst->getOperand(0));
-      assert(valIndex != AndersNodeFactory::InvalidIndex &&
-             "Failed to find return value node");
+      if (valIndex == AndersNodeFactory::InvalidIndex) break;
+
       constraints.emplace_back(AndersConstraint::COPY, retIndex, valIndex);
-    }
-    break;
+      break;
   }
   case Instruction::Load: {
     if (inst->getType()->isPointerTy()) {
@@ -357,9 +372,39 @@ void Andersen::collectConstraintsForInstruction(Context *context, const Instruct
     }
     break;
   }
-  case Instruction::ExtractValue:
+  case Instruction::ExtractValue: {
+      if (!inst->getType()->isPointerTy()) break;
+      NodeIndex dstIndex = nodeFactory.getValueNodeFor(context, inst);
+      assert(dstIndex != AndersNodeFactory::InvalidIndex);
+
+      const ExtractValueInst *evi = cast<ExtractValueInst>(inst);
+      const Value *aggOp = evi->getAggregateOperand();
+
+      if (!isa<Constant>(aggOp)) {
+          NodeIndex srcIndex = nodeFactory.getValueNodeFor(context, aggOp);
+          if (srcIndex != AndersNodeFactory::InvalidIndex)
+              constraints.emplace_back(AndersConstraint::COPY, dstIndex, srcIndex);
+      }
+      break;
+  }
   case Instruction::InsertValue: {
-    if (!inst->getType()->isPointerTy())
+      if (!typeContainsPointer(inst->getType())) break;
+      NodeIndex dstIndex = nodeFactory.getValueNodeFor(context, inst);
+      if (dstIndex == AndersNodeFactory::InvalidIndex) break;
+
+      const InsertValueInst *ivi = cast<InsertValueInst>(inst);
+      const Value *insertedVal = ivi->getInsertedValueOperand();
+      const Value *aggOp = ivi->getAggregateOperand();
+      if (insertedVal->getType()->isPointerTy() && !isa<Constant>(insertedVal)) {
+          NodeIndex srcIndex = nodeFactory.getValueNodeFor(context, insertedVal);
+          if (srcIndex != AndersNodeFactory::InvalidIndex)
+              constraints.emplace_back(AndersConstraint::COPY, dstIndex, srcIndex);
+      }
+      if (!isa<Constant>(aggOp) && typeContainsPointer(aggOp->getType())) {
+          NodeIndex aggIndex = nodeFactory.getValueNodeFor(context, aggOp);
+          if (aggIndex != AndersNodeFactory::InvalidIndex)
+              constraints.emplace_back(AndersConstraint::COPY, dstIndex, aggIndex);
+      }
       break;
   }
   // We have no intention to support exception-handling in the near future
@@ -422,14 +467,14 @@ void Andersen::addConstraintForCall(Context *context, const CallBase* cs) {
     } else // Non-external function call
     {
       Context* calleeCtx = context->getChild(cs);
-      if (cs->getCalledFunction()->getReturnType()->isPointerTy()) {
-        NodeIndex retIndex = nodeFactory.getValueNodeFor(context, cs);
-        assert(retIndex != AndersNodeFactory::InvalidIndex &&
-               "Failed to find ret node!");
-        NodeIndex fRetIndex = nodeFactory.getReturnNodeFor(calleeCtx, f);
-        assert(fRetIndex != AndersNodeFactory::InvalidIndex &&
-               "Failed to find function ret node!");
-        constraints.emplace_back(AndersConstraint::COPY, retIndex, fRetIndex);
+      const Type *retTy = cs->getCalledFunction()->getReturnType();
+      if (retTy->isPointerTy() || typeContainsPointer(retTy)) {
+          NodeIndex retIndex = nodeFactory.getValueNodeFor(context, cs);
+          if (retIndex != AndersNodeFactory::InvalidIndex) {
+              NodeIndex fRetIndex = nodeFactory.getReturnNodeFor(calleeCtx, f);
+              if (fRetIndex != AndersNodeFactory::InvalidIndex)
+                  constraints.emplace_back(AndersConstraint::COPY, retIndex, fRetIndex);
+          }
       }
       // The argument constraints
       addArgumentConstraintForCall(calleeCtx, context, cs, f);

@@ -2,6 +2,7 @@
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/IR/Attributes.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/raw_ostream.h"
@@ -148,6 +149,16 @@ bool Andersen::addConstraintForExternalLibrary(Context* context,
       constraints.emplace_back(AndersConstraint::ADDR_OF, ptrIndex, objIndex);
     }
 
+    return true;
+  }
+
+  // sometimes these are annotated by allockind("alloc").
+  unsigned int allocAttr = static_cast<unsigned int>(f->getAttributes().getAllocKind());
+  if (allocAttr & (unsigned int) AllocFnKind::Alloc) {
+    const Instruction *inst = cs;
+    NodeIndex objIndex = nodeFactory.createObjectNode(context, inst);
+    NodeIndex ptrIndex = nodeFactory.getValueNodeFor(context, inst);
+    constraints.emplace_back(AndersConstraint::ADDR_OF, ptrIndex, objIndex);
     return true;
   }
 
