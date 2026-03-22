@@ -1,4 +1,4 @@
-; ModuleID = 'std_rs.ll'
+; ModuleID = 'files/std_rs.ll'
 source_filename = "std_rs.5466325db683071d-cgu.0"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
@@ -39,17 +39,17 @@ target triple = "x86_64-unknown-linux-gnu"
 %"alloc::string::String" = type { %"alloc::vec::Vec<u8>" }
 %"alloc::vec::Vec<u8>" = type { { i64, ptr }, i64 }
 %"core::result::Result<std::sys::unix::thread::Thread, std::io::error::Error>" = type { i64, [1 x i64] }
-%"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}}" = type { ptr, ptr, ptr, ptr }
+%"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}" = type { ptr, ptr, ptr, ptr }
 %"alloc::sync::ArcInner<std::thread::scoped::ScopeData>" = type { %"core::sync::atomic::AtomicUsize", %"core::sync::atomic::AtomicUsize", %"std::thread::scoped::ScopeData" }
 %"std::thread::scoped::ScopeData" = type { ptr, %"core::sync::atomic::AtomicUsize", %"core::sync::atomic::AtomicBool", [7 x i8] }
 %"core::sync::atomic::AtomicBool" = type { i8 }
 %"core::result::Result<std::sys::unix::thread::Thread, std::io::error::Error>::Ok" = type { [1 x i64], i64 }
 %"core::result::Result<std::sys::unix::thread::Thread, std::io::error::Error>::Err" = type { [1 x i64], ptr }
-%"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}}" = type { ptr, ptr, ptr, ptr }
+%"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}" = type { ptr, ptr, ptr, ptr }
 %"core::option::Option<core::ops::range::Range<usize>>" = type { i64, [2 x i64] }
 %"std::panicking::try::Data<core::panic::unwind_safe::AssertUnwindSafe<{closure@<std::thread::Packet<'_, ()> as core::ops::drop::Drop>::drop::{closure#0}}>, ()>" = type { [2 x i64] }
-%"std::panicking::try::Data<core::panic::unwind_safe::AssertUnwindSafe<{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}::{closure#0}}>, ()>" = type { [2 x i64] }
-%"std::panicking::try::Data<core::panic::unwind_safe::AssertUnwindSafe<{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}::{closure#0}}>, ()>" = type { [2 x i64] }
+%"std::panicking::try::Data<core::panic::unwind_safe::AssertUnwindSafe<{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}::{closure#0}}>, ()>" = type { [2 x i64] }
+%"std::panicking::try::Data<core::panic::unwind_safe::AssertUnwindSafe<{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}::{closure#0}}>, ()>" = type { [2 x i64] }
 %"core::fmt::builders::DebugList<'_, '_>" = type { %"core::fmt::builders::DebugInner<'_, '_>" }
 %"core::fmt::builders::DebugInner<'_, '_>" = type { ptr, i8, i8, [6 x i8] }
 %"core::fmt::Formatter<'_>" = type { { i64, i64 }, { i64, i64 }, { ptr, ptr }, i32, i32, i8, [7 x i8] }
@@ -131,14 +131,14 @@ target triple = "x86_64-unknown-linux-gnu"
 @vtable.9 = private unnamed_addr constant <{ ptr, [16 x i8], ptr }> <{ ptr @"_ZN4core3ptr50drop_in_place$LT$$RF$alloc..vec..Vec$LT$u8$GT$$GT$17h628487f5c9fc8300E", [16 x i8] c"\08\00\00\00\00\00\00\00\08\00\00\00\00\00\00\00", ptr @"_ZN42_$LT$$RF$T$u20$as$u20$core..fmt..Debug$GT$3fmt17hec76821d6600275fE" }>, align 8
 @alloc_3b99cf3889855522042186bfbc89cd01 = private unnamed_addr constant <{ [52 x i8] }> <{ [52 x i8] c"fatal runtime error: thread result panicked on drop\0A" }>, align 1
 @alloc_2ca7775364e940040d1ca01e1c1e4d62 = private unnamed_addr constant <{ ptr, [8 x i8] }> <{ ptr @alloc_3b99cf3889855522042186bfbc89cd01, [8 x i8] c"4\00\00\00\00\00\00\00" }>, align 8
-@alloc_da81ba9594f4a25ca4a4830fff90a7f0 = private unnamed_addr constant <{ [9 x i8] }> <{ [9 x i8] c"std_rs.rs" }>, align 1
-@alloc_1930e6ced2c09a90d57aa0f3b8b9037b = private unnamed_addr constant <{ ptr, [16 x i8] }> <{ ptr @alloc_da81ba9594f4a25ca4a4830fff90a7f0, [16 x i8] c"\09\00\00\00\00\00\00\00\0D\00\00\00\0E\00\00\00" }>, align 8
-@alloc_adb6bb846f743fddf1374f52764a59e9 = private unnamed_addr constant <{ ptr, [16 x i8] }> <{ ptr @alloc_da81ba9594f4a25ca4a4830fff90a7f0, [16 x i8] c"\09\00\00\00\00\00\00\00\13\00\00\00\0F\00\00\00" }>, align 8
-@alloc_c15e95bd5d538440cd0db073bc4e0df6 = private unnamed_addr constant <{ [21 x i8] }> <{ [21 x i8] c"[std_rs.rs:11:3] y = " }>, align 1
+@alloc_1b0b6e2ee384b95b8e7eefa09af5967a = private unnamed_addr constant <{ [15 x i8] }> <{ [15 x i8] c"files/std_rs.rs" }>, align 1
+@alloc_12a92478de7931f922a4a99ef3519763 = private unnamed_addr constant <{ ptr, [16 x i8] }> <{ ptr @alloc_1b0b6e2ee384b95b8e7eefa09af5967a, [16 x i8] c"\0F\00\00\00\00\00\00\00\0D\00\00\00\0E\00\00\00" }>, align 8
+@alloc_df98f02fc76fe3abc1e7ce5f16b13c1f = private unnamed_addr constant <{ ptr, [16 x i8] }> <{ ptr @alloc_1b0b6e2ee384b95b8e7eefa09af5967a, [16 x i8] c"\0F\00\00\00\00\00\00\00\13\00\00\00\0F\00\00\00" }>, align 8
+@alloc_9c6916c9bb86567722faae8b09a66490 = private unnamed_addr constant <{ [27 x i8] }> <{ [27 x i8] c"[files/std_rs.rs:11:9] y = " }>, align 1
 @alloc_49a1e817e911805af64bbc7efb390101 = private unnamed_addr constant <{ [1 x i8] }> <{ [1 x i8] c"\0A" }>, align 1
-@alloc_1c662730d3e86f61b61bc7ae07425cb9 = private unnamed_addr constant <{ ptr, [8 x i8], ptr, [8 x i8] }> <{ ptr @alloc_c15e95bd5d538440cd0db073bc4e0df6, [8 x i8] c"\15\00\00\00\00\00\00\00", ptr @alloc_49a1e817e911805af64bbc7efb390101, [8 x i8] c"\01\00\00\00\00\00\00\00" }>, align 8
-@alloc_ad8712763ac90ab7afab46d9bf3da337 = private unnamed_addr constant <{ [21 x i8] }> <{ [21 x i8] c"[std_rs.rs:17:3] z = " }>, align 1
-@alloc_70c60b27269362b7fb415fb3a1c0e55a = private unnamed_addr constant <{ ptr, [8 x i8], ptr, [8 x i8] }> <{ ptr @alloc_ad8712763ac90ab7afab46d9bf3da337, [8 x i8] c"\15\00\00\00\00\00\00\00", ptr @alloc_49a1e817e911805af64bbc7efb390101, [8 x i8] c"\01\00\00\00\00\00\00\00" }>, align 8
+@alloc_bfbb86cc6d189835cbb292836a61ad04 = private unnamed_addr constant <{ ptr, [8 x i8], ptr, [8 x i8] }> <{ ptr @alloc_9c6916c9bb86567722faae8b09a66490, [8 x i8] c"\1B\00\00\00\00\00\00\00", ptr @alloc_49a1e817e911805af64bbc7efb390101, [8 x i8] c"\01\00\00\00\00\00\00\00" }>, align 8
+@alloc_f62552dbfd9ec9b3b5c22b0dda30b91d = private unnamed_addr constant <{ [27 x i8] }> <{ [27 x i8] c"[files/std_rs.rs:17:9] z = " }>, align 1
+@alloc_3540addb1ff9d570f8b9e92348c7768f = private unnamed_addr constant <{ ptr, [8 x i8], ptr, [8 x i8] }> <{ ptr @alloc_f62552dbfd9ec9b3b5c22b0dda30b91d, [8 x i8] c"\1B\00\00\00\00\00\00\00", ptr @alloc_49a1e817e911805af64bbc7efb390101, [8 x i8] c"\01\00\00\00\00\00\00\00" }>, align 8
 
 ; Function Attrs: nounwind nonlazybind uwtable
 define internal fastcc void @"_ZN104_$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$T$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h20f3985a52bb6f5fE"(ptr align 8 %self) unnamed_addr #0 {
@@ -981,8 +981,8 @@ start:
   %x = alloca %"alloc::string::String", align 8
   %self5 = alloca %"core::result::Result<std::sys::unix::thread::Thread, std::io::error::Error>", align 8
   %_36 = alloca %"std::thread::JoinInner<'_, ()>", align 8
-  %_33 = alloca %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}}", align 8
-  %main = alloca %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}}", align 8
+  %_33 = alloca %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", align 8
+  %main = alloca %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", align 8
   %_20 = alloca ptr, align 8
   %output_capture = alloca ptr, align 8
   %their_packet = alloca ptr, align 8
@@ -1131,11 +1131,11 @@ bb5:                                              ; preds = %bb45
 bb6:                                              ; preds = %bb5
   store ptr %_61, ptr %main, align 8
   %30 = load ptr, ptr %output_capture, align 8, !noundef !6
-  %31 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}}", ptr %main, i64 0, i32 2
+  %31 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %main, i64 0, i32 2
   store ptr %30, ptr %31, align 8
-  %32 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}}", ptr %main, i64 0, i32 3
+  %32 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %main, i64 0, i32 3
   store ptr %0, ptr %32, align 8
-  %33 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}}", ptr %main, i64 0, i32 1
+  %33 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %main, i64 0, i32 1
   store ptr %25, ptr %33, align 8
   %self13 = load ptr, ptr %my_packet, align 8, !nonnull !6, !noundef !6
   %34 = getelementptr inbounds %"alloc::sync::ArcInner<std::thread::Packet<'_, ()>>", ptr %self13, i64 0, i32 2
@@ -1301,8 +1301,8 @@ start:
   %x = alloca %"alloc::string::String", align 8
   %self5 = alloca %"core::result::Result<std::sys::unix::thread::Thread, std::io::error::Error>", align 8
   %_36 = alloca %"std::thread::JoinInner<'_, ()>", align 8
-  %_33 = alloca %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}}", align 8
-  %main = alloca %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}}", align 8
+  %_33 = alloca %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", align 8
+  %main = alloca %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", align 8
   %_20 = alloca ptr, align 8
   %output_capture = alloca ptr, align 8
   %their_packet = alloca ptr, align 8
@@ -1451,11 +1451,11 @@ bb5:                                              ; preds = %bb45
 bb6:                                              ; preds = %bb5
   store ptr %_61, ptr %main, align 8
   %30 = load ptr, ptr %output_capture, align 8, !noundef !6
-  %31 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}}", ptr %main, i64 0, i32 2
+  %31 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %main, i64 0, i32 2
   store ptr %30, ptr %31, align 8
-  %32 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}}", ptr %main, i64 0, i32 3
+  %32 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %main, i64 0, i32 3
   store ptr %0, ptr %32, align 8
-  %33 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}}", ptr %main, i64 0, i32 1
+  %33 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %main, i64 0, i32 1
   store ptr %25, ptr %33, align 8
   %self13 = load ptr, ptr %my_packet, align 8, !nonnull !6, !noundef !6
   %34 = getelementptr inbounds %"alloc::sync::ArcInner<std::thread::Packet<'_, ()>>", ptr %self13, i64 0, i32 2
@@ -1649,7 +1649,7 @@ bb2:                                              ; preds = %bb1
           to label %bb3 unwind label %bb20.thread
 
 bb3:                                              ; preds = %bb2, %bb1
-  %6 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
+  %6 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
   %_8 = load ptr, ptr %6, align 8, !noundef !6
   %7 = invoke ptr @_ZN3std2io5stdio18set_output_capture17hbfdad0a1763c8421E(ptr %_8)
           to label %bb4 unwind label %bb20.thread
@@ -1660,7 +1660,7 @@ bb4:                                              ; preds = %bb3
           to label %bb5 unwind label %bb20.thread
 
 bb5:                                              ; preds = %bb4
-  %8 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
+  %8 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
   %9 = load ptr, ptr %8, align 8, !nonnull !6, !noundef !6
   store ptr %9, ptr %f, align 8
   invoke void @_ZN3std3sys4unix6thread5guard7current17h5a7c57689f473c66E(ptr nonnull sret(%"core::option::Option<core::ops::range::Range<usize>>") align 8 %_12)
@@ -1691,7 +1691,7 @@ bb22:                                             ; preds = %bb7
   %14 = getelementptr inbounds %"core::option::Option<core::result::Result<(), alloc::boxed::Box<dyn core::any::Any + core::marker::Send>>>::Some", ptr %_17, i64 0, i32 1, i32 1
   store ptr %try_result.1, ptr %14, align 8
   store i64 1, ptr %_17, align 8
-  %15 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
+  %15 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
   %self5 = load ptr, ptr %15, align 8, !nonnull !6, !noundef !6
   %_39 = getelementptr inbounds %"alloc::sync::ArcInner<std::thread::Packet<'_, ()>>", ptr %self5, i64 0, i32 2, i32 1
   invoke fastcc void @"_ZN4core3ptr158drop_in_place$LT$core..option..Option$LT$core..result..Result$LT$$LP$$RP$$C$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$$GT$$GT$17ha7dc1a6812d0b1faE"(ptr nonnull align 8 %_39)
@@ -1743,7 +1743,7 @@ bb15:                                             ; preds = %bb18, %bb17
   br i1 %_25.012, label %bb16, label %bb13
 
 bb18:                                             ; preds = %bb17
-  %23 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
+  %23 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
   invoke fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hc8f3867161fd7f48E"(ptr nonnull align 8 %23) #30
           to label %bb15 unwind label %terminate
 
@@ -1756,7 +1756,7 @@ bb13:                                             ; preds = %bb16, %bb12, %bb20,
   br i1 %.not1, label %bb10, label %bb14
 
 bb16:                                             ; preds = %bb15
-  %27 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
+  %27 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
   call fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17h15132ec8770dbca7E"(ptr nonnull align 8 %27) #30
   br label %bb13
 
@@ -1770,7 +1770,7 @@ bb10:                                             ; preds = %bb14, %bb13
 bb14:                                             ; preds = %bb13.thread, %bb13
   %32 = phi i32 [ %18, %bb13.thread ], [ %24, %bb13 ]
   %33 = phi ptr [ %17, %bb13.thread ], [ %25, %bb13 ]
-  %34 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
+  %34 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
   invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hd134fefae5dee978E"(ptr nonnull align 8 %34) #30
           to label %bb10 unwind label %terminate
 }
@@ -1810,7 +1810,7 @@ bb2:                                              ; preds = %bb1
           to label %bb3 unwind label %bb20.thread
 
 bb3:                                              ; preds = %bb2, %bb1
-  %6 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
+  %6 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
   %_8 = load ptr, ptr %6, align 8, !noundef !6
   %7 = invoke ptr @_ZN3std2io5stdio18set_output_capture17hbfdad0a1763c8421E(ptr %_8)
           to label %bb4 unwind label %bb20.thread
@@ -1821,7 +1821,7 @@ bb4:                                              ; preds = %bb3
           to label %bb5 unwind label %bb20.thread
 
 bb5:                                              ; preds = %bb4
-  %8 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
+  %8 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
   %9 = load ptr, ptr %8, align 8, !nonnull !6, !noundef !6
   store ptr %9, ptr %f, align 8
   invoke void @_ZN3std3sys4unix6thread5guard7current17h5a7c57689f473c66E(ptr nonnull sret(%"core::option::Option<core::ops::range::Range<usize>>") align 8 %_12)
@@ -1852,7 +1852,7 @@ bb22:                                             ; preds = %bb7
   %14 = getelementptr inbounds %"core::option::Option<core::result::Result<(), alloc::boxed::Box<dyn core::any::Any + core::marker::Send>>>::Some", ptr %_17, i64 0, i32 1, i32 1
   store ptr %try_result.1, ptr %14, align 8
   store i64 1, ptr %_17, align 8
-  %15 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
+  %15 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
   %self5 = load ptr, ptr %15, align 8, !nonnull !6, !noundef !6
   %_39 = getelementptr inbounds %"alloc::sync::ArcInner<std::thread::Packet<'_, ()>>", ptr %self5, i64 0, i32 2, i32 1
   invoke fastcc void @"_ZN4core3ptr158drop_in_place$LT$core..option..Option$LT$core..result..Result$LT$$LP$$RP$$C$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$$GT$$GT$17ha7dc1a6812d0b1faE"(ptr nonnull align 8 %_39)
@@ -1904,7 +1904,7 @@ bb15:                                             ; preds = %bb18, %bb17
   br i1 %_25.012, label %bb16, label %bb13
 
 bb18:                                             ; preds = %bb17
-  %23 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
+  %23 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
   invoke fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hc8f3867161fd7f48E"(ptr nonnull align 8 %23) #30
           to label %bb15 unwind label %terminate
 
@@ -1917,7 +1917,7 @@ bb13:                                             ; preds = %bb16, %bb12, %bb20,
   br i1 %.not1, label %bb10, label %bb14
 
 bb16:                                             ; preds = %bb15
-  %27 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
+  %27 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
   call fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17hb62b8b3916239723E"(ptr nonnull align 8 %27) #30
   br label %bb13
 
@@ -1931,7 +1931,7 @@ bb10:                                             ; preds = %bb14, %bb13
 bb14:                                             ; preds = %bb13.thread, %bb13
   %32 = phi i32 [ %18, %bb13.thread ], [ %24, %bb13 ]
   %33 = phi ptr [ %17, %bb13.thread ], [ %25, %bb13 ]
-  %34 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
+  %34 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
   invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hd134fefae5dee978E"(ptr nonnull align 8 %34) #30
           to label %bb10 unwind label %terminate
 }
@@ -1981,7 +1981,7 @@ bb4:                                              ; preds = %bb3, %bb2
 ; Function Attrs: nonlazybind uwtable
 define internal fastcc { ptr, ptr } @_ZN3std9panicking3try17hab138f7be3ceff6eE(ptr %f) unnamed_addr #3 {
 start:
-  %data = alloca %"std::panicking::try::Data<core::panic::unwind_safe::AssertUnwindSafe<{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}::{closure#0}}>, ()>", align 8
+  %data = alloca %"std::panicking::try::Data<core::panic::unwind_safe::AssertUnwindSafe<{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}::{closure#0}}>, ()>", align 8
   %0 = icmp ne ptr %f, null
   tail call void @llvm.assume(i1 %0)
   store ptr %f, ptr %data, align 8
@@ -2009,7 +2009,7 @@ bb4:                                              ; preds = %bb3, %bb2
 ; Function Attrs: nonlazybind uwtable
 define internal fastcc { ptr, ptr } @_ZN3std9panicking3try17hfc0332b7eab0d245E(ptr %f) unnamed_addr #3 {
 start:
-  %data = alloca %"std::panicking::try::Data<core::panic::unwind_safe::AssertUnwindSafe<{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}::{closure#0}}>, ()>", align 8
+  %data = alloca %"std::panicking::try::Data<core::panic::unwind_safe::AssertUnwindSafe<{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}::{closure#0}}>, ()>", align 8
   %0 = icmp ne ptr %f, null
   tail call void @llvm.assume(i1 %0)
   store ptr %f, ptr %data, align 8
@@ -2579,18 +2579,18 @@ start:
 bb5:                                              ; preds = %start
   %0 = landingpad { ptr, i32 }
           cleanup
-  %1 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
+  %1 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
   invoke fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hc8f3867161fd7f48E"(ptr nonnull align 8 %1) #30
           to label %bb4 unwind label %terminate
 
 bb8:                                              ; preds = %start
-  %2 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
+  %2 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
   invoke fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hc8f3867161fd7f48E"(ptr nonnull align 8 %2)
           to label %bb7 unwind label %cleanup1
 
 bb4:                                              ; preds = %cleanup1, %bb5
   %.pn = phi { ptr, i32 } [ %4, %cleanup1 ], [ %0, %bb5 ]
-  %3 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
+  %3 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
   call fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17hb62b8b3916239723E"(ptr nonnull align 8 %3) #30
   br label %bb3
 
@@ -2600,17 +2600,17 @@ cleanup1:                                         ; preds = %bb8
   br label %bb4
 
 bb7:                                              ; preds = %bb8
-  %5 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
+  %5 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
   call fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17hb62b8b3916239723E"(ptr nonnull align 8 %5)
   br label %bb6
 
 bb3:                                              ; preds = %bb4
-  %6 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
+  %6 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
   invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hd134fefae5dee978E"(ptr nonnull align 8 %6) #30
           to label %bb1 unwind label %terminate
 
 bb6:                                              ; preds = %bb7
-  %7 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:16:25: 16:32}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
+  %7 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
   tail call fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hd134fefae5dee978E"(ptr nonnull align 8 %7)
   ret void
 
@@ -2633,18 +2633,18 @@ start:
 bb5:                                              ; preds = %start
   %0 = landingpad { ptr, i32 }
           cleanup
-  %1 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
+  %1 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
   invoke fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hc8f3867161fd7f48E"(ptr nonnull align 8 %1) #30
           to label %bb4 unwind label %terminate
 
 bb8:                                              ; preds = %start
-  %2 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
+  %2 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
   invoke fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hc8f3867161fd7f48E"(ptr nonnull align 8 %2)
           to label %bb7 unwind label %cleanup1
 
 bb4:                                              ; preds = %cleanup1, %bb5
   %.pn = phi { ptr, i32 } [ %4, %cleanup1 ], [ %0, %bb5 ]
-  %3 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
+  %3 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
   call fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17h15132ec8770dbca7E"(ptr nonnull align 8 %3) #30
   br label %bb3
 
@@ -2654,17 +2654,17 @@ cleanup1:                                         ; preds = %bb8
   br label %bb4
 
 bb7:                                              ; preds = %bb8
-  %5 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
+  %5 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
   call fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17h15132ec8770dbca7E"(ptr nonnull align 8 %5)
   br label %bb6
 
 bb3:                                              ; preds = %bb4
-  %6 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
+  %6 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
   invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hd134fefae5dee978E"(ptr nonnull align 8 %6) #30
           to label %bb1 unwind label %terminate
 
 bb6:                                              ; preds = %bb7
-  %7 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@std_rs.rs:10:24: 10:31}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
+  %7 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
   tail call fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hd134fefae5dee978E"(ptr nonnull align 8 %7)
   ret void
 
@@ -4605,7 +4605,7 @@ bb4:                                              ; preds = %bb3
 bb5:                                              ; preds = %bb4
   %_9.0 = extractvalue { ptr, ptr } %3, 0
   %_9.1 = extractvalue { ptr, ptr } %3, 1
-  invoke fastcc void @"_ZN4core6result19Result$LT$T$C$E$GT$6unwrap17h3fc686120212960dE"(ptr align 1 %_9.0, ptr %_9.1, ptr nonnull align 8 @alloc_1930e6ced2c09a90d57aa0f3b8b9037b)
+  invoke fastcc void @"_ZN4core6result19Result$LT$T$C$E$GT$6unwrap17h3fc686120212960dE"(ptr align 1 %_9.0, ptr %_9.1, ptr nonnull align 8 @alloc_12a92478de7931f922a4a99ef3519763)
           to label %bb6 unwind label %bb13
 
 bb6:                                              ; preds = %bb5
@@ -4619,7 +4619,7 @@ bb7:                                              ; preds = %bb6
 bb8:                                              ; preds = %bb7
   %_13.0 = extractvalue { ptr, ptr } %4, 0
   %_13.1 = extractvalue { ptr, ptr } %4, 1
-  invoke fastcc void @"_ZN4core6result19Result$LT$T$C$E$GT$6unwrap17h3fc686120212960dE"(ptr align 1 %_13.0, ptr %_13.1, ptr nonnull align 8 @alloc_adb6bb846f743fddf1374f52764a59e9)
+  invoke fastcc void @"_ZN4core6result19Result$LT$T$C$E$GT$6unwrap17h3fc686120212960dE"(ptr align 1 %_13.0, ptr %_13.1, ptr nonnull align 8 @alloc_df98f02fc76fe3abc1e7ce5f16b13c1f)
           to label %bb9 unwind label %bb14
 
 bb9:                                              ; preds = %bb8
@@ -4663,7 +4663,7 @@ bb3:
   %5 = getelementptr inbounds %"core::fmt::rt::Placeholder", ptr %_16, i64 0, i32 1
   store i64 2, ptr %5, align 8
   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(56) %_15, ptr noundef nonnull align 8 dereferenceable(56) %_16, i64 56, i1 false)
-  call fastcc void @_ZN4core3fmt9Arguments16new_v1_formatted17h3dd9796cd39befecE(ptr nonnull sret(%"core::fmt::Arguments<'_>") align 8 %_5, ptr nonnull align 8 @alloc_1c662730d3e86f61b61bc7ae07425cb9, i64 2, ptr nonnull align 8 %_9, i64 1, ptr nonnull align 8 %_15, i64 1)
+  call fastcc void @_ZN4core3fmt9Arguments16new_v1_formatted17h3dd9796cd39befecE(ptr nonnull sret(%"core::fmt::Arguments<'_>") align 8 %_5, ptr nonnull align 8 @alloc_bfbb86cc6d189835cbb292836a61ad04, i64 2, ptr nonnull align 8 %_9, i64 1, ptr nonnull align 8 %_15, i64 1)
   br label %bb4
 
 bb7:                                              ; preds = %bb4
@@ -4713,7 +4713,7 @@ bb3:
   %5 = getelementptr inbounds %"core::fmt::rt::Placeholder", ptr %_16, i64 0, i32 1
   store i64 2, ptr %5, align 8
   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(56) %_15, ptr noundef nonnull align 8 dereferenceable(56) %_16, i64 56, i1 false)
-  call fastcc void @_ZN4core3fmt9Arguments16new_v1_formatted17h3dd9796cd39befecE(ptr nonnull sret(%"core::fmt::Arguments<'_>") align 8 %_5, ptr nonnull align 8 @alloc_70c60b27269362b7fb415fb3a1c0e55a, i64 2, ptr nonnull align 8 %_9, i64 1, ptr nonnull align 8 %_15, i64 1)
+  call fastcc void @_ZN4core3fmt9Arguments16new_v1_formatted17h3dd9796cd39befecE(ptr nonnull sret(%"core::fmt::Arguments<'_>") align 8 %_5, ptr nonnull align 8 @alloc_3540addb1ff9d570f8b9e92348c7768f, i64 2, ptr nonnull align 8 %_9, i64 1, ptr nonnull align 8 %_15, i64 1)
   br label %bb4
 
 bb7:                                              ; preds = %bb4
@@ -4961,7 +4961,7 @@ attributes #30 = { cold }
 !1 = !{i32 7, !"PIE Level", i32 2}
 !2 = !{i32 2, !"RtLibUseGOT", i32 1}
 !3 = !{!"rustc version 1.76.0 (07dca489a 2024-02-04)"}
-!4 = !{i32 3806347}
+!4 = !{i32 3806389}
 !5 = !{i64 0, i64 2}
 !6 = !{}
 !7 = !{i8 0, i8 42}

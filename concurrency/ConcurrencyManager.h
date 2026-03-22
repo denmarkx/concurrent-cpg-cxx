@@ -150,6 +150,7 @@ inline ThreadOperation ConcurrencyManager::getConcurrencyOperation(const Functio
             return it->second.opCode;
 
     // Take 2: underlying call
+    if (!LTOLibCManager::isEnabled()) return ThreadOperation::NONE;
     std::vector<const LightFunction*> functions;
     functions = LTOLibCManager::get()->getLibCFunctions(F);
 

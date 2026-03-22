@@ -39,6 +39,8 @@ public:
 
     const std::vector<const LightFunction*> getLibCFunctions(const Function *f);
 
+    static bool isEnabled();
+
     static LTOLibCManager* get();
     static LTOLibCManager* _manager;
 

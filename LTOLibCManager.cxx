@@ -10,7 +10,7 @@
 LTOLibCManager::LTOLibCManager(const Module& mainModule) {
     LLVMContext ctx;
     SMDiagnostic error;
-    _module = llvm::parseIRFile("std_rs_lto.bc", error, ctx);
+    _module = llvm::parseIRFile("files/std_rs_lto.bc", error, ctx);
 
     if (!_module) {
         error.print("", errs());
@@ -90,6 +90,9 @@ const std::vector<const LightFunction*> LTOLibCManager::getLibCFunctions(const F
     return _funcLibCMap[f->getName().str()];
 }
 
+bool LTOLibCManager::isEnabled() {
+    return _manager != nullptr;
+}
 
 /**
  * Returns boolean indicating if the given llvm::Function matches LightFunction
@@ -123,7 +126,8 @@ LTOLibCManager* LTOLibCManager::get() {
     if (!_manager)
         // This is a bit different from our other singletons.
         // and that's only because we require the main module's reference for setup.
-        throw std::runtime_error("LTOLibCManager must be initialized prior to running ::get");
+        // throw std::runtime_error("LTOLibCManager must be initialized prior to running ::get");
+        return nullptr;
     return _manager;
 }
 
