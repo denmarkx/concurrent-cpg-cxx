@@ -82,6 +82,7 @@ static const char *memcpyFuncs[] = {"llvm.memcpy.i32",
                                     "llvm.memcpy.p0i8.p0i8.i32",
                                     "llvm.memcpy.i64",
                                     "llvm.memcpy.p0i8.p0i8.i64",
+                                    "llvm.memcpy.p0.p0.i64",
                                     "llvm.memmove.i32",
                                     "llvm.memmove.p0i8.p0i8.i32",
                                     "llvm.memmove.i64",
@@ -206,9 +207,11 @@ bool Andersen::addConstraintForExternalLibrary(const Context* context,
     assert(arg1Index != AndersNodeFactory::InvalidIndex &&
            "Failed to find arg1 node");
 
-    NodeIndex tempIndex = nodeFactory.createValueNode();
-    constraints.emplace_back(AndersConstraint::LOAD, tempIndex, arg1Index);
-    constraints.emplace_back(AndersConstraint::STORE, arg0Index, tempIndex);
+    // NodeIndex tempIndex = nodeFactory.createValueNode();
+    // constraints.emplace_back(AndersConstraint::LOAD, tempIndex, arg1Index);
+    // constraints.emplace_back(AndersConstraint::STORE, arg0Index, tempIndex);
+
+    constraints.emplace_back(AndersConstraint::COPY, arg1Index, arg0Index);
 
     // Don't forget the return value
     NodeIndex retIndex = nodeFactory.getValueNodeFor(context, cs);
