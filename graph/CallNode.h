@@ -49,7 +49,7 @@ public:
             }
             std::vector<const llvm::Value *> ptsSet{};
             AndersenAAResult *AA = GraphManager::get()->getAliasResult();
-            AA->getPointsToSet(funcPtrV, ptsSet);
+            AA->getPointsToSet(nullptr, funcPtrV, ptsSet); // TODO
 
             functions.reserve(ptsSet.size());
             for (auto &v : ptsSet) {

@@ -84,7 +84,7 @@ private:
 
     const Function* getLogicalRoutine(const Value *v) {
         std::vector<const Value *> ptsSet;
-        GraphManager::get()->getAliasResult()->getPointsToSet(v, ptsSet);
+        GraphManager::get()->getAliasResult()->getPointsToSet(nullptr, v, ptsSet);
 
         // TODO: this sort of draws back to a CFG / domtree
         // if there exists more than 1 function within ours ptsSet.

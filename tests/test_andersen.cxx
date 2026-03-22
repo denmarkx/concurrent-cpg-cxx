@@ -1,3 +1,4 @@
+#include "llvm/Analysis/AliasAnalysis.h"
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 
@@ -155,20 +156,20 @@ TEST_CASE("Andersen[NodeFactoryTest]") {
     auto w = &*++itr;
 
     AndersNodeFactory factory;
-    auto vx = factory.createValueNode(x);
-    auto vy = factory.createValueNode(y);
-    auto oz = factory.createObjectNode(z);
-    auto ow = factory.createObjectNode(w);
+    auto vx = factory.createValueNode(nullptr, x);
+    auto vy = factory.createValueNode(nullptr, y);
+    auto oz = factory.createObjectNode(nullptr, z);
+    auto ow = factory.createObjectNode(nullptr, w);
 
     CHECK_EQ(x, factory.getValueForNode(vx));
     CHECK_EQ(y, factory.getValueForNode(vy));
     CHECK(factory.isObjectNode(oz));
     CHECK(factory.isObjectNode(ow));
-    CHECK_EQ(factory.getValueNodeFor(x), vx);
-    CHECK_EQ(factory.getValueNodeFor(y), vy);
-    CHECK_EQ(factory.getValueNodeFor(z), AndersNodeFactory::InvalidIndex);
-    CHECK_EQ(factory.getValueNodeFor(w), AndersNodeFactory::InvalidIndex);
-    CHECK_EQ(factory.getObjectNodeFor(z), oz);
+    CHECK_EQ(factory.getValueNodeFor(nullptr, x), vx);
+    CHECK_EQ(factory.getValueNodeFor(nullptr, y), vy);
+    CHECK_EQ(factory.getValueNodeFor(nullptr, z), AndersNodeFactory::InvalidIndex);
+    CHECK_EQ(factory.getValueNodeFor(nullptr, w), AndersNodeFactory::InvalidIndex);
+    CHECK_EQ(factory.getObjectNodeFor(nullptr, z), oz);
 }
 
 static std::unique_ptr<Andersen> runAndersen(llvm::Module &M) {
@@ -182,6 +183,18 @@ static const Value *findInstr(const Function *F, const std::string &name) {
                 return &I;
     return nullptr;
 }
+
+static const Value *findInstrByID(const Function *F, int id) {
+    for (auto &BB : *F) {
+        int c = 0;
+        for (auto &I : BB) {
+            if (c == id) return &I;
+            c++;
+        }
+    }
+    return nullptr;
+}
+
 
 static bool ptsContains(const std::vector<const Value*> &pts,
                          const Value *v) {
@@ -208,7 +221,7 @@ TEST_CASE("Andersen[Alloca]") {
     CHECK_NE(qLoad, nullptr);
 
     std::vector<const Value*> pts;
-    anders->getPointsToSet(qLoad, pts);
+    anders->getPointsToSet(0u, qLoad, pts);
     CHECK_EQ(pts.size(), 1u);
     CHECK_EQ(pts[0], xAlloca);
 }
@@ -231,8 +244,8 @@ TEST_CASE("Andersen[UnrelatedAlloca_NoAlias]") {
     REQUIRE(yAlloca != nullptr);
 
     std::vector<const Value*> xPts, yPts;
-    anders->getPointsToSet(xAlloca, xPts);
-    anders->getPointsToSet(yAlloca, yPts);
+    anders->getPointsToSet(nullptr, xAlloca, xPts);
+    anders->getPointsToSet(nullptr, yAlloca, yPts);
     CHECK_FALSE(ptsContains(xPts, yAlloca));
     CHECK_FALSE(ptsContains(yPts, xAlloca));
 }
@@ -264,13 +277,13 @@ TEST_CASE("Andersen[DoubleIndirection]") {
     CHECK_NE(rLoad, nullptr);
 
     std::vector<const Value*> qPts;
-    anders->getPointsToSet(qLoad, qPts);
-    CHECK_EQ(qPts.size(), 1u);
+    REQUIRE_EQ(anders->getPointsToSet(0u, qLoad, qPts), true);
+    REQUIRE_EQ(qPts.size(), 1u);
     CHECK_EQ(qPts[0], pAlloca);
 
     std::vector<const Value*> rPts;
-    anders->getPointsToSet(rLoad, rPts);
-    CHECK_EQ(rPts.size(), 1u);
+    REQUIRE_EQ(anders->getPointsToSet(0u, rLoad, rPts), true);
+    REQUIRE_EQ(rPts.size(), 1u);
     CHECK_EQ(rPts[0], xAlloca);
 }
 
@@ -297,7 +310,7 @@ TEST_CASE("Andersen[StoreIndirection]") {
     CHECK_NE(rLoad, nullptr);
 
     std::vector<const Value*> pts;
-    anders->getPointsToSet(rLoad, pts);
+    anders->getPointsToSet(0u, rLoad, pts);
     CHECK_EQ(pts.size(), 1u);
     CHECK_EQ(pts[0], xAlloca);
 }
@@ -327,7 +340,7 @@ TEST_CASE("Andersen[GEP_FieldInsensitivity]") {
     CHECK_NE(vLoad, nullptr);
 
     std::vector<const Value*> pts;
-    anders->getPointsToSet(vLoad, pts);
+    anders->getPointsToSet(0u, vLoad, pts);
     CHECK(ptsContains(pts, xAlloca));
 }
 
@@ -352,7 +365,7 @@ TEST_CASE("Andersen[Call_ReturnValue]") {
     REQUIRE(retVal  != nullptr);
 
     std::vector<const Value*> pts;
-    anders->getPointsToSet(retVal, pts);
+    anders->getPointsToSet(0u, retVal, pts);
     CHECK(ptsContains(pts, xAlloca));
 }
 
@@ -376,7 +389,7 @@ TEST_CASE("Andersen[NullPtr_NoAlias]") {
     REQUIRE(qLoad   != nullptr);
 
     std::vector<const Value*> pts;
-    anders->getPointsToSet(qLoad, pts);
+    anders->getPointsToSet(0u, qLoad, pts);
     CHECK_FALSE(ptsContains(pts, xAlloca));
 }
 
@@ -416,7 +429,7 @@ TEST_CASE("Andersen[IndirectCall_Via_Global_Fptr]") {
     REQUIRE(fptrLoad != nullptr);
 
     std::vector<const Value*> pts;
-    anders->getPointsToSet(fptrLoad, pts);
+    anders->getPointsToSet(0u, fptrLoad, pts);
 
     const Function *target = module->getFunction("target");
     CHECK(ptsContains(pts, target));
@@ -451,8 +464,166 @@ TEST_CASE("Andersen[Phi_Merge]") {
     REQUIRE(phiVal  != nullptr);
 
     std::vector<const Value*> pts;
-    anders->getPointsToSet(phiVal, pts);
+    anders->getPointsToSet(0u, phiVal, pts);
     CHECK_EQ(pts.size(), 2u);
     CHECK(ptsContains(pts, xAlloca));
     CHECK(ptsContains(pts, yAlloca));
+}
+
+TEST_CASE("Andersen[ContextGlobalNoAlias]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        @g = global i32 100, align 4
+        @h = global i32 500, align 4
+
+        define ptr @get(ptr noundef %0) #0 {
+          %2 = alloca ptr, align 8
+          store ptr %0, ptr %2, align 8
+          %3 = load ptr, ptr %2, align 8
+          ret ptr %3
+        }
+
+        define dso_local i32 @main() #0 {
+          %1 = alloca i32, align 4
+          %2 = alloca ptr, align 8
+          %3 = alloca ptr, align 8
+          store i32 0, ptr %1, align 4
+          %x = call ptr @get(ptr noundef @g)
+          store ptr %x, ptr %2, align 8
+          %y = call ptr @get(ptr noundef @h)
+          store ptr %y, ptr %3, align 8
+          ret i32 0
+        }
+    )");
+
+    auto anders = std::make_unique<AndersenAAResult>(AndersenAAResult(*module));
+    const Function *F = module->getFunction("main");
+
+    const Value *xAlloca = findInstr(F, "x");
+    const Value *yAlloca = findInstr(F, "y");
+    REQUIRE(xAlloca != nullptr);
+    REQUIRE(yAlloca != nullptr);
+
+    AliasResult result = anders->alias(xAlloca, yAlloca, 0u, 0u);
+    CHECK_EQ(result, AliasResult::NoAlias);
+}
+
+
+TEST_CASE("Andersen[ContextGlobalAlias]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        @g = global i32 100, align 4
+        @h = global i32 500, align 4
+
+        define ptr @get(ptr noundef %0) #0 {
+          %2 = alloca ptr, align 8
+          store ptr %0, ptr %2, align 8
+          %3 = load ptr, ptr %2, align 8
+          ret ptr %3
+        }
+
+        define dso_local i32 @main() #0 {
+          %1 = alloca i32, align 4
+          %2 = alloca ptr, align 8
+          %3 = alloca ptr, align 8
+          store i32 0, ptr %1, align 4
+          %x = call ptr @get(ptr noundef @g)
+          store ptr %x, ptr %2, align 8
+          %y = call ptr @get(ptr noundef @g)
+          store ptr %y, ptr %3, align 8
+          ret i32 0
+        }
+    )");
+
+    auto anders = std::make_unique<AndersenAAResult>(AndersenAAResult(*module));
+    const Function *F = module->getFunction("main");
+
+    const Value *xAlloca = findInstr(F, "x");
+    const Value *yAlloca = findInstr(F, "y");
+    REQUIRE(xAlloca != nullptr);
+    REQUIRE(yAlloca != nullptr);
+
+    AliasResult result = anders->alias(xAlloca, yAlloca, 0u, 0u);
+    CHECK_EQ(result, AliasResult::MustAlias);
+}
+
+TEST_CASE("Andersen[ContextSensitiveTwoLevelCall]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        @g = global i32 3
+        @h = global i32 4
+
+        define ptr @inner(ptr %p) {
+          ret ptr %p
+        }
+
+        define ptr @outer(ptr %q) {
+          %1 = call ptr @inner(ptr %q)
+          ret ptr %1
+        }
+
+        define i32 @main() {
+          %x = call ptr @outer(ptr @g)
+          %y = call ptr @outer(ptr @h)
+          ret i32 0
+        }
+    )");
+
+    auto anders = std::make_unique<AndersenAAResult>(*module);
+    const Function *F = module->getFunction("main");
+    const Function *outer = module->getFunction("outer");
+
+    const Value *x = findInstr(F, "x");
+    const Value *y = findInstr(F, "y");
+    const Value *innerCall = findInstrByID(outer, 0);
+    errs() << *innerCall << "\n";
+
+    REQUIRE(x != nullptr);
+    REQUIRE(y != nullptr);
+    REQUIRE(innerCall != nullptr);
+
+    AliasResult result = anders->alias(x, y, 0u, 0u);
+    CHECK_EQ(result, AliasResult::NoAlias);
+
+    AliasResult result2 = anders->alias(innerCall, innerCall, 2u, 2u);
+    CHECK_EQ(result, AliasResult::NoAlias);
+
+    AliasResult result3 = anders->alias(innerCall, innerCall, 2u, 4u);
+    CHECK_EQ(result, AliasResult::NoAlias);
+
+    AliasResult result4 = anders->alias(innerCall, innerCall, 2u, 3u);
+    CHECK_EQ(result, AliasResult::NoAlias);
+}
+
+TEST_CASE("Andersen[ContextSensitiveMixed]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        @g = global i32 1
+        @h = global i32 2
+
+        define ptr @id(ptr %p) {
+          ret ptr %p
+        }
+
+        define i32 @main() {
+          %x = call ptr @id(ptr @g)
+          %y = call ptr @id(ptr @h)
+          %z = call ptr @id(ptr @g)
+          ret i32 0
+        }
+    )");
+
+    auto anders = std::make_unique<AndersenAAResult>(*module);
+    const Function *F = module->getFunction("main");
+
+    const Value *x = findInstr(F, "x");
+    const Value *y = findInstr(F, "y");
+    const Value *z = findInstr(F, "z");
+
+    REQUIRE(x);
+    REQUIRE(y);
+    REQUIRE(z);
+
+    CHECK_EQ(anders->alias(x, y, 0u, 0u), AliasResult::NoAlias);
+    CHECK_EQ(anders->alias(x, z, 0u, 0u), AliasResult::MustAlias);
 }

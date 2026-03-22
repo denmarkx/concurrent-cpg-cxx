@@ -663,8 +663,8 @@ void Andersen::solveConstraints() {
                 // errs() << "\tInsert copy edge " << tgtNode << " -> " << v <<
                 // "\n";
                 nextWorkList->enqueue(tgtNode);
-                if (reseeded.insert(vRep).second)
-                  deltaPts[vRep].unionWith(ptsGraph[vRep]);
+                if (reseeded.insert(tgtNode).second)
+                  deltaPts[tgtNode].unionWith(ptsGraph[tgtNode]);
               }
 
               // If we find that dst has been merged to elsewhere, remember this

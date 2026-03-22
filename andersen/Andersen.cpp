@@ -20,13 +20,14 @@ cl::opt<bool> DumpConstraintInfo("dump-cons",
 Andersen::Andersen(const Module &module) { runOnModule(module); }
 
 void Andersen::getAllAllocationSites(
-    std::vector<const llvm::Value *> &allocSites) const {
+    std::vector<std::pair<const Context*, const llvm::Value *>> &allocSites) const {
   nodeFactory.getAllocSites(allocSites);
 }
 
-bool Andersen::getPointsToSet(const llvm::Value *v,
+// TODO: context should be const
+bool Andersen::getPointsToSet(const Context *ctx, const llvm::Value *v,
                               std::vector<const llvm::Value *> &ptsSet) {
-  NodeIndex ptrIndex = nodeFactory.getValueNodeFor(v);
+  NodeIndex ptrIndex = nodeFactory.getValueNodeFor(ctx, v);
   // We have no idea what v is...
   if (ptrIndex == AndersNodeFactory::InvalidIndex ||
       ptrIndex == nodeFactory.getUniversalPtrNode())
@@ -53,9 +54,33 @@ bool Andersen::getPointsToSet(const llvm::Value *v,
   return true;
 }
 
-bool Andersen::getPointsFromSet(const llvm::Value *v,
+bool Andersen::getPointsToSet(unsigned int ctxId, const llvm::Value *v,
+                              std::vector<const llvm::Value *> &ptsSet) {
+  assert(ctxId < nodeFactory.getNumContexts());
+  return getPointsToSet(nodeFactory.getContext(ctxId), v, ptsSet);
+}
+
+/**
+ * Given a value, populates ptsSet with all possible pointsTo
+ * values among ALL associated contexts.
+*/
+bool Andersen::getPointsToSet(const llvm::Value *v, std::vector<const llvm::Value *> &ptsSet) {
+  std::vector<const Context*> contexts = nodeFactory.getAssociatedContexts(v);
+
+  for (const Context *ctx : contexts) {
+    std::vector<const llvm::Value*> childSet;
+    if (getPointsToSet(ctx, v, childSet)) {
+      for (const llvm::Value *v : childSet)
+        ptsSet.push_back(v);
+    }
+  }
+  return ptsSet.size() > 0;
+}
+
+// TODO: context should be const
+bool Andersen::getPointsFromSet(const Context* ctx, const llvm::Value *v,
                                 std::vector<const llvm::Value *> &ptsSet) {
-  NodeIndex ptrIndex = nodeFactory.getValueNodeFor(v);
+  NodeIndex ptrIndex = nodeFactory.getValueNodeFor(ctx, v);
   if (ptrIndex == AndersNodeFactory::InvalidIndex ||
       ptrIndex == nodeFactory.getUniversalPtrNode())
     return false;
@@ -73,6 +98,29 @@ bool Andersen::getPointsFromSet(const llvm::Value *v,
     }
   }
   return true;
+}
+
+bool Andersen::getPointsFromSet(unsigned int ctxId, const llvm::Value *v,
+                              std::vector<const llvm::Value *> &ptsSet) {
+  assert(ctxId < nodeFactory.getNumContexts());
+  return getPointsFromSet(nodeFactory.getContext(ctxId), v, ptsSet);
+}
+
+/**
+ * Given a value, populates ptsSet with all possible pointsTo
+ * values among ALL associated contexts.
+*/
+bool Andersen::getPointsFromSet(const llvm::Value *v, std::vector<const llvm::Value *> &ptsSet) {
+  std::vector<const Context*> contexts = nodeFactory.getAssociatedContexts(v);
+
+  for (const Context *ctx : contexts) {
+    std::vector<const llvm::Value*> childSet;
+    if (getPointsFromSet(ctx, v, childSet)) {
+      for (const llvm::Value *v : childSet)
+        ptsSet.push_back(v);
+    }
+  }
+  return ptsSet.size() > 0;
 }
 
 bool Andersen::runOnModule(const Module &M) {
