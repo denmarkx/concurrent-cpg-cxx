@@ -76,7 +76,7 @@ private:
 
   // Helper functions for constraint collection
   Context* collectConstraintsForGlobals(const llvm::Module &);
-  void collectConstraintsForInstruction(Context*, const llvm::Instruction *);
+  void collectConstraintsForInstruction(Context*, const llvm::Instruction *, bool recursiveHack=false);
   void addGlobalInitializerConstraints(NodeIndex, const llvm::Constant *);
   void addConstraintForCall(Context*, const llvm::CallBase* cs);
   bool addConstraintForExternalLibrary(Context*,

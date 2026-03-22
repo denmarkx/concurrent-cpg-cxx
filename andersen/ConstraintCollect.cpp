@@ -70,6 +70,7 @@ void Andersen::scanFunction(Context *context, const llvm::Function *f) {
   // necessary to do the job here rather than on-the-fly because an
   // instruction may refer to the value node defined before it (e.g. phi
   // nodes)
+  bool recursiveHack = false;
   for (const_inst_iterator itr = inst_begin(f), ite = inst_end(f); itr != ite;
        ++itr) {
     auto inst = &*itr.getInstructionIterator();
@@ -83,10 +84,15 @@ void Andersen::scanFunction(Context *context, const llvm::Function *f) {
     // If this is a call, we scan that function:
     if (const CallBase *cs = dyn_cast<CallBase>(inst)) {
       if (cs->getCalledFunction()) {
-        Context *child = nodeFactory.createContext(context, cs);
+        // TODO: recursive funcs
+        if (f != cs->getCalledFunction()) {
+          Context *child = nodeFactory.createContext(context, cs);
 
-        setupFunctionConstraints(child, cs->getCalledFunction());
-        scanFunction(child, cs->getCalledFunction());
+          setupFunctionConstraints(child, cs->getCalledFunction());
+          scanFunction(child, cs->getCalledFunction());
+        } else {
+          recursiveHack = true;
+        }
       }
     }
   }
@@ -95,7 +101,7 @@ void Andersen::scanFunction(Context *context, const llvm::Function *f) {
   for (const_inst_iterator itr = inst_begin(f), ite = inst_end(f); itr != ite;
        ++itr) {
     auto inst = &*itr.getInstructionIterator();
-    collectConstraintsForInstruction(context, inst);
+    collectConstraintsForInstruction(context, inst, recursiveHack);
   }
 }
 
@@ -199,7 +205,7 @@ void Andersen::addGlobalInitializerConstraints(NodeIndex objNode,
   }
 }
 
-void Andersen::collectConstraintsForInstruction(Context *context, const Instruction *inst) {
+void Andersen::collectConstraintsForInstruction(Context *context, const Instruction *inst, bool recursiveHack) {
   switch (inst->getOpcode()) {
   case Instruction::Alloca: {
     NodeIndex valNode = nodeFactory.getValueNodeFor(context, inst);
@@ -214,7 +220,9 @@ void Andersen::collectConstraintsForInstruction(Context *context, const Instruct
     const CallBase *cb = dyn_cast<CallBase>(inst);
     assert(cb && "Something wrong with callsite?");
 
-    addConstraintForCall(context, cb);
+    // TODO: recursive funcs
+    if (!recursiveHack)
+      addConstraintForCall(context, cb);
 
     break;
   }
