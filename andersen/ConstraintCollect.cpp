@@ -146,7 +146,7 @@ Context* Andersen::collectConstraintsForGlobals(const Module &M) {
   return _globalCtx;
 }
 
-void Andersen::setupFunctionConstraints(Context *context, const Function *f) {
+void Andersen::setupFunctionConstraints(const Context *context, const Function *f) {
   // If f is an addr-taken function, create a pointer and an object for it
   if (f->hasAddressTaken()) {
     // 创建一个值节点和一个对象节点
@@ -205,7 +205,7 @@ void Andersen::addGlobalInitializerConstraints(NodeIndex objNode,
   }
 }
 
-void Andersen::collectConstraintsForInstruction(Context *context, const Instruction *inst, bool recursiveHack) {
+void Andersen::collectConstraintsForInstruction(const Context *context, const Instruction *inst, bool recursiveHack) {
   switch (inst->getOpcode()) {
   case Instruction::Alloca: {
     NodeIndex valNode = nodeFactory.getValueNodeFor(context, inst);
@@ -438,7 +438,7 @@ void Andersen::collectConstraintsForInstruction(Context *context, const Instruct
 // There are two types of constraints to add for a function call:
 // - ValueNode(callsite) = ReturnNode(call target)
 // - ValueNode(formal arg) = ValueNode(actual arg)
-void Andersen::addConstraintForCall(Context *context, const CallBase* cs) {
+void Andersen::addConstraintForCall(const Context *context, const CallBase* cs) {
   // Ignore asm calls.
   if (cs->isInlineAsm()) return;
 
@@ -542,8 +542,8 @@ void Andersen::addConstraintForCall(Context *context, const CallBase* cs) {
   }
 }
 
-void Andersen::addArgumentConstraintForCall(Context *calleeCtx,
-                                            Context *context,
+void Andersen::addArgumentConstraintForCall(const Context *calleeCtx,
+                                            const Context *context,
                                             const CallBase *cs,
                                             const Function *f) {
   Function::const_arg_iterator fItr = f->arg_begin();

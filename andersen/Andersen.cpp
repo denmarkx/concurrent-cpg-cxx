@@ -20,12 +20,12 @@ cl::opt<bool> DumpConstraintInfo("dump-cons",
 Andersen::Andersen(const Module &module) { runOnModule(module); }
 
 void Andersen::getAllAllocationSites(
-    std::vector<std::pair<Context*, const llvm::Value *>> &allocSites) const {
+    std::vector<std::pair<const Context*, const llvm::Value *>> &allocSites) const {
   nodeFactory.getAllocSites(allocSites);
 }
 
 // TODO: context should be const
-bool Andersen::getPointsToSet(Context *ctx, const llvm::Value *v,
+bool Andersen::getPointsToSet(const Context *ctx, const llvm::Value *v,
                               std::vector<const llvm::Value *> &ptsSet) {
   NodeIndex ptrIndex = nodeFactory.getValueNodeFor(ctx, v);
   // We have no idea what v is...
@@ -57,9 +57,7 @@ bool Andersen::getPointsToSet(Context *ctx, const llvm::Value *v,
 bool Andersen::getPointsToSet(unsigned int ctxId, const llvm::Value *v,
                               std::vector<const llvm::Value *> &ptsSet) {
   assert(ctxId < nodeFactory.getNumContexts());
-  // TODO: need to fix the rest of the isgnatures. const_cast here is bad
-  Context* ctx = const_cast<Context*>(nodeFactory.getContext(ctxId));
-  return getPointsToSet(ctx, v, ptsSet);
+  return getPointsToSet(nodeFactory.getContext(ctxId), v, ptsSet);
 }
 
 /**
@@ -70,10 +68,8 @@ bool Andersen::getPointsToSet(const llvm::Value *v, std::vector<const llvm::Valu
   std::vector<const Context*> contexts = nodeFactory.getAssociatedContexts(v);
 
   for (const Context *ctx : contexts) {
-    // TODO: need to fix signatures and kill const_cast here
-    Context* tmp = const_cast<Context*>(ctx);
     std::vector<const llvm::Value*> childSet;
-    if (getPointsToSet(tmp, v, childSet)) {
+    if (getPointsToSet(ctx, v, childSet)) {
       for (const llvm::Value *v : childSet)
         ptsSet.push_back(v);
     }
@@ -82,7 +78,7 @@ bool Andersen::getPointsToSet(const llvm::Value *v, std::vector<const llvm::Valu
 }
 
 // TODO: context should be const
-bool Andersen::getPointsFromSet(Context* ctx, const llvm::Value *v,
+bool Andersen::getPointsFromSet(const Context* ctx, const llvm::Value *v,
                                 std::vector<const llvm::Value *> &ptsSet) {
   NodeIndex ptrIndex = nodeFactory.getValueNodeFor(ctx, v);
   if (ptrIndex == AndersNodeFactory::InvalidIndex ||
@@ -107,9 +103,7 @@ bool Andersen::getPointsFromSet(Context* ctx, const llvm::Value *v,
 bool Andersen::getPointsFromSet(unsigned int ctxId, const llvm::Value *v,
                               std::vector<const llvm::Value *> &ptsSet) {
   assert(ctxId < nodeFactory.getNumContexts());
-  // TODO: need to fix the rest of the isgnatures. const_cast here is bad
-  Context* ctx = const_cast<Context*>(nodeFactory.getContext(ctxId));
-  return getPointsFromSet(ctx, v, ptsSet);
+  return getPointsFromSet(nodeFactory.getContext(ctxId), v, ptsSet);
 }
 
 /**
@@ -120,10 +114,8 @@ bool Andersen::getPointsFromSet(const llvm::Value *v, std::vector<const llvm::Va
   std::vector<const Context*> contexts = nodeFactory.getAssociatedContexts(v);
 
   for (const Context *ctx : contexts) {
-    // TODO: need to fix signatures and kill const_cast here
-    Context* tmp = const_cast<Context*>(ctx);
     std::vector<const llvm::Value*> childSet;
-    if (getPointsFromSet(tmp, v, childSet)) {
+    if (getPointsFromSet(ctx, v, childSet)) {
       for (const llvm::Value *v : childSet)
         ptsSet.push_back(v);
     }

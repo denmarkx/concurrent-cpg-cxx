@@ -106,7 +106,7 @@ static bool lookupName(const char *table[], const char *str) {
 // and add constraint correspondingly If this is a call to a "known" function,
 // add the constraints and return true. If this is a call to an unknown
 // function, return false.
-bool Andersen::addConstraintForExternalLibrary(Context* context,
+bool Andersen::addConstraintForExternalLibrary(const Context* context,
                                                const CallBase *cs,
                                                const Function *f) {
   assert(f != nullptr && "called function is nullptr!");

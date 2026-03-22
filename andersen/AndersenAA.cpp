@@ -11,7 +11,7 @@ static inline bool isSetContainingOnly(const AndersPtsSet &set, NodeIndex i) {
   return (set.getSize() == 1) && (*set.begin() == i);
 }
 
-AliasResult AndersenAAResult::andersenAlias(Context *c1, Context *c2, const Value *v1, const Value *v2) {
+AliasResult AndersenAAResult::andersenAlias(const Context *c1, const Context *c2, const Value *v1, const Value *v2) {
   NodeIndex n1 = (anders.nodeFactory)
                      .getMergeTarget((anders.nodeFactory).getValueNodeFor(c1, v1));
   NodeIndex n2 = (anders.nodeFactory)
@@ -50,8 +50,8 @@ AliasResult AndersenAAResult::andersenAlias(Context *c1, Context *c2, const Valu
 
 AliasResult AndersenAAResult::alias(const MemoryLocation &l1,
                                     const MemoryLocation &l2,
-                                    Context *c1,
-                                    Context *c2) {
+                                    const Context *c1,
+                                    const Context *c2) {
   if (l1.Size == 0 || l2.Size == 0)
     return AliasResult::Kind::NoAlias;
 
@@ -69,8 +69,8 @@ AliasResult AndersenAAResult::alias(const MemoryLocation &l1,
 
 AliasResult AndersenAAResult::alias(const Value *v1,
                                     const Value *v2,
-                                    Context* c1,
-                                    Context* c2) {
+                                    const Context* c1,
+                                    const Context* c2) {
   if (!v1 || !v2) return AliasResult::Kind::NoAlias;
 
   MemoryLocation m1(v1, MemoryLocation::UnknownSize);
@@ -117,7 +117,7 @@ bool AndersenAAResult::pointsToConstantMemory(const MemoryLocation &loc,
   return true;
 }
 
-bool AndersenAAResult::getPointsToSet(Context* cs, const Value *v, PtsSetType &ptsSet) {
+bool AndersenAAResult::getPointsToSet(const Context* cs, const Value *v, PtsSetType &ptsSet) {
   return anders.getPointsToSet(cs, v, ptsSet);
 }
 
@@ -129,7 +129,7 @@ bool AndersenAAResult::getPointsToSet(unsigned int ctxId, const Value *v, PtsSet
   return anders.getPointsToSet(ctxId, v, ptsSet);
 }
 
-bool AndersenAAResult::getPointsFromSet(Context* cs, const Value *v, PtsSetType &ptsSet) {
+bool AndersenAAResult::getPointsFromSet(const Context* cs, const Value *v, PtsSetType &ptsSet) {
   return anders.getPointsFromSet(cs, v, ptsSet);
 }
 
@@ -151,7 +151,7 @@ std::vector<unsigned int> AndersenAAResult::getContextIDs(const Value *v) {
   return contexts;
 }
 
-void AndersenAAResult::printPointsToSet(Context* cs, const Value *v) {
+void AndersenAAResult::printPointsToSet(const Context* cs, const Value *v) {
   PtsSetType ptsSet{};
   getPointsToSet(cs, v, ptsSet);
 
@@ -172,8 +172,7 @@ void AndersenAAResult::printPointsToSet(Context* cs, const Value *v) {
 
 void AndersenAAResult::printPointsToSet(unsigned int ctxId, const Value *v) {
   assert(ctxId < anders.nodeFactory.getNumContexts());
-  Context *ctx = const_cast<Context*>(anders.nodeFactory.getContext(ctxId));
-  return printPointsToSet(ctx, v);
+  return printPointsToSet(anders.nodeFactory.getContext(ctxId), v);
 }
 
 AndersenAAResult::AndersenAAResult(const Module &m) : anders(m) {}

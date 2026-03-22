@@ -31,7 +31,7 @@ AndersNodeFactory::AndersNodeFactory() {
   assert(nodes.size() == 4);
 }
 
-NodeIndex AndersNodeFactory::createValueNode(Context *context, const Value *val) {
+NodeIndex AndersNodeFactory::createValueNode(const Context *context, const Value *val) {
   unsigned nextIdx = nodes.size();
   nodes.push_back(AndersNode(AndersNode::VALUE_NODE, nextIdx, val));
   if (val != nullptr) {
@@ -43,7 +43,7 @@ NodeIndex AndersNodeFactory::createValueNode(Context *context, const Value *val)
   return nextIdx;
 }
 
-NodeIndex AndersNodeFactory::createObjectNode(Context *context, const Value *val) {
+NodeIndex AndersNodeFactory::createObjectNode(const Context *context, const Value *val) {
   unsigned nextIdx = nodes.size();
   nodes.push_back(AndersNode(AndersNode::OBJ_NODE, nextIdx, val));
   if (val != nullptr) {
@@ -57,7 +57,7 @@ NodeIndex AndersNodeFactory::createObjectNode(Context *context, const Value *val
 }
 
 // TODO: this is imprecise for functions that have >1 return stmt.
-NodeIndex AndersNodeFactory::createReturnNode(Context *context, const llvm::Function *f) {
+NodeIndex AndersNodeFactory::createReturnNode(const Context *context, const llvm::Function *f) {
   auto existing = returnMap.find({context, f});
   if (existing != returnMap.end()) return existing->second;
 
@@ -77,7 +77,7 @@ NodeIndex AndersNodeFactory::createVarargNode(const llvm::Function *f) {
   return nextIdx;
 }
 
-NodeIndex AndersNodeFactory::getValueNodeFor(Context *context, const Value *val) {
+NodeIndex AndersNodeFactory::getValueNodeFor(const Context *context, const Value *val) {
   if (const Constant *c = dyn_cast<Constant>(val)) {
     if (!isa<GlobalValue>(c))
       return getValueNodeForConstant(context, c);
@@ -92,7 +92,7 @@ NodeIndex AndersNodeFactory::getValueNodeFor(Context *context, const Value *val)
     return itr->second;
 }
 
-NodeIndex AndersNodeFactory::getValueNodeForConstant(Context *context, const llvm::Constant *c) {
+NodeIndex AndersNodeFactory::getValueNodeForConstant(const Context *context, const llvm::Constant *c) {
   assert(isa<PointerType>(c->getType()) && "Not a constant pointer!");
 
   if (isa<ConstantPointerNull>(c) || isa<UndefValue>(c))
@@ -120,7 +120,7 @@ NodeIndex AndersNodeFactory::getValueNodeForConstant(Context *context, const llv
   return InvalidIndex;
 }
 
-NodeIndex AndersNodeFactory::getObjectNodeFor(Context *context, const Value *val) const {
+NodeIndex AndersNodeFactory::getObjectNodeFor(const Context *context, const Value *val) const {
   if (const Constant *c = dyn_cast<Constant>(val))
     if (!isa<GlobalValue>(c))
       return getObjectNodeForConstant(context, c);
@@ -133,7 +133,7 @@ NodeIndex AndersNodeFactory::getObjectNodeFor(Context *context, const Value *val
 }
 
 NodeIndex
-AndersNodeFactory::getObjectNodeForConstant(Context *context, const llvm::Constant *c) const {
+AndersNodeFactory::getObjectNodeForConstant(const Context *context, const llvm::Constant *c) const {
   assert(isa<PointerType>(c->getType()) && "Not a constant pointer!");
 
   if (isa<ConstantPointerNull>(c))
@@ -161,7 +161,7 @@ AndersNodeFactory::getObjectNodeForConstant(Context *context, const llvm::Consta
   return InvalidIndex;
 }
 
-NodeIndex AndersNodeFactory::getReturnNodeFor(Context *context, const llvm::Function *f) const {
+NodeIndex AndersNodeFactory::getReturnNodeFor(const Context *context, const llvm::Function *f) const {
   auto itr = returnMap.find({context, f});
   if (itr == returnMap.end())
     return InvalidIndex;
@@ -208,7 +208,7 @@ NodeIndex AndersNodeFactory::getMergeTarget(NodeIndex n) const {
 }
 
 void AndersNodeFactory::getAllocSites(
-    std::vector<std::pair<Context*, const llvm::Value *>> &allocSites) const {
+    std::vector<std::pair<const Context*, const llvm::Value *>> &allocSites) const {
   allocSites.clear();
   allocSites.reserve(objNodeMap.size());
   for (auto const &mapping : objNodeMap)

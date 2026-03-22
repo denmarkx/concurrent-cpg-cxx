@@ -30,7 +30,7 @@ struct Context {
       prevCtx->children[_callSite] = this;
   }
 
-  Context* getChild(const llvm::CallBase *cs) {
+  Context* getChild(const llvm::CallBase *cs) const {
     auto it = children.find(cs);
     return it != children.end() ? it->second : nullptr;
   }
@@ -73,7 +73,7 @@ public:
 // std::unique_ptr and heap allocations. Therefore, we use plain integers to
 // represent nodes for public functions like createXXX and getXXX. This is ugly,
 // but it is efficient.
-typedef llvm::DenseMap<std::pair<Context*, const llvm::Value*>, NodeIndex> NodeMapType;
+typedef llvm::DenseMap<std::pair<const Context*, const llvm::Value*>, NodeIndex> NodeMapType;
 
 class AndersNodeFactory {
 public:
@@ -102,7 +102,7 @@ private:
 
   // returnMap - This map contains an entry for each function in the program
   // that returns a ptr.
-  llvm::DenseMap<std::pair<Context*, const llvm::Function *>, NodeIndex> returnMap;
+  llvm::DenseMap<std::pair<const Context*, const llvm::Function *>, NodeIndex> returnMap;
 
   // varargMap - This map contains the entry used to represent all pointers
   // passed through the varargs portion of a function call for a particular
@@ -118,17 +118,17 @@ public:
   Context* _globalCtx;
 
   // Factory methods
-  NodeIndex createValueNode(Context *context = nullptr, const llvm::Value *val = nullptr);
-  NodeIndex createObjectNode(Context *context = nullptr, const llvm::Value *val = nullptr);
-  NodeIndex createReturnNode(Context *context, const llvm::Function *f);
+  NodeIndex createValueNode(const Context *context = nullptr, const llvm::Value *val = nullptr);
+  NodeIndex createObjectNode(const Context *context = nullptr, const llvm::Value *val = nullptr);
+  NodeIndex createReturnNode(const Context *context, const llvm::Function *f);
   NodeIndex createVarargNode(const llvm::Function *f);
 
   // Map lookup interfaces (return InvalidIndex if value not found)
-  NodeIndex getValueNodeFor(Context *context, const llvm::Value *val);
-  NodeIndex getValueNodeForConstant(Context *context, const llvm::Constant *c);
-  NodeIndex getObjectNodeFor(Context *context, const llvm::Value *val) const;
-  NodeIndex getObjectNodeForConstant(Context *context, const llvm::Constant *c) const;
-  NodeIndex getReturnNodeFor(Context *context, const llvm::Function *f) const;
+  NodeIndex getValueNodeFor(const Context *context, const llvm::Value *val);
+  NodeIndex getValueNodeForConstant(const Context *context, const llvm::Constant *c);
+  NodeIndex getObjectNodeFor(const Context *context, const llvm::Value *val) const;
+  NodeIndex getObjectNodeForConstant(const Context *context, const llvm::Constant *c) const;
+  NodeIndex getReturnNodeFor(const Context *context, const llvm::Function *f) const;
   NodeIndex getVarargNodeFor(const llvm::Function *f) const;
 
   // Node merge interfaces
@@ -155,10 +155,10 @@ public:
   const llvm::Value *getValueForNode(NodeIndex i) const {
     return nodes.at(i).getValue();
   }
-  void getAllocSites(std::vector<std::pair<Context*, const llvm::Value *>> &) const;
+  void getAllocSites(std::vector<std::pair<const Context*, const llvm::Value *>> &) const;
 
   // Value remover
-  void removeNodeForValue(Context *context, const llvm::Value *val) { 
+  void removeNodeForValue(const Context *context, const llvm::Value *val) { 
     valueNodeMap.erase({context, val}); 
   }
 

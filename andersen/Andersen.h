@@ -76,17 +76,17 @@ private:
 
   // Helper functions for constraint collection
   Context* collectConstraintsForGlobals(const llvm::Module &);
-  void collectConstraintsForInstruction(Context*, const llvm::Instruction *, bool recursiveHack=false);
+  void collectConstraintsForInstruction(const Context*, const llvm::Instruction *, bool recursiveHack=false);
   void addGlobalInitializerConstraints(NodeIndex, const llvm::Constant *);
-  void addConstraintForCall(Context*, const llvm::CallBase* cs);
-  bool addConstraintForExternalLibrary(Context*,
+  void addConstraintForCall(const Context*, const llvm::CallBase* cs);
+  bool addConstraintForExternalLibrary(const Context*,
                                        const llvm::CallBase* cs,
                                        const llvm::Function *f);
-  void addArgumentConstraintForCall(Context*, Context*,
+  void addArgumentConstraintForCall(const Context*, const Context*,
                                     const llvm::CallBase* cs,
                                     const llvm::Function *f);
   void scanFunction(Context*, const llvm::Function *f);
-  void setupFunctionConstraints(Context*, const llvm::Function *f);
+  void setupFunctionConstraints(const Context*, const llvm::Function *f);
 
   // Helper functions for constraint optimization
   NodeIndex getRefNodeIndex(NodeIndex n) const;
@@ -109,7 +109,7 @@ public:
   // words, the client must conservatively assume v can points to everything.
   // - Return true otherwise, and the points-to set of v is put into the second
   // argument.
-  bool getPointsToSet(Context *ctx, const llvm::Value *v,
+  bool getPointsToSet(const Context *ctx, const llvm::Value *v,
                       std::vector<const llvm::Value *> &ptsSet);
 
   bool getPointsToSet(unsigned int ctxId, const llvm::Value *v,
@@ -118,7 +118,7 @@ public:
   bool getPointsToSet(const llvm::Value *v,
                       std::vector<const llvm::Value *> &ptsSet);
 
-  bool getPointsFromSet(Context *ctx, const llvm::Value *v,
+  bool getPointsFromSet(const Context *ctx, const llvm::Value *v,
                       std::vector<const llvm::Value *> &ptsSet);
 
   bool getPointsFromSet(unsigned int ctxId, const llvm::Value *v,
@@ -130,7 +130,7 @@ public:
   // Put all allocation sites (i.e. all memory objects identified by the
   // analysis) into the first arugment
   void
-  getAllAllocationSites(std::vector<std::pair<Context*, const llvm::Value *>> &allocSites) const;
+  getAllAllocationSites(std::vector<std::pair<const Context*, const llvm::Value *>> &allocSites) const;
 
   Context* getGlobalCtx() const;
 
