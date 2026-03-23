@@ -37,9 +37,28 @@ AliasResult AndersenAAResult::andersenAlias(const Context *c1, const Context *c2
   if (s1.getSize() == 1 && s2.getSize() == 1 && *s1.begin() == *s2.begin())
     return AliasResult::Kind::MustAlias;
 
+  // If s1 and s2 are the same, we'll say this MustAlias.
+  // This excludes ids 0-3 as those are reserved.
+  // TODO: this comparison is probably better delegated to AndersPtsSet
+  if (s1.getSize() == s2.getSize()) {
+    bool same = true;
+    for (auto const &idx : s1) {
+      if (idx <= 3) continue;
+      if (!s2.has(idx)) {
+        same = false;
+        break;
+      }
+    }
+    if (same)
+      return AliasResult::Kind::MustAlias;
+  }
+
   // Compute the intersection of s1 and s2
   for (auto const &idx : s1) {
-    if (idx == (anders.nodeFactory).getNullObjectNode())
+    // NOTE: previously this checked just for the null obj node.
+    // though that yielded seriously imprecise results. Any
+    // intersection should be based on canonical ptsTo ids for a MayAlias result.
+    if (idx <= (anders.nodeFactory).getNullObjectNode())
       continue;
     if (s2.has(idx))
       return AliasResult::Kind::MayAlias;
