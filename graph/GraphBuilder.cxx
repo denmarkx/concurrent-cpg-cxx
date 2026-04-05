@@ -4,8 +4,10 @@
 #include "Debug.h"
 
 #include "Node.h"
+#include "components/ControlFlowGraph.h"
 #include <stdexcept>
 #include <tuple>
+#include <unordered_map>
 #include <vector>
 #include <sstream>
 
@@ -77,14 +79,18 @@ void GraphBuilder::persistAll() {
         execute(cypher);
     }
 
-    std::vector<std::tuple<std::string, std::string, std::string>> rels;
+    std::vector<std::tuple<std::string, std::string, std::string, std::unordered_map<std::string, std::string>>> rels;
     for (auto* node : nodes) {
         auto edges = node->getEdges();
         for (const auto& [type, end] : edges) {
             if (end == nullptr) continue;
-            rels.push_back({std::to_string(node->getId()), type, std::to_string(end->getId())});
+            rels.push_back({std::to_string(node->getId()), type, std::to_string(end->getId()), {}});
         }
     }
+
+    auto cfgEdges = ControlFlowGraph::get()->getProcessedEdges();
+    rels.reserve(rels.size() + cfgEdges.size());
+    rels.insert(rels.end(), cfgEdges.begin(), cfgEdges.end());
 
     size_t numEdgeBatches = (rels.size() + batchSize - 1) / batchSize;
     for (size_t batch = 0; batch < numEdgeBatches; batch++) {
@@ -96,15 +102,24 @@ void GraphBuilder::persistAll() {
 
         for (size_t i = start; i < end; i++) {
             if (i > start) batchData << ",";
-            const auto& [fromId, type, toId] = rels[i];
-            batchData << "{from:'" << fromId << "',type:'" << type << "',to:'" << toId << "'}";
+            const auto& [fromId, type, toId, props] = rels[i];
+            batchData << "{from:'" << fromId << "',type:'" << type << "',to:'" << toId << "',props:{";
+
+            int j = 0;
+            for (auto &[k, v] : props) {
+                batchData << Util::parseNeo4jKey(k) << ": '" << v << "'";
+                if (j != props.size()-1)
+                    batchData << ", ";
+                j++;
+            }
+            batchData << "}}";
         }
         batchData << "]";
 
         std::string cypher = 
             "UNWIND " + batchData.str() + " AS row "
             "MATCH (a {id: row.from}), (b {id: row.to}) "
-            "CALL apoc.create.relationship(a, row.type, {}, b) YIELD rel "
+            "CALL apoc.create.relationship(a, row.type, row.props, b) YIELD rel "
             "RETURN count(rel)";
         LOG_NEO4J(cypher);
         execute(cypher);

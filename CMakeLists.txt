@@ -45,6 +45,7 @@ target_include_directories(Andersen PUBLIC andersen)
 target_link_libraries(Andersen PUBLIC ${LLVM_LIBS})
 
 set(FILES
+    components/ControlFlowGraph.cxx
     graph/GraphManager.cxx
     graph/Node.cxx
     graph/FunctionNode.h

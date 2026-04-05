@@ -178,8 +178,8 @@ namespace GraphParser {
         for (BasicBlockNode* block : blocks) {
             for (auto *s : successors(dyn_cast<BasicBlock>(block->getValue()))) {
                 Node* next = GraphManager::get()->getNodeOrNull(s);
-                if (next)
-                    block->registerCFGEdge(next);
+                // if (next)
+                    // block->registerCFGEdge(next);
             }
         }
     }
