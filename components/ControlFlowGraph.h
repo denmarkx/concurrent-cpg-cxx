@@ -1,6 +1,7 @@
 #pragma once
 #include "ComponentGraphBase.h"
 #include "graph/BasicBlockNode.h"
+#include "llvm/IR/InstrTypes.h"
 #include <array>
 
 enum CFGEdgeType {
@@ -8,6 +9,7 @@ enum CFGEdgeType {
     COND_FALSE,
     UNWIND,
     SWITCH,
+    CALL,
     DEFAULT,
 };
 
@@ -17,6 +19,7 @@ inline const char* to_string(CFGEdgeType edgeType) {
         "COND_FALSE",
         "UNWIND",
         "SWITCH",
+        "CALL",
         "DEFAULT",
     };
     static_assert(edgeTypes.size() == (size_t)CFGEdgeType::DEFAULT + 1);
@@ -24,8 +27,8 @@ inline const char* to_string(CFGEdgeType edgeType) {
 }
 
 struct CFGEdge {
-    BasicBlockNode *start;
-    BasicBlockNode *end;
+    Node *start;
+    Node *end;
     CFGEdgeType type = CFGEdgeType::DEFAULT;
 };
 
@@ -46,8 +49,9 @@ public:
 
 private:
     void handleBasicBlock(const BasicBlock& block);
-    const CFGEdgeType getCFGEdgeType(const BasicBlock& start, const BasicBlock& end) const;
+    void handleCall(const CallBase& call);
+    const CFGEdgeType getBlockCFGType(const BasicBlock& start, const BasicBlock& end) const;
 
 private:
-    std::unordered_map<BasicBlockNode*, std::vector<CFGEdge>> _edges;
+    std::unordered_map<Node*, std::vector<CFGEdge>> _edges;
 };

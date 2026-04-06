@@ -1,9 +1,11 @@
 #include "ControlFlowGraph.h"
 #include "graph/BasicBlockNode.h"
 #include "graph/GraphManager.h"
+#include "graph/Node.h"
 
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CFG.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include <string>
 
@@ -11,8 +13,45 @@ ControlFlowGraph::ControlFlowGraph() { _graph = this; };
 
 void ControlFlowGraph::parseModule(const Module& module) {
     for (const Function &f : module) {
+        if (f.isIntrinsic()) continue;
+
+        Node *funcNode = GraphManager::get()->getNode(&f);
+        assert(funcNode != nullptr);
+
+        // Connect F -> start block:
+        auto startBlock = f.begin();
+        if (startBlock != f.end()) {
+            Node *startBlockNode = GraphManager::get()->getNode(&*startBlock);
+            assert (startBlockNode != nullptr);
+
+            _edges[funcNode].push_back( CFGEdge { funcNode, startBlockNode, CFGEdgeType::DEFAULT } );
+
+        }
+
         for (const BasicBlock &bb : f) {
             handleBasicBlock(bb);
+
+            for (const Instruction &instr : bb) {
+                switch (instr.getOpcode()) {
+                    case Instruction::Call:
+                    case Instruction::Invoke: {
+                        const CallBase *call = dyn_cast<CallBase>(&instr);
+                        assert(call != nullptr);
+
+                        if (!call->getCalledFunction()) break; // TODO
+                        if (call->getCalledFunction()->isIntrinsic() || call->isInlineAsm()) break;
+
+                        Node *node = GraphManager::get()->getNode(call);
+                        assert(node != nullptr);
+
+                        Node *toNode = GraphManager::get()->getNode(call->getCalledFunction());
+                        assert(toNode != nullptr);
+
+                        _edges[node].push_back( CFGEdge { node, toNode, CFGEdgeType::CALL } );
+                        break;
+                    }
+                }
+            }
         }
     }
 }
@@ -23,11 +62,11 @@ void ControlFlowGraph::handleBasicBlock(const BasicBlock& block) {
     for (auto it = succ_begin(&block); it != succ_end(&block); ++it) {
         BasicBlockNode *endNode = GraphManager::get()->getNode<BasicBlockNode>(*it);
 
-        _edges[startNode].push_back(CFGEdge { startNode, endNode, getCFGEdgeType(block, **it) });
+        _edges[startNode].push_back(CFGEdge { startNode, endNode, getBlockCFGType(block, **it) });
     }
 }
 
-const CFGEdgeType ControlFlowGraph::getCFGEdgeType(
+const CFGEdgeType ControlFlowGraph::getBlockCFGType(
     const BasicBlock& start, const BasicBlock& end) const {
 
     CFGEdgeType edgeType = CFGEdgeType::DEFAULT;
