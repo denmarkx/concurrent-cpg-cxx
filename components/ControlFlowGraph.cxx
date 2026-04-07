@@ -1,12 +1,11 @@
 #include "ControlFlowGraph.h"
-#include "graph/BasicBlockNode.h"
 #include "graph/GraphManager.h"
 #include "graph/Node.h"
 
 #include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/CFG.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/CFG.h"
 #include <string>
 
 ControlFlowGraph::ControlFlowGraph() { _graph = this; };
@@ -29,10 +28,14 @@ void ControlFlowGraph::parseModule(const Module& module) {
         }
 
         for (const BasicBlock &bb : f) {
-            handleBasicBlock(bb);
+            // TODO: need to read more into how atomic instrs actually work in llvm
+            Node *prevNode = GraphManager::get()->getNode(&bb);
 
             for (const Instruction &instr : bb) {
                 switch (instr.getOpcode()) {
+
+                    // Call / Invoke: handle regular call path
+                    //  Invoke: also handles path to unwind block.
                     case Instruction::Call:
                     case Instruction::Invoke: {
                         const CallBase *call = dyn_cast<CallBase>(&instr);
@@ -48,84 +51,49 @@ void ControlFlowGraph::parseModule(const Module& module) {
                         assert(toNode != nullptr);
 
                         _edges[node].push_back( CFGEdge { node, toNode, CFGEdgeType::CALL } );
+
+                        // Handle unwind path:
+                        if (const InvokeInst *invoke = dyn_cast<InvokeInst>(&instr)) {
+                            Node *unwindNode = GraphManager::get()->getNode(invoke);
+                            if (unwindNode)
+                                _edges[node].push_back( CFGEdge { node, toNode, CFGEdgeType::UNWIND } );
+                        }
+                        break;
+                    }
+
+                    // Conditional br instructions: handle path to true and false blocks.
+                    case Instruction::Br: {
+                        const BranchInst *br = dyn_cast<BranchInst>(&instr);
+                        Node *node = GraphManager::get()->getNode(br);
+
+                        if (node == nullptr) break;
+                        if (br->isUnconditional()) break;
+
+                        Node *trueNode = GraphManager::get()->getNode(br->getOperand(1));
+                        assert(trueNode != nullptr);
+
+                        Node *falseNode = GraphManager::get()->getNode(br->getOperand(2));
+                        assert(falseNode != nullptr);
+
+                        // Connect to both nodes:
+                        _edges[node].push_back( CFGEdge { node, trueNode, CFGEdgeType::COND_TRUE } );
+                        _edges[node].push_back( CFGEdge { node, falseNode, CFGEdgeType::COND_FALSE } );
                         break;
                     }
                 }
+
+                // Connect prev -> this node.
+                Node *node = GraphManager::get()->getNode(&instr);
+
+                if (prevNode && node)
+                    _edges[prevNode].push_back( CFGEdge { prevNode, node, CFGEdgeType::DEFAULT });
+
+                // This may sometimes be set to null because we deliberately don't have nodes
+                // for every single instruction (IE: unconditional brs).
+                prevNode = node;
             }
         }
     }
-}
-
-void ControlFlowGraph::handleBasicBlock(const BasicBlock& block) {
-    BasicBlockNode *startNode = GraphManager::get()->getNode<BasicBlockNode>(&block);
-
-    for (auto it = succ_begin(&block); it != succ_end(&block); ++it) {
-        BasicBlockNode *endNode = GraphManager::get()->getNode<BasicBlockNode>(*it);
-
-        _edges[startNode].push_back(CFGEdge { startNode, endNode, getBlockCFGType(block, **it) });
-    }
-}
-
-const CFGEdgeType ControlFlowGraph::getBlockCFGType(
-    const BasicBlock& start, const BasicBlock& end) const {
-
-    CFGEdgeType edgeType = CFGEdgeType::DEFAULT;
-
-    for (auto user : end.users()) {
-        const Instruction *instr = dyn_cast<Instruction>(user);
-        assert(instr != nullptr);
-
-        bool gotEdgeType = false;
-        switch(instr->getOpcode()) {
-            case Instruction::Br: {
-                const BranchInst *br = dyn_cast<BranchInst>(instr);
-
-                if (br->isUnconditional()) {
-                    gotEdgeType = true;
-                    break;
-                }
-
-                // Conditional needs to check if both start and end are as operands.
-                const BasicBlock *trueOp = dyn_cast<BasicBlock>(br->getOperand(1));
-                assert(trueOp != nullptr);
-
-                const BasicBlock *falseOp = dyn_cast<BasicBlock>(br->getOperand(2));
-                assert(falseOp != nullptr);
-
-                if (trueOp == &start && falseOp == &end) {
-                    edgeType = CFGEdgeType::COND_FALSE;
-                    gotEdgeType = true;
-                    break;
-                }
-
-                if (falseOp == &start && trueOp == &end) {
-                    edgeType = CFGEdgeType::COND_TRUE;
-                    gotEdgeType = true;
-                    break;
-                }
-                break;
-            }
-
-            case Instruction::Invoke: {
-                const InvokeInst *invoke = dyn_cast<InvokeInst>(instr);
-                if (invoke->getUnwindDest() == &end) {
-                    edgeType = CFGEdgeType::UNWIND;
-                    gotEdgeType = true;
-                }
-                break;
-            }
-
-            case Instruction::Switch: {
-                edgeType = CFGEdgeType::SWITCH;
-                gotEdgeType = true;
-                break;
-            }
-        }
-
-        if (gotEdgeType) break;
-    }
-
-    return edgeType;
 }
 
 EdgeInfo ControlFlowGraph::getProcessedEdges() const {

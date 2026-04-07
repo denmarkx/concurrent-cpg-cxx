@@ -63,7 +63,7 @@ void GraphBuilder::persistAll() {
             batchData << "], ";
             size_t propSize = 0;
             for (auto &[k, v] : properties) {
-                batchData << Util::parseNeo4jKey(k) << ": '" << v << "', ";
+                batchData << Util::parseNeo4jKey(k) << ": '" << Util::escapeCypherString(v) << "', ";
                 propSize++;
             }
             batchData << "name: '" << Util::escapeCypherString(nodes[i]->getName()) << "'}";

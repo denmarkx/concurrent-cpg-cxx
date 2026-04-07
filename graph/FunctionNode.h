@@ -17,7 +17,7 @@ public:
     FunctionNode(const Function* F, std::string name="Function") : Node(F, name) {
         if (!F->isDeclaration()) {
             _blockGroup = GroupNode::make("Group", "BLOCKS");
-            _edges.push_back(pair("BLOCK_GROUP", _blockGroup));
+            // _edges.push_back(pair("BLOCK_GROUP", _blockGroup));
         }
     }
 
@@ -81,7 +81,7 @@ public:
     }
 
     void addBlock(BasicBlockNode* block) {
-        _blockGroup->storeEdge(block);
+        // _blockGroup->storeEdge(block);
     }
     
     void addParam(ParamNode* param) {

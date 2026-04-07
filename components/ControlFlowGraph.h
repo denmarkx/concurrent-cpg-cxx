@@ -48,10 +48,5 @@ public:
     static ControlFlowGraph* _graph;
 
 private:
-    void handleBasicBlock(const BasicBlock& block);
-    void handleCall(const CallBase& call);
-    const CFGEdgeType getBlockCFGType(const BasicBlock& start, const BasicBlock& end) const;
-
-private:
     std::unordered_map<Node*, std::vector<CFGEdge>> _edges;
 };
