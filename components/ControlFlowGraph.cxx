@@ -54,9 +54,9 @@ void ControlFlowGraph::parseModule(const Module& module) {
 
                         // Handle unwind path:
                         if (const InvokeInst *invoke = dyn_cast<InvokeInst>(&instr)) {
-                            Node *unwindNode = GraphManager::get()->getNode(invoke);
+                            Node *unwindNode = GraphManager::get()->getNode(invoke->getUnwindDest());
                             if (unwindNode)
-                                _edges[node].push_back( CFGEdge { node, toNode, CFGEdgeType::UNWIND } );
+                                _edges[node].push_back( CFGEdge { node, unwindNode, CFGEdgeType::UNWIND } );
                         }
                         break;
                     }
