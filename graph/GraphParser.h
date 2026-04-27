@@ -10,6 +10,7 @@
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
@@ -24,12 +25,15 @@
 #include "graph/BlockComplexity.h"
 #include "graph/BranchNode.h"
 #include "graph/CastNode.h"
+#include "graph/ExtractValueNode.h"
 #include "graph/GetElementPtrNode.h"
 #include "graph/GlobalConstant.h"
 #include "graph/ICompareNode.h"
+#include "graph/InsertValueNode.h"
 #include "graph/InstructionOrdering.h"
 #include "graph/LiteralNode.h"
 #include "graph/MutexNode.h"
+#include "graph/PhiNode.h"
 #include "graph/SwitchNode.h"
 #include "llvm/Pass.h"
 #include <stdexcept>
@@ -56,6 +60,7 @@ namespace GraphParser {
 
     inline Node* handleNode(const Value* value) {
         assert (value != nullptr);
+        
         Node *n = nullptr;
         TypeSwitch<const Value *>(value)
             .Case<Function>([&](const Function *F) { n = handleNode<FunctionNode, Function>(F); })
@@ -113,7 +118,10 @@ namespace GraphParser {
         switch (instr->getOpcode()) {
             case Instruction::Alloca: return handleNode<StackAllocation, AllocaInst>(instr);
             case Instruction::Load: return handleNode<LoadNode, LoadInst>(instr);
+
             case Instruction::GetElementPtr: return handleNode<GetElementPtrNode, GetElementPtrInst>(instr);
+            case Instruction::ExtractValue: return handleNode<ExtractValueNode, ExtractValueInst>(instr);
+            case Instruction::InsertValue: return handleNode<InsertValueNode, InsertValueInst>(instr);
 
             case Instruction::Call:
             case Instruction::Invoke: return handleCallInvoke(instr);
@@ -123,6 +131,8 @@ namespace GraphParser {
             case Instruction::ICmp: return handleNode<ICompareNode, ICmpInst> (instr);
             case Instruction::Br: return handleNode<BranchNode, BranchInst> (instr);
             case Instruction::Switch: return handleNode<SwitchNode, SwitchInst> (instr);
+
+            case Instruction::PHI: return handleNode<PhiNode, PHINode>(instr);
 
             case Instruction::Trunc:
             case Instruction::ZExt:

@@ -8,3 +8,4 @@
 #endif
 
 #define PRINT_VALUE(x) x->print(outs()); std::cout << "\n";
+#define WARN(x) std::cout << "\033[93m" << x << "\033[0m\n";

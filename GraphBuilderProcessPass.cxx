@@ -3,9 +3,9 @@
 #include "concurrency/ConcurrencyPass.h"
 
 bool GraphBuilderProcessPass::runOnModule(Module &M) {
-    ConcurrencyPass *pass = new ConcurrencyPass();
-    pass->handleGlobals(M.globals());
-    pass->run();
+    // ConcurrencyPass *pass = new ConcurrencyPass();
+    // pass->handleGlobals(M.globals());
+    // pass->run();
 
     ControlFlowGraph *cfg = new ControlFlowGraph();
     cfg->parseModule(M);

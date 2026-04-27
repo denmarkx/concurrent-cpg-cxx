@@ -31,7 +31,7 @@ namespace Util {
             // Some names are only for the LL format. In this case,
             // we return the whole code.
             llvm::raw_string_ostream stream(name);
-            // value->print(stream);
+            value->print(stream);
         }
         return name;
     }

@@ -2,6 +2,7 @@
 #include "GraphManager.h"
 #include "Node.h"
 #include "graph/IntrinsicHandler.h"
+#include "Debug.h"
 
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/MemoryLocation.h"
@@ -116,7 +117,10 @@ public:
 
     void addArgument(const Use *value, size_t index) {
         Node *argNode = GraphManager::get()->getNode(value->get());
-        if (argNode == nullptr) return;
+        if (argNode == nullptr) {
+            WARN(value->get()->getName().str());
+            return;
+        }
 
         argNode->addProperty("argumentIndex", std::to_string(index));
 
