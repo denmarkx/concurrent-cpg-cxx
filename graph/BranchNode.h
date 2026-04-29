@@ -26,9 +26,9 @@ public:
         Node *nodeT = GraphManager::get()->getNodeFromOperand(I, 2);
         Node *nodeF = GraphManager::get()->getNodeFromOperand(I, 1);
 
-        node->_edges.push_back(pair("CONDITION", condNode));
-        node->_edges.push_back(pair("TRUE", nodeT));
-        node->_edges.push_back(pair("FALSE", nodeF));
+        node->addEdge("CONDITION", condNode);
+        node->addEdge("TRUE", nodeT);
+        node->addEdge("FALSE", nodeF);
         return node;
     }
 };

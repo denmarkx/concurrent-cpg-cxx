@@ -27,6 +27,6 @@ public:
 
     void registerIndexEdge(Node *aggregate, int index) {
         // TODO: index should be a field prop
-        _edges.push_back(pair("FIELD", aggregate));
+        addEdge("FIELD", aggregate);
     }
 };

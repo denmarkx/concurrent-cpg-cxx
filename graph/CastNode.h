@@ -34,7 +34,7 @@ public:
 
         auto it = node->InstrLabelMap.find(I->getOpcode());
         node->_labels.push_back(it->second);
-        node->_edges.push_back(pair("SOURCE", srcNode));
+        node->addEdge("SOURCE", srcNode);
 
         // I have a hard time reasoning about an explicit "type" node.
         // There doesn't seem to be a specific use-case for these for us.

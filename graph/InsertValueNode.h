@@ -33,11 +33,11 @@ public:
     }
 
     void registerAggregateValue(Node *node) {
-        _edges.push_back(pair("PREVIOUS_AGGREGATE", node));
+        node->addEdge("PREVIOUS_AGGREGATE", node);
     }
 
     void registerFieldValue(Node *node, int idx) {
         // TODO: idx
-        _edges.push_back(pair("FIELD", node));
+        node->addEdge("FIELD", node);
     }
 };

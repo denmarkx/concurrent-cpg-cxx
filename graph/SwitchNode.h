@@ -17,8 +17,8 @@ public:
 
     static SwitchCase* make(Node *lhs, Node *dest) {
         SwitchCase *node = new SwitchCase();
-        node->_edges.push_back(pair("COMPARE_WITH", lhs));
-        node->_edges.push_back(pair("DESTINATION", dest));
+        node->addEdge("COMPARE_WITH", lhs);
+        node->addEdge("DESTINATION", dest);
         return node;
     }
 };
@@ -34,15 +34,15 @@ public:
 
         Node *condNode = GraphManager::get()->getNode(I->getCondition());
         Node *defaultBlockNode = GraphManager::get()->getNodeFromOperand(I, 1);
-        node->_edges.push_back(pair("CONDITION", condNode));
-        node->_edges.push_back(pair("DEFAULT", defaultBlockNode));
+        node->addEdge("CONDITION", condNode);
+        node->addEdge("DEFAULT", defaultBlockNode);
 
         for (size_t i=2; i < I->getNumOperands(); i += 2) {
             Node *lhs = GraphManager::get()->getNodeFromOperand(I, i);
             Node *dest = GraphManager::get()->getNodeFromOperand(I, i+1);
 
             SwitchCase *switchCase = SwitchCase::make(lhs, dest);
-            node->_edges.push_back(pair("CASE", switchCase));
+            node->addEdge("CASE", switchCase);
         }
         return node;
     }

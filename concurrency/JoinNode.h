@@ -27,7 +27,7 @@ public:
         ConcurrencyManager::get()->registerNode(node);
 
         node->_threadID = GraphManager::get()->getNodeFromOperand(I, 0);
-        node->_edges.push_back(pair("THREAD_ID", node->_threadID));
+        // node->_edges.push_back(pair("THREAD_ID", node->_threadID));
         // node->resolveThreadID();
         return node;
     }
@@ -62,7 +62,7 @@ public:
 
         if (threadOpCode == ThreadOperation::CREATE) {
             Node *createNode = GraphManager::get()->getNode(callInstr);
-            _edges.push_back(pair("JOIN", createNode));
+            // _edges.push_back(pair("JOIN", createNode));
         }
     }
 
