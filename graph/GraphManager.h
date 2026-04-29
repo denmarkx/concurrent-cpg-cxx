@@ -4,12 +4,15 @@
 #include "LTOLibCManager.h"
 #include "Node.h"
 #include "llvm/Analysis/MemorySSA.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/IR/Value.h"
 #include "andersen/AndersenAA.h"
 
 #include <functional>
 #include <unordered_map>
 #include <vector>
+#include <array>
+
 using namespace std;
 using namespace llvm;
 
@@ -52,6 +55,17 @@ public:
 
     static GraphManager* get();
     static GraphManager* _graph;
+
+public:
+    static constexpr std::array<uint8_t, 3> NonSSACodes = {
+        Instruction::Store,
+        Instruction::Ret,
+        Instruction::Br,
+    };
+    
+    inline static bool isNonSSA(uint8_t opCode) {
+        return std::find(NonSSACodes.begin(), NonSSACodes.end(), opCode) != NonSSACodes.end();
+    };
 
 private:
     std::vector<Node*> _nodes;

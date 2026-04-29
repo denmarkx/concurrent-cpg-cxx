@@ -50,6 +50,7 @@ public:
     void addProperty(std::string key, std::string value);
     void addEdge(std::string name, Node* end);
     void addEdge(std::string name, Node* end, std::string key, std::string value);
+    bool hasEdge(std::string name, Node* end);
 
 private:
     void setDefaultProperties(const Value *value);
