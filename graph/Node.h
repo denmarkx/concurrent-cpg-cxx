@@ -1,6 +1,7 @@
 #pragma once
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
 #include "Debug.h"
 #include "APIHelper.h"
@@ -32,6 +33,7 @@ public:
 
     // TODO: all this needs to be moved into a subclass
     // where nodes that actually produce SSA values derive
+    void registerAtomicStoreEdge(Node* node, const StoreInst *instr);
     void registerStoreEdge(Node* node);
     void registerAliasEdge(Node* node);
     void registerCopyEdge(Node* node);
@@ -50,6 +52,7 @@ public:
     void addProperty(std::string key, std::string value);
     void addEdge(std::string name, Node* end);
     void addEdge(std::string name, Node* end, std::string key, std::string value);
+    void addEdge(std::string name, Node* end, std::unordered_map<std::string, std::string> properties);
     bool hasEdge(std::string name, Node* end);
 
 private:

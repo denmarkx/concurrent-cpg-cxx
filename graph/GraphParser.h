@@ -21,6 +21,8 @@
 #include "concurrency/ConcurrencyPass.h"
 #include "concurrency/JoinNode.h"
 #include "concurrency/ThreadNode.h"
+#include "graph/AtomicCmpXChgNode.h"
+#include "graph/AtomicRMWNode.h"
 #include "graph/BinaryOperatorNode.h"
 #include "graph/BlockComplexity.h"
 #include "graph/BranchNode.h"
@@ -79,7 +81,13 @@ namespace GraphParser {
         Node *srcNode = GraphManager::get()->getNode(src);
         Node *destNode = GraphManager::get()->getNode(dest);
 
-        if (srcNode && destNode) srcNode->registerStoreEdge(destNode);
+        if (srcNode && destNode) {
+            if (instr->isAtomic()) {
+                srcNode->registerAtomicStoreEdge(destNode, store);
+                return nullptr;
+            }
+            srcNode->registerStoreEdge(destNode);
+        }
         return nullptr;
     }
 
@@ -133,6 +141,9 @@ namespace GraphParser {
             case Instruction::Switch: return handleNode<SwitchNode, SwitchInst> (instr);
 
             case Instruction::PHI: return handleNode<PhiNode, PHINode>(instr);
+
+            case Instruction::AtomicRMW: return handleNode<AtomicRMWNode, AtomicRMWInst>(instr);
+            case Instruction::AtomicCmpXchg: return handleNode<AtomicCmpXChgNode, AtomicCmpXchgInst>(instr);
 
             case Instruction::Trunc:
             case Instruction::ZExt:
