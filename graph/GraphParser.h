@@ -40,9 +40,10 @@
 #include "graph/SwitchNode.h"
 #include "llvm/Pass.h"
 #include <stdexcept>
+#include <type_traits>
 using namespace llvm;
 
-#include <type_traits>
+#define CHECK_SKIPPED 0
 
 namespace GraphParser {
 
@@ -163,7 +164,16 @@ namespace GraphParser {
                 return handleNode<CastNode, CastInst>(instr);
             }
         }
-        return handleNode(dynamic_cast<const Value*>(instr));
+        Node *valueHandle = handleNode(dynamic_cast<const Value*>(instr));
+
+        #ifdef CHECK_SKIPPED
+            if (!valueHandle) {
+                errs() << "\033[93mUnhandled: " << *instr << "\033[0m\n";
+                errs() << "    TypeID = " << instr->getOpcode() << "\n";
+            }
+        #endif
+
+        return valueHandle;
     }
 
     inline void handleGraph(Module &M) {
