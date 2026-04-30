@@ -28,6 +28,7 @@
 #include "graph/BranchNode.h"
 #include "graph/CastNode.h"
 #include "graph/ExtractValueNode.h"
+#include "graph/FenceNode.h"
 #include "graph/GetElementPtrNode.h"
 #include "graph/GlobalConstant.h"
 #include "graph/ICompareNode.h"
@@ -144,6 +145,7 @@ namespace GraphParser {
 
             case Instruction::AtomicRMW: return handleNode<AtomicRMWNode, AtomicRMWInst>(instr);
             case Instruction::AtomicCmpXchg: return handleNode<AtomicCmpXChgNode, AtomicCmpXchgInst>(instr);
+            case Instruction::Fence: return handleNode<FenceNode, FenceInst>(instr);
 
             case Instruction::Trunc:
             case Instruction::ZExt:
