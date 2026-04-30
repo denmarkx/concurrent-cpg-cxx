@@ -1,4 +1,5 @@
 #include "ControlFlowGraph.h"
+#include "graph/FunctionNode.h"
 #include "graph/GraphManager.h"
 #include "graph/Node.h"
 
@@ -14,7 +15,7 @@ void ControlFlowGraph::parseModule(const Module& module) {
     for (const Function &f : module) {
         if (f.isIntrinsic()) continue;
 
-        Node *funcNode = GraphManager::get()->getNode(&f);
+        FunctionNode *funcNode = GraphManager::get()->getNode<FunctionNode>(&f);
         assert(funcNode != nullptr);
 
         // Connect F -> start block:
@@ -78,6 +79,25 @@ void ControlFlowGraph::parseModule(const Module& module) {
                         // Connect to both nodes:
                         _edges[node].push_back( CFGEdge { node, trueNode, CFGEdgeType::COND_TRUE } );
                         _edges[node].push_back( CFGEdge { node, falseNode, CFGEdgeType::COND_FALSE } );
+                        break;
+                    }
+
+                    // TODO: this doesnt actually belong here anymore since its non-cfg
+                    case Instruction::Ret: {
+                        const ReturnInst *inst = dyn_cast<ReturnInst>(&instr);
+
+                        Node *node = funcNode->getReturnNode();
+                        if (!node || !inst->getReturnValue()) break;
+
+                        // Connects to each node who originally called.
+                        for (const User *user : f.users()) {
+                            if (const CallBase *callInst = dyn_cast<CallBase>(user)) {
+                                Node *callNode = GraphManager::get()->getNode(callInst);
+                                if (!callNode) continue;
+
+                                node->addEdge("RETURN_BIND", callNode);
+                            }
+                        }
                         break;
                     }
                 }
