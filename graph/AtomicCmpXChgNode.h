@@ -35,9 +35,9 @@ public:
         node->addProperty("failedOrdering", toIRString(I->getFailureOrdering()));
         node->addProperty("successOrdering", toIRString(I->getSuccessOrdering()));
 
-        node->addEdge("comparison", cmp);
-        node->addEdge("lhs", ptr);
-        node->addEdge("rhs", newValue);
+        node->addEdge("COMPARISON", cmp);
+        node->addEdge("LHS", ptr);
+        node->addEdge("RHS", newValue);
         return node;
     }
 
