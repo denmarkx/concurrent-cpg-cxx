@@ -2,11 +2,13 @@
 #define ANDERSEN_NODE_FACTORY_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Value.h"
+#include <climits>
 using namespace llvm;
 
 #include <vector>
@@ -50,20 +52,35 @@ struct Context {
 typedef unsigned NodeIndex;
 class AndersNode {
 public:
-  enum AndersNodeType { VALUE_NODE, OBJ_NODE };
+  enum AndersNodeType { VALUE_NODE, OBJ_NODE, FIELD_NODE };
+  virtual ~AndersNode() = default;
 
 private:
   AndersNodeType type;
   NodeIndex idx, mergeTarget;
   const llvm::Value *value;
+
+public:
   AndersNode(AndersNodeType t, unsigned i, const llvm::Value *v = nullptr)
       : type(t), idx(i), mergeTarget(i), value(v) {}
 
-public:
   NodeIndex getIndex() const { return idx; }
   const llvm::Value *getValue() const { return value; }
 
   friend class AndersNodeFactory;
+};
+
+class AndersFieldNode : public AndersNode {
+public:
+  AndersFieldNode(AndersNodeType t, unsigned i, unsigned fieldId, const llvm::Value *v = nullptr)
+      : AndersNode(t, i, v), _fieldId(fieldId) {};
+
+    const unsigned int getFieldId() const {
+      return _fieldId;
+    }
+
+private:
+  const unsigned int _fieldId = 0;
 };
 
 // This is the factory class of AndersNode
@@ -75,6 +92,18 @@ public:
 // but it is efficient.
 typedef llvm::DenseMap<std::pair<const Context*, const llvm::Value*>, NodeIndex> NodeMapType;
 
+struct FieldNodeMap {
+  const Context *ctx;
+  const llvm::Value *value;
+  const unsigned int fieldId;
+
+  friend bool operator==(const FieldNodeMap& lhs, const FieldNodeMap& rhs) {
+    return lhs.ctx == rhs.ctx &&\
+      lhs.value == rhs.value &&\
+      lhs.fieldId == rhs.fieldId;
+  }
+};
+
 class AndersNodeFactory {
 public:
   // The largest unsigned int is reserved for invalid index
@@ -82,7 +111,7 @@ public:
 
 private:
   // The set of nodes
-  std::vector<AndersNode> nodes;
+  std::vector<std::unique_ptr<AndersNode>> nodes;
 
   // Some special indices
   static const NodeIndex UniversalPtrIndex = 0;
@@ -110,6 +139,8 @@ private:
   // take variable arguments.
   llvm::DenseMap<const llvm::Function *, NodeIndex> varargMap;
 
+  llvm::DenseMap<const FieldNodeMap*, NodeIndex> fieldMap;
+
   std::vector<const Context*> _contexts;
 
 public:
@@ -122,6 +153,7 @@ public:
   NodeIndex createObjectNode(const Context *context = nullptr, const llvm::Value *val = nullptr);
   NodeIndex createReturnNode(const Context *context, const llvm::Function *f);
   NodeIndex createVarargNode(const llvm::Function *f);
+  NodeIndex createFieldNode(const Context *context = nullptr, const llvm::Value *val = nullptr, unsigned int idx = 0);
 
   // Map lookup interfaces (return InvalidIndex if value not found)
   NodeIndex getValueNodeFor(const Context *context, const llvm::Value *val);
@@ -130,6 +162,7 @@ public:
   NodeIndex getObjectNodeForConstant(const Context *context, const llvm::Constant *c) const;
   NodeIndex getReturnNodeFor(const Context *context, const llvm::Function *f) const;
   NodeIndex getVarargNodeFor(const llvm::Function *f) const;
+  NodeIndex getFieldNodeFor(const Context *context, const llvm::Value *val, unsigned int fieldIdx) const;
 
   // Node merge interfaces
   void mergeNode(NodeIndex n0, NodeIndex n1); // Merge n1 into n0
@@ -138,7 +171,7 @@ public:
 
   // Pointer arithmetic
   bool isObjectNode(NodeIndex i) const {
-    return (nodes.at(i).type == AndersNode::OBJ_NODE);
+    return (nodes.at(i)->type == AndersNode::OBJ_NODE);
   }
   NodeIndex getOffsetObjectNode(NodeIndex n, unsigned offset) const {
     assert(isObjectNode(n + offset));
@@ -153,7 +186,7 @@ public:
 
   // Value getters
   const llvm::Value *getValueForNode(NodeIndex i) const {
-    return nodes.at(i).getValue();
+    return nodes.at(i)->getValue();
   }
   void getAllocSites(std::vector<std::pair<const Context*, const llvm::Value *>> &) const;
 

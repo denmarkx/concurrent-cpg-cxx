@@ -74,8 +74,18 @@ void Andersen::scanFunction(Context *context, const llvm::Function *f) {
   for (const_inst_iterator itr = inst_begin(f), ite = inst_end(f); itr != ite;
        ++itr) {
     auto inst = &*itr.getInstructionIterator();
-    if (inst->getType()->isPointerTy())
-      nodeFactory.createValueNode(context, inst);
+    if (inst->getType()->isPointerTy()) {
+      if (inst->getOpcode() == Instruction::Alloca) {
+        if (const AllocaInst *allocaInst = dyn_cast<AllocaInst>(inst)) {
+          const Type* allocaType = allocaInst->getAllocatedType();
+          if (allocaType->isAggregateType()) {
+            for (unsigned int i=0; i < allocaType->getStructNumElements(); ++i)
+              nodeFactory.createFieldNode(context, inst, i);
+          }
+        }
+      } else
+        nodeFactory.createValueNode(context, inst);
+    }
     // i want to say this can be simplified somehow
     else if (isa<CallBase>(inst) && typeContainsPointer(inst->getType()))
         nodeFactory.createValueNode(context, inst);
@@ -268,8 +278,12 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
   case Instruction::GetElementPtr: {
     assert(inst->getType()->isPointerTy());
 
+    // TODO: may not always be op2
+    const ConstantInt *fieldIdxV = dyn_cast<ConstantInt>(inst->getOperand(2));
+    assert(fieldIdxV != nullptr);
+
     // P1 = getelementptr P2, ... --> <Copy/P1/P2>
-    NodeIndex srcIndex = nodeFactory.getValueNodeFor(context, inst->getOperand(0));
+    NodeIndex srcIndex = nodeFactory.getFieldNodeFor(context, inst->getOperand(0), fieldIdxV->getZExtValue());
     assert(srcIndex != AndersNodeFactory::InvalidIndex &&
            "Failed to find gep src node");
     NodeIndex dstIndex = nodeFactory.getValueNodeFor(context, inst);
