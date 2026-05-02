@@ -274,12 +274,19 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
   case Instruction::GetElementPtr: {
     assert(inst->getType()->isPointerTy());
 
-    // TODO: may not always be op2
-    const ConstantInt *fieldIdxV = dyn_cast<ConstantInt>(inst->getOperand(2));
-    assert(fieldIdxV != nullptr);
+    // -2 unless there's actually a reason for the first operand after the pointer.
+    size_t seed = inst->getNumOperands() - 2;
+
+    for (unsigned int i=2; i < inst->getNumOperands(); i++) {
+      const ConstantInt *fieldIdxV = dyn_cast<ConstantInt>(inst->getOperand(i));
+
+      // TODO: this still fucks up when not a const int
+      assert(fieldIdxV != nullptr);
+      seed ^= fieldIdxV->getZExtValue() + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    }
 
     // P1 = getelementptr P2, ... --> <Copy/P1/P2>
-    NodeIndex srcIndex = nodeFactory.getFieldNodeFor(context, inst->getOperand(0), fieldIdxV->getZExtValue());
+    NodeIndex srcIndex = nodeFactory.getFieldNodeFor(context, inst->getOperand(0), seed);
     assert(srcIndex != AndersNodeFactory::InvalidIndex &&
            "Failed to find gep src node");
     NodeIndex dstIndex = nodeFactory.getValueNodeFor(context, inst);
