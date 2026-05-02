@@ -72,15 +72,24 @@ public:
 
 class AndersFieldNode : public AndersNode {
 public:
-  AndersFieldNode(AndersNodeType t, unsigned i, unsigned fieldId, const llvm::Value *v = nullptr)
+  AndersFieldNode(AndersNodeType t, unsigned i, std::vector<unsigned int> fieldId, const llvm::Value *v = nullptr)
       : AndersNode(t, i, v), _fieldId(fieldId) {};
 
-    const unsigned int getFieldId() const {
+    const std::vector<unsigned int>& getFieldId() const {
       return _fieldId;
     }
 
+    std::string getFieldStr() const {
+      std::string s = "[";
+      for (unsigned int i = 0; i < _fieldId.size() - 2; i++) {
+        s += std::to_string(_fieldId[i]) + ", ";
+      }
+      s += std::to_string(_fieldId[_fieldId.size() - 1]) + "]";
+      return s;
+    }
+
 private:
-  const unsigned int _fieldId = 0;
+  const std::vector<unsigned int> _fieldId;
 };
 
 // This is the factory class of AndersNode
@@ -95,12 +104,12 @@ typedef llvm::DenseMap<std::pair<const Context*, const llvm::Value*>, NodeIndex>
 struct FieldNodeMap {
   const Context *ctx;
   const llvm::Value *value;
-  const unsigned int fieldId;
+  const std::vector<unsigned int> fieldIdxs;
 
   friend bool operator==(const FieldNodeMap& lhs, const FieldNodeMap& rhs) {
     return lhs.ctx == rhs.ctx &&\
       lhs.value == rhs.value &&\
-      lhs.fieldId == rhs.fieldId;
+      lhs.fieldIdxs == rhs.fieldIdxs;
   }
 };
 
@@ -153,8 +162,8 @@ public:
   NodeIndex createObjectNode(const Context *context = nullptr, const llvm::Value *val = nullptr);
   NodeIndex createReturnNode(const Context *context, const llvm::Function *f);
   NodeIndex createVarargNode(const llvm::Function *f);
-  NodeIndex createFieldNode(const Context *context = nullptr, const llvm::Value *val = nullptr, unsigned int idx = 0);
-  NodeIndex createFieldObjNode(const Context *context, const llvm::Value *val, unsigned int fieldIdx);
+  NodeIndex createFieldNode(const Context *context = nullptr, const llvm::Value *val = nullptr, std::vector<unsigned int> fieldIdxs = {});
+  NodeIndex createFieldObjNode(const Context *context, const llvm::Value *val, std::vector<unsigned int> fieldIdx);
 
   // Map lookup interfaces (return InvalidIndex if value not found)
   NodeIndex getValueNodeFor(const Context *context, const llvm::Value *val);
@@ -163,9 +172,11 @@ public:
   NodeIndex getObjectNodeForConstant(const Context *context, const llvm::Constant *c) const;
   NodeIndex getReturnNodeFor(const Context *context, const llvm::Function *f) const;
   NodeIndex getVarargNodeFor(const llvm::Function *f) const;
-  NodeIndex getFieldNodeFor(const Context *context, const llvm::Value *val, unsigned int fieldIdx);
+  NodeIndex getFieldNodeFor(const Context *context, const llvm::Value *val, std::vector<unsigned int> fieldIdxs);
 
   const llvm::DenseMap<const FieldNodeMap*, NodeIndex>& getFieldMap() const;
+
+  const llvm::Value* getConstantGlobalFieldValue(const llvm::Value *aggregate, std::vector<unsigned int> fieldIdx) const;
 
   // Node merge interfaces
   void mergeNode(NodeIndex n0, NodeIndex n1); // Merge n1 into n0

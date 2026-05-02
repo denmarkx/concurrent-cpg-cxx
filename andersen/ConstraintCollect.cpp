@@ -55,7 +55,7 @@ void Andersen::collectConstraints(const Module &M) {
   }
 
   for (const auto &[k, v] : nodeFactory.getFieldMap()) {
-    NodeIndex fieldObjIdx = nodeFactory.createFieldObjNode(k->ctx, k->value, k->fieldId);
+    NodeIndex fieldObjIdx = nodeFactory.createFieldObjNode(k->ctx, k->value, k->fieldIdxs);
     constraints.emplace_back(AndersConstraint::ADDR_OF, v, fieldObjIdx);
   }
 }
@@ -274,19 +274,22 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
   case Instruction::GetElementPtr: {
     assert(inst->getType()->isPointerTy());
 
+    // TODO: this is bullshit but i cant think of what else to do atm
+    std::vector<unsigned int> fieldIdxs;
+
     // -2 unless there's actually a reason for the first operand after the pointer.
-    size_t seed = inst->getNumOperands() - 2;
+    fieldIdxs.reserve(inst->getNumOperands() - 2);
 
     for (unsigned int i=2; i < inst->getNumOperands(); i++) {
       const ConstantInt *fieldIdxV = dyn_cast<ConstantInt>(inst->getOperand(i));
 
       // TODO: this still fucks up when not a const int
       assert(fieldIdxV != nullptr);
-      seed ^= fieldIdxV->getZExtValue() + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+      fieldIdxs.push_back(fieldIdxV->getZExtValue());
     }
 
     // P1 = getelementptr P2, ... --> <Copy/P1/P2>
-    NodeIndex srcIndex = nodeFactory.getFieldNodeFor(context, inst->getOperand(0), seed);
+    NodeIndex srcIndex = nodeFactory.getFieldNodeFor(context, inst->getOperand(0), std::move(fieldIdxs));
     assert(srcIndex != AndersNodeFactory::InvalidIndex &&
            "Failed to find gep src node");
     NodeIndex dstIndex = nodeFactory.getValueNodeFor(context, inst);

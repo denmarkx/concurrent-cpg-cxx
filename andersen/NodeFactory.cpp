@@ -3,6 +3,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
@@ -57,17 +58,34 @@ NodeIndex AndersNodeFactory::createObjectNode(const Context *context, const Valu
   return nextIdx;
 }
 
-NodeIndex AndersNodeFactory::createFieldNode(const Context *context, const llvm::Value *val, unsigned int fieldIdx) {
+// TODO: does not generalize to vectors
+const llvm::Value* AndersNodeFactory::getConstantGlobalFieldValue(const llvm::Value *aggregate, std::vector<unsigned int> fieldIdx) const {
+  const GlobalVariable* globalVariable = dyn_cast<GlobalVariable>(aggregate);
+  if (!globalVariable || !globalVariable->isConstant()) return nullptr;
+
+  const Constant *globalConst = globalVariable->getInitializer();
+  if (!globalConst || !globalConst->getType()->isAggregateType()) return nullptr;
+
+  return globalConst->getAggregateElement(fieldIdx[0]);
+}
+
+NodeIndex AndersNodeFactory::createFieldNode(const Context *context, const llvm::Value *val, std::vector<unsigned int> fieldIdxs) {
   unsigned nextIdx = nodes.size();
-  nodes.push_back(std::make_unique<AndersFieldNode>(AndersNode::FIELD_NODE, nextIdx, fieldIdx, val));
+  
+  const llvm::Value *constVal = getConstantGlobalFieldValue(val, fieldIdxs);
+  if (constVal)
+    val = constVal;
+
+  // TODO: technically, andersfieldnode doesnt need the fieldidxs i dont think? it'll be fine with a hash..maybe?
+  nodes.push_back(std::make_unique<AndersFieldNode>(AndersNode::FIELD_NODE, nextIdx, fieldIdxs, val));
   if (val != nullptr) {
-    const FieldNodeMap* fieldNodeMap = new FieldNodeMap {context, val, fieldIdx};
+    const FieldNodeMap* fieldNodeMap = new FieldNodeMap {context, val, std::move(fieldIdxs)};
     fieldMap[fieldNodeMap] = nextIdx;
   }
   return nextIdx;
 }
 
-NodeIndex AndersNodeFactory::createFieldObjNode(const Context *context, const llvm::Value *val, unsigned int fieldIdx) {
+NodeIndex AndersNodeFactory::createFieldObjNode(const Context *context, const llvm::Value *val, std::vector<unsigned int> fieldIdx) {
   unsigned nextIdx = nodes.size();
   nodes.push_back(std::make_unique<AndersFieldNode>(AndersNode::OBJ_NODE, nextIdx, fieldIdx, val));
   return nextIdx;
@@ -105,7 +123,7 @@ NodeIndex AndersNodeFactory::getValueNodeFor(const Context *context, const Value
   if (const AllocaInst *allocaInst = dyn_cast<AllocaInst>(val)) {
     const Type* allocaType = allocaInst->getAllocatedType();
     if (allocaType->isAggregateType()) {
-      return getFieldNodeFor(context, val, 0);
+      return getFieldNodeFor(context, val, {});
     }
   }
 
@@ -156,15 +174,15 @@ NodeIndex AndersNodeFactory::getObjectNodeFor(const Context *context, const Valu
     return itr->second;
 }
 
-NodeIndex AndersNodeFactory::getFieldNodeFor(const Context *context, const llvm::Value *val, unsigned int fieldIdx) {
+NodeIndex AndersNodeFactory::getFieldNodeFor(const Context *context, const llvm::Value *val, std::vector<unsigned int> fieldIdxs) {
   // auto itr = fieldMap (FieldNodeMap { context, val, fieldIdx });
   auto itr = std::find_if(fieldMap.begin(), fieldMap.end(), [&](auto &field) {
-    return field.first->ctx == context && field.first->value == val && field.first->fieldId == fieldIdx;
+    return field.first->ctx == context && field.first->value == val && field.first->fieldIdxs == fieldIdxs;
   });
   // Other get funcs will return an InvalidIndex, but since we can have a large amount of fields, I opt for on-demand creation.
   if (itr == fieldMap.end())
     // TODO: if val is a nullptr, this will actually return an index that doesn't correspond to anything.
-    return createFieldNode(context, val, fieldIdx);
+    return createFieldNode(context, val, fieldIdxs);
   return itr->second;
 }
 
@@ -268,7 +286,7 @@ void AndersNodeFactory::dumpNode(NodeIndex idx) const {
     assert(false && "Wrong type number!");
   errs() << "#" << n->idx;
   if (fieldNode) {
-    errs() << ", field=" << fieldNode->getFieldId();
+    errs() << ", field=" << fieldNode->getFieldStr();
   }
   errs() << "]";
 }
