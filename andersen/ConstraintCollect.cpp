@@ -75,19 +75,19 @@ void Andersen::scanFunction(Context *context, const llvm::Function *f) {
        ++itr) {
     auto inst = &*itr.getInstructionIterator();
     if (inst->getType()->isPointerTy()) {
-      // bool createdNode = false;
-      // if (inst->getOpcode() == Instruction::Alloca) {
-      //   if (const AllocaInst *allocaInst = dyn_cast<AllocaInst>(inst)) {
-      //     const Type* allocaType = allocaInst->getAllocatedType();
-      //     if (allocaType->isAggregateType()) {
-      //       for (unsigned int i=0; i < allocaType->getStructNumElements(); ++i)
-      //         nodeFactory.createFieldNode(context, inst, i);
-      //       createdNode = true;
-      //     }
-      //   }
-      // }
-      // if (!createdNode)
-      nodeFactory.createValueNode(context, inst);
+      bool createdNode = false;
+      if (inst->getOpcode() == Instruction::Alloca) {
+        if (const AllocaInst *allocaInst = dyn_cast<AllocaInst>(inst)) {
+          const Type* allocaType = allocaInst->getAllocatedType();
+          if (allocaType->isAggregateType()) {
+            for (unsigned int i=0; i < allocaType->getStructNumElements(); ++i)
+              nodeFactory.createFieldNode(context, inst, i);
+            createdNode = true;
+          }
+        }
+      }
+      if (!createdNode)
+        nodeFactory.createValueNode(context, inst);
     }
     // i want to say this can be simplified somehow
     else if (isa<CallBase>(inst) && typeContainsPointer(inst->getType()))
