@@ -58,7 +58,6 @@ NodeIndex AndersNodeFactory::createObjectNode(const Context *context, const Valu
   return nextIdx;
 }
 
-// TODO: does not generalize to vectors
 const llvm::Value* AndersNodeFactory::getConstantGlobalFieldValue(const llvm::Value *aggregate, std::vector<unsigned int> fieldIdx) const {
   const GlobalVariable* globalVariable = dyn_cast<GlobalVariable>(aggregate);
   if (!globalVariable || !globalVariable->isConstant()) return nullptr;
