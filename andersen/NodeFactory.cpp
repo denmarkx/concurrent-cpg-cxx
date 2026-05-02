@@ -68,6 +68,11 @@ NodeIndex AndersNodeFactory::createFieldNode(const Context *context, const llvm:
   return nextIdx;
 }
 
+NodeIndex AndersNodeFactory::createFieldObjNode(const Context *context, const llvm::Value *val, unsigned int fieldIdx) {
+  unsigned nextIdx = nodes.size();
+  nodes.push_back(std::make_unique<AndersFieldNode>(AndersNode::OBJ_NODE, nextIdx, fieldIdx, val));
+  return nextIdx;
+}
 
 // TODO: this is imprecise for functions that have >1 return stmt.
 NodeIndex AndersNodeFactory::createReturnNode(const Context *context, const llvm::Function *f) {
@@ -247,6 +252,7 @@ void AndersNodeFactory::getAllocSites(
 
 void AndersNodeFactory::dumpNode(NodeIndex idx) const {
   const AndersNode *n = nodes.at(idx).get();
+  const AndersFieldNode *fieldNode = dynamic_cast<const AndersFieldNode*>(n);
   if (n->type == AndersNode::VALUE_NODE)
     errs() << "[V ";
   else if (n->type == AndersNode::OBJ_NODE)
@@ -256,8 +262,7 @@ void AndersNodeFactory::dumpNode(NodeIndex idx) const {
   else
     assert(false && "Wrong type number!");
   errs() << "#" << n->idx;
-  if (n->type == AndersNode::FIELD_NODE) {
-    const AndersFieldNode *fieldNode = dynamic_cast<const AndersFieldNode*>(n);
+  if (fieldNode) {
     errs() << ", field=" << fieldNode->getFieldId();
   }
   errs() << "]";

@@ -154,6 +154,7 @@ public:
   NodeIndex createReturnNode(const Context *context, const llvm::Function *f);
   NodeIndex createVarargNode(const llvm::Function *f);
   NodeIndex createFieldNode(const Context *context = nullptr, const llvm::Value *val = nullptr, unsigned int idx = 0);
+  NodeIndex createFieldObjNode(const Context *context, const llvm::Value *val, unsigned int fieldIdx);
 
   // Map lookup interfaces (return InvalidIndex if value not found)
   NodeIndex getValueNodeFor(const Context *context, const llvm::Value *val);
