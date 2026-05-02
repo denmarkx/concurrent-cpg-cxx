@@ -4,6 +4,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
+#include <queue>
 
 using namespace llvm;
 
@@ -121,6 +122,40 @@ bool Andersen::getPointsFromSet(const llvm::Value *v, std::vector<const llvm::Va
     }
   }
   return ptsSet.size() > 0;
+}
+
+bool Andersen::getTransitivePointsToSet(const Context *ctx, const llvm::Value *v,
+                              std::vector<const llvm::Value *> &ptsSet) {
+  std::queue<unsigned int> worklist;
+
+  NodeIndex ptrTgt = nodeFactory.getMergeTarget(nodeFactory.getValueNodeFor(ctx, v));
+
+  auto ptsItr = ptsGraph.find(ptrTgt);
+  if (ptsItr == ptsGraph.end()) return false;
+  for (auto vx : ptsItr->second) {
+    if (vx == nodeFactory.getNullObjectNode()) continue;
+    worklist.push(vx);
+  }
+
+  while (!worklist.empty()) {
+    unsigned int c = worklist.front();
+    worklist.pop();
+
+    const llvm::Value *cv = nodeFactory.getValueForNode(c);
+    if (!cv) continue;
+
+    if (std::find(ptsSet.begin(), ptsSet.end(), cv) == ptsSet.end()) {
+      ptsSet.push_back(cv);
+
+      auto ptsItr = ptsGraph.find(c);
+      if (ptsItr == ptsGraph.end()) continue;
+      for (auto vx : ptsItr->second) {
+        if (vx == nodeFactory.getNullObjectNode()) continue;
+        worklist.push(vx);
+      }
+    }
+  }
+  return true;
 }
 
 bool Andersen::runOnModule(const Module &M) {

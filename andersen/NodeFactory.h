@@ -80,8 +80,10 @@ public:
     }
 
     std::string getFieldStr() const {
+      if (_fieldId.empty()) return "[]";
+
       std::string s = "[";
-      for (unsigned int i = 0; i < _fieldId.size() - 2; i++) {
+      for (unsigned int i = 0; i <= _fieldId.size() - 1; i++) {
         s += std::to_string(_fieldId[i]) + ", ";
       }
       s += std::to_string(_fieldId[_fieldId.size() - 1]) + "]";
