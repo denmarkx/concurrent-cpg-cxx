@@ -126,6 +126,14 @@ NodeIndex AndersNodeFactory::getValueNodeFor(const Context *context, const Value
     }
   }
 
+  auto fieldItr = std::find_if(fieldMap.begin(), fieldMap.end(), [&](auto &field) {
+    return field.first->ctx == context && field.first->value == val;
+  });
+
+  // If it's possible that this is a field, we'll assume it is.
+  if (fieldItr != fieldMap.end())
+    return fieldItr->second;
+
   auto itr = valueNodeMap.find({context, val});
   if (itr == valueNodeMap.end())
     return InvalidIndex;
