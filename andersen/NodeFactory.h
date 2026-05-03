@@ -134,25 +134,20 @@ public:
   Context* _globalCtx;
 
   // Factory methods
-  NodeIndex createValueNode(const Context *context = nullptr, const llvm::Value *val = nullptr);
-  NodeIndex createObjectNode(const Context *context = nullptr, const llvm::Value *val = nullptr);
+  NodeIndex createValueNode(const Context *context = nullptr, const llvm::Value *val = nullptr, FieldType fields={});
+  NodeIndex createObjectNode(const Context *context = nullptr, const llvm::Value *val = nullptr, FieldType fields={});
   NodeIndex createReturnNode(const Context *context, const llvm::Function *f);
   NodeIndex createVarargNode(const llvm::Function *f);
-  // NodeIndex createFieldNode(const Context *context = nullptr, const llvm::Value *val = nullptr, std::vector<unsigned int> fieldIdxs = {});
-  // NodeIndex createFieldObjNode(const Context *context, const llvm::Value *val, std::vector<unsigned int> fieldIdx);
 
   // Map lookup interfaces (return InvalidIndex if value not found)
-  NodeIndex getValueNodeFor(const Context *context, const llvm::Value *val);
+  NodeIndex getValueNodeFor(const Context *context, const llvm::Value *val, FieldType fields={});
   NodeIndex getValueNodeForConstant(const Context *context, const llvm::Constant *c);
-  NodeIndex getObjectNodeFor(const Context *context, const llvm::Value *val) const;
+  NodeIndex getObjectNodeFor(const Context *context, const llvm::Value *val, FieldType fields={}) const;
   NodeIndex getObjectNodeForConstant(const Context *context, const llvm::Constant *c) const;
   NodeIndex getReturnNodeFor(const Context *context, const llvm::Function *f) const;
   NodeIndex getVarargNodeFor(const llvm::Function *f) const;
-  // NodeIndex getFieldNodeFor(const Context *context, const llvm::Value *val, std::vector<unsigned int> fieldIdxs);
 
-  // const llvm::DenseMap<const FieldNodeMap*, NodeIndex>& getFieldMap() const;
-
-  // const llvm::Value* getConstantGlobalFieldValue(const llvm::Value *aggregate, std::vector<unsigned int> fieldIdx) const;
+  llvm::SmallVector<unsigned int, 4> getFields(const llvm::Value *v) const;
 
   // Node merge interfaces
   void mergeNode(NodeIndex n0, NodeIndex n1); // Merge n1 into n0
