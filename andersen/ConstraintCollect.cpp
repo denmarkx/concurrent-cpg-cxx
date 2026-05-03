@@ -54,10 +54,10 @@ void Andersen::collectConstraints(const Module &M) {
       scanFunction(globalCtx, &f);
   }
 
-  for (const auto &[k, v] : nodeFactory.getFieldMap()) {
-    NodeIndex fieldObjIdx = nodeFactory.createFieldObjNode(k->ctx, k->value, k->fieldIdxs);
-    constraints.emplace_back(AndersConstraint::ADDR_OF, v, fieldObjIdx);
-  }
+  // for (const auto &[k, v] : nodeFactory.getFieldMap()) {
+    // NodeIndex fieldObjIdx = nodeFactory.createFieldObjNode(k->ctx, k->value, k->fieldIdxs);
+    // constraints.emplace_back(AndersConstraint::ADDR_OF, v, fieldObjIdx);
+  // }
 }
 
 static bool typeContainsPointer(const Type *t) {
@@ -176,43 +176,43 @@ void Andersen::setupFunctionConstraints(const Context *context, const Function *
   // Add nodes for all formal arguments.
   for (Function::const_arg_iterator itr = f->arg_begin(), ite = f->arg_end();
        itr != ite; ++itr) {
-    if (!createParamField(context, itr) && isa<PointerType>(itr->getType()))
+    if (isa<PointerType>(itr->getType()))
       nodeFactory.createValueNode(context, &*itr);
   }
 }
 
-const std::vector<unsigned int> Andersen::getFieldIds(const llvm::Value *v) const {
-  const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(v);
-  if (!gep) return {};
+// const std::vector<unsigned int> Andersen::getFieldIds(const llvm::Value *v) const {
+//   const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(v);
+//   if (!gep) return {};
     
-  std::vector<unsigned int> fieldIdxs;
-  fieldIdxs.reserve(gep->getNumOperands() - 2);
-  for (unsigned int i=2; i < gep->getNumOperands(); i++) {
-    const ConstantInt *fieldIdxV = dyn_cast<ConstantInt>(gep->getOperand(i));
-    if (!fieldIdxV) continue;
+//   std::vector<unsigned int> fieldIdxs;
+//   fieldIdxs.reserve(gep->getNumOperands() - 2);
+//   for (unsigned int i=2; i < gep->getNumOperands(); i++) {
+//     const ConstantInt *fieldIdxV = dyn_cast<ConstantInt>(gep->getOperand(i));
+//     if (!fieldIdxV) continue;
 
-    assert(fieldIdxV != nullptr);
-    fieldIdxs.push_back(fieldIdxV->getZExtValue());
-  }
-  return fieldIdxs;
-}
+//     assert(fieldIdxV != nullptr);
+//     fieldIdxs.push_back(fieldIdxV->getZExtValue());
+//   }
+//   return fieldIdxs;
+// }
 
 /*
  * Since pointer types are opaque, this is meant to try and identify the type.
  * Currently, this is only used for parameters and checks just for direct uses.
  * ..specifically, for GEP uses only. ideally, this can be handled by dbg info.
 */
-const bool Andersen::createParamField(const Context *ctx, const llvm::Value *v) {
-  if (!isa<PointerType>(v->getType())) return false;
+// const bool Andersen::createParamField(const Context *ctx, const llvm::Value *v) {
+//   if (!isa<PointerType>(v->getType())) return false;
 
-  for (const User *user : v->users()) {
-    if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(user)) {
-      nodeFactory.createFieldObjNode(ctx, v, getFieldIds(v));
-      return true;
-    }
-  }
-  return false;
-}
+//   for (const User *user : v->users()) {
+//     if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(user)) {
+//       nodeFactory.createFieldObjNode(ctx, v, getFieldIds(v));
+//       return true;
+//     }
+//   }
+//   return false;
+// }
 
 void Andersen::addGlobalInitializerConstraints(NodeIndex objNode,
                                                const Constant *c) {
@@ -308,12 +308,12 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
     assert(inst->getType()->isPointerTy());
 
     // TODO: this is bullshit but i cant think of what else to do atm
-    std::vector<unsigned int> fieldIdxs = getFieldIds(inst);
+    // std::vector<unsigned int> fieldIdxs = getFieldIds(inst);
 
     // P1 = getelementptr P2, ... --> <Copy/P1/P2>
     NodeIndex srcIndex = nodeFactory.getValueNodeFor(context, inst->getOperand(0));
-    if (!fieldIdxs.empty())
-      srcIndex = nodeFactory.getFieldNodeFor(context, inst->getOperand(0), std::move(fieldIdxs));
+    // if (!fieldIdxs.empty())
+      // srcIndex = nodeFactory.getFieldNodeFor(context, inst->getOperand(0), std::move(fieldIdxs));
     assert(srcIndex != AndersNodeFactory::InvalidIndex &&
            "Failed to find gep src node");
     NodeIndex dstIndex = nodeFactory.getValueNodeFor(context, inst);
