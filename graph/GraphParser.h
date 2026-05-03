@@ -43,7 +43,7 @@
 #include <type_traits>
 using namespace llvm;
 
-#define CHECK_SKIPPED 0
+// #define CHECK_SKIPPED 0
 
 namespace GraphParser {
 
