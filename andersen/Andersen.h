@@ -47,6 +47,7 @@
 
 #include "Constraint.h"
 #include "NodeFactory.h"
+#include "NodeMap.h"
 #include "PtsSet.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/ADT/DenseMap.h"
@@ -78,6 +79,7 @@ private:
   Context* collectConstraintsForGlobals(const llvm::Module &);
   void collectConstraintsForInstruction(const Context*, const llvm::Instruction *, bool recursiveHack=false);
   void addGlobalInitializerConstraints(NodeIndex, const llvm::Constant *);
+  void addGlobalAggregateConstraints(const llvm::Value *aggregate, const llvm::Constant *, FieldType &fields);
   void addConstraintForCall(const Context*, const llvm::CallBase* cs);
   bool addConstraintForExternalLibrary(const Context*,
                                        const llvm::CallBase* cs,

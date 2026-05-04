@@ -91,31 +91,31 @@ NodeIndex AndersNodeFactory::createVarargNode(const llvm::Function *f) {
 NodeIndex AndersNodeFactory::getValueNodeFor(const Context *context, const Value *val, FieldType fields) {
   if (const Constant *c = dyn_cast<Constant>(val)) {
     if (!isa<GlobalValue>(c))
-      return getValueNodeForConstant(context, c);
+      return getValueNodeForConstant(context, c, fields);
     else
       context = _globalCtx; // TODO: may not be sound
   }
   return valueNodeMap.find(context, val, fields);
 }
 
-NodeIndex AndersNodeFactory::getValueNodeForConstant(const Context *context, const llvm::Constant *c) {
+NodeIndex AndersNodeFactory::getValueNodeForConstant(const Context *context, const llvm::Constant *c, FieldType fields) {
   assert(isa<PointerType>(c->getType()) && "Not a constant pointer!");
 
   if (isa<ConstantPointerNull>(c) || isa<UndefValue>(c))
     return getNullPtrNode();
   else if (const GlobalValue *gv = dyn_cast<GlobalValue>(c))
-    return getValueNodeFor(context, gv);
+    return getValueNodeFor(context, gv, fields);
   else if (const ConstantExpr *ce = dyn_cast<ConstantExpr>(c)) {
     switch (ce->getOpcode()) {
     // Pointer to any field within a struct is treated as a pointer to the first
     // field
     case Instruction::GetElementPtr:
-      return getValueNodeFor(context, c->getOperand(0));
+      return getValueNodeFor(context, c->getOperand(0), getFields(c));
     case Instruction::IntToPtr:
     case Instruction::PtrToInt:
       return createValueNode(context);
     case Instruction::BitCast:
-      return getValueNodeForConstant(context, ce->getOperand(0));
+      return getValueNodeForConstant(context, ce->getOperand(0), fields);
     default:
       errs() << "Constant Expr not yet handled: " << *ce << "\n";
       llvm_unreachable(0);
@@ -129,29 +129,29 @@ NodeIndex AndersNodeFactory::getValueNodeForConstant(const Context *context, con
 NodeIndex AndersNodeFactory::getObjectNodeFor(const Context *context, const Value *val, FieldType fields) const {
   if (const Constant *c = dyn_cast<Constant>(val))
     if (!isa<GlobalValue>(c))
-      return getObjectNodeForConstant(context, c);
+      return getObjectNodeForConstant(context, c, fields);
   return objNodeMap.find(context, val, fields);
 }
 
 NodeIndex
-AndersNodeFactory::getObjectNodeForConstant(const Context *context, const llvm::Constant *c) const {
+AndersNodeFactory::getObjectNodeForConstant(const Context *context, const llvm::Constant *c, FieldType fields) const {
   assert(isa<PointerType>(c->getType()) && "Not a constant pointer!");
 
   if (isa<ConstantPointerNull>(c))
     return getNullObjectNode();
   else if (const GlobalValue *gv = dyn_cast<GlobalValue>(c))
-    return getObjectNodeFor(context, gv);
+    return getObjectNodeFor(context, gv, fields);
   else if (const ConstantExpr *ce = dyn_cast<ConstantExpr>(c)) {
     switch (ce->getOpcode()) {
     // Pointer to any field within a struct is treated as a pointer to the first
     // field
     case Instruction::GetElementPtr:
-      return getObjectNodeForConstant(context, ce->getOperand(0));
+      return getObjectNodeForConstant(context, ce->getOperand(0), fields);
     case Instruction::IntToPtr:
     case Instruction::PtrToInt:
       return getUniversalObjNode();
     case Instruction::BitCast:
-      return getObjectNodeForConstant(context, ce->getOperand(0));
+      return getObjectNodeForConstant(context, ce->getOperand(0), fields);
     default:
       errs() << "Constant Expr not yet handled: " << *ce << "\n";
       llvm_unreachable(0);
