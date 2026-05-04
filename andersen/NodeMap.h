@@ -3,6 +3,7 @@
 struct Context;
 
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/ADT/DenseMap.h"
 using namespace llvm;
@@ -111,12 +112,23 @@ public:
 
         FieldType fields;
 
+        // Global Variable:
+        if (const GlobalVariable *global = dyn_cast<GlobalVariable>(value)) {
+            if (!global->hasInitializer()) return {};
+
+            const Constant *initializer = global->getInitializer();
+
+            // for an aggregate x, &x = &x[0]
+            if (initializer->getType()->isAggregateType())
+                return {0};
+        }
+
         // Const Expression:
-        if (const ConstantExpr *cExpr = dyn_cast<ConstantExpr>(value))
+        else if (const ConstantExpr *cExpr = dyn_cast<ConstantExpr>(value))
             return getFields(cExpr->getAsInstruction());
 
         // GEP: I should note that this doesn't support the first index (ptr offset).
-        if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(value)) {
+        else if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(value)) {
             fields.reserve(gep->getNumIndices());
 
             for (unsigned int i=2; i < gep->getNumOperands(); i++) {
@@ -132,7 +144,7 @@ public:
         }
 
         // Parameter:
-        if (const Argument *param = dyn_cast<Argument>(value)) {
+        else if (const Argument *param = dyn_cast<Argument>(value)) {
             // TODO: sret will show the aggregate type (param->getParamStructRetType)
             // TODO: DWARF metadata will send me in circles, but that is what should be checked next.
 
@@ -140,7 +152,6 @@ public:
             const llvm::Value *candidate = findAggregateFromParam(param);
             return getFields(candidate);
         }
-
         return fields;
     }
 
