@@ -627,3 +627,196 @@ TEST_CASE("Andersen[ContextSensitiveMixed]") {
     CHECK_EQ(anders->alias(x, y, 0u, 0u), AliasResult::NoAlias);
     CHECK_EQ(anders->alias(x, z, 0u, 0u), AliasResult::MustAlias);
 }
+
+TEST_CASE("Andersen[FieldSensitivity_Simple]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        %S = type { ptr, ptr }
+
+        define i32 @main() {
+            %1 = alloca %S, align 8
+            %x = alloca i32, align 4
+            %y = alloca i32, align 4
+
+            ; tpts(s1) = {%1.f0, %x}
+            %s1 = getelementptr inbounds %S, ptr %1, i32 0, i32 0
+            store ptr %x, ptr %s1, align 8
+
+            ; tpts(s2) = {%1.f1, %y}
+            %s2 = getelementptr inbounds %S, ptr %1, i32 0, i32 1
+            store ptr %y, ptr %s2, align 8
+
+            ret i32 0
+        }
+    )");
+
+    auto anders = std::make_unique<AndersenAAResult>(*module);
+    const Function *F = module->getFunction("main");
+
+    const Value *x = findInstr(F, "x");
+    const Value *y = findInstr(F, "y");
+
+    const Value *s1 = findInstr(F, "s1");
+    const Value *s2 = findInstr(F, "s2");
+
+    PtsSetType s1Pts;
+    anders->getTransitivePointsToSet(s1, s1Pts);
+
+    PtsSetType s2Pts;
+    anders->getTransitivePointsToSet(s2, s2Pts);
+
+    CHECK(ptsContains(s1Pts, x));
+    CHECK(!ptsContains(s1Pts, y));
+
+    CHECK(ptsContains(s2Pts, y));
+    CHECK(!ptsContains(s2Pts, x));
+}
+
+TEST_CASE("Andersen[FieldSensitivity_Simple_MixedContext]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        %S = type { ptr, ptr }
+
+        define void @func(ptr %0) {
+            ; Obviously not the best thing to do here, but its just a test.
+            %y = alloca i32, align 4
+
+            ; tpts(s2) = {%1.f1, %y}
+            %s2 = getelementptr inbounds %S, ptr %0, i32 0, i32 1
+            store ptr %y, ptr %s2, align 8
+            ret void
+        }
+
+        define i32 @main() {
+            %1 = alloca %S, align 8
+            %x = alloca i32, align 4
+            %y = alloca i32, align 4
+
+            ; tpts(s1) = {%1.f0, %x}
+            %s1 = getelementptr inbounds %S, ptr %1, i32 0, i32 0
+            store ptr %x, ptr %s1, align 8
+
+            call void @func(ptr %1);
+            ret i32 0
+        }
+    )");
+
+    auto anders = std::make_unique<AndersenAAResult>(*module);
+    const Function *F = module->getFunction("main");
+    const Function *F2 = module->getFunction("func");
+
+    const Value *x = findInstr(F, "x");
+    const Value *y = findInstr(F2, "y");
+
+    const Value *s1 = findInstr(F, "s1");
+    const Value *s2 = findInstr(F2, "s2");
+
+    PtsSetType s1Pts;
+    anders->getTransitivePointsToSet(s1, s1Pts);
+
+    PtsSetType s2Pts;
+    anders->getTransitivePointsToSet(s2, s2Pts);
+
+    CHECK(ptsContains(s1Pts, x));
+    CHECK(!ptsContains(s1Pts, y));
+
+    CHECK(ptsContains(s2Pts, y));
+    CHECK(!ptsContains(s2Pts, x));
+}
+
+TEST_CASE("Andersen[FieldSensitivity_GlobalFuncArray]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        @x = internal global [3 x ptr] [ptr @f1, ptr @f2, ptr @f3], align 8
+
+        define i32 @main() {
+            %s1 = getelementptr inbounds [3 x ptr], ptr @x, i64 0, i64 0
+            %fptr = load ptr, ptr %s1, align 8
+
+            ; obviously f4 overwrites @x[2], but tpts(x[2]) will still = {@f3, @f4}
+            %s2 = getelementptr inbounds [3 x ptr], ptr @x, i64 0, i64 2
+            store ptr @f4, ptr %s2, align 8
+            %fptr2 = load ptr, ptr %s2, align 8
+            ret i32 0
+        }
+
+        define void @f1() { ret void }
+        define void @f2() { ret void }
+        define void @f3() { ret void }
+        define void @f4() { ret void }
+    )");
+
+    auto anders = std::make_unique<AndersenAAResult>(*module);
+    const Function *F = module->getFunction("main");
+    const Function *f1 = module->getFunction("f1");
+    const Function *f2 = module->getFunction("f2");
+    const Function *f3 = module->getFunction("f3");
+    const Function *f4 = module->getFunction("f4");
+
+    const Value *s1 = findInstr(F, "s1");
+    const Value *s2 = findInstr(F, "s2");
+    const Value *fptr = findInstr(F, "fptr");
+    const Value *fptr2 = findInstr(F, "fptr2");
+
+    anders->printTransitivePointsToSet(s2);
+
+    PtsSetType s1Pts;
+    anders->getTransitivePointsToSet(s1, s1Pts);
+    CHECK(ptsContains(s1Pts, f1));
+    CHECK(!ptsContains(s1Pts, f2));
+    CHECK(!ptsContains(s1Pts, f3));
+
+    PtsSetType fptrPts;
+    anders->getTransitivePointsToSet(fptr, fptrPts);
+    CHECK(ptsContains(fptrPts, f1));
+    CHECK(!ptsContains(fptrPts, f2));
+    CHECK(!ptsContains(fptrPts, f3));
+
+    PtsSetType s2Pts;
+    anders->getTransitivePointsToSet(s2, s2Pts);
+    CHECK(ptsContains(s2Pts, f3));
+    CHECK(ptsContains(s2Pts, f4));
+    CHECK(!ptsContains(s2Pts, f1));
+    CHECK(!ptsContains(s2Pts, f2));
+
+    PtsSetType fptr2Pts;
+    anders->getTransitivePointsToSet(fptr2, fptr2Pts);
+    CHECK(ptsContains(fptr2Pts, f3));
+    CHECK(ptsContains(fptr2Pts, f4));
+    CHECK(!ptsContains(fptr2Pts, f1));
+    CHECK(!ptsContains(fptr2Pts, f2));
+}
+
+// TODO: inline gep still not handled properly for store inst.
+
+TEST_CASE("Andersen[FieldSensitivity_InlineGEP]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        @g = internal global [2 x ptr] [ptr @f1, ptr @f2], align 8
+
+        define i32 @main() {
+            %s1 = getelementptr inbounds [2 x ptr], ptr @g, i32 0, i32 0
+            ; store ptr @f3, ptr getelementptr inbounds ([2 x ptr], ptr @g, i32 0, i32 0), align 8
+            store ptr @f3, ptr %s1, align 8
+
+            %x = getelementptr inbounds [2 x ptr], ptr @g, i32 0, i32 0
+            %y = load ptr, ptr %x, align 8
+            ret i32 0
+        }
+
+        define void @f1() { ret void }
+        define void @f2() { ret void }
+        define void @f3() { ret void }
+    )");
+
+    auto anders = std::make_unique<AndersenAAResult>(*module);
+    const Function *F = module->getFunction("main");
+
+    const Value *x = findInstr(F, "x");
+    const Value *y = findInstr(F, "y");
+
+    // PtsSetType s1Pts;
+    // anders->getTransitivePointsToSet(s1, s1Pts);
+    anders->printTransitivePointsToSet(x);
+    anders->printTransitivePointsToSet(y);
+}

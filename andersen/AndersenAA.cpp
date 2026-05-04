@@ -160,6 +160,10 @@ bool AndersenAAResult::getPointsFromSet(unsigned int ctxId, const Value *v, PtsS
   return anders.getPointsFromSet(ctxId, v, ptsSet);
 }
 
+bool AndersenAAResult::getTransitivePointsToSet(const Value *v, PtsSetType &ptsSet) {
+  return anders.getTransitivePointsToSet(v, ptsSet);
+}
+
 bool AndersenAAResult::getTransitivePointsToSet(const Context* cs, const Value *v, PtsSetType &ptsSet) {
   return anders.getTransitivePointsToSet(cs, v, ptsSet);
 }

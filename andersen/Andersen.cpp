@@ -124,6 +124,21 @@ bool Andersen::getPointsFromSet(const llvm::Value *v, std::vector<const llvm::Va
   return ptsSet.size() > 0;
 }
 
+/**
+ * Where no ctx is given, all associated contexts are assumed.
+*/
+bool Andersen::getTransitivePointsToSet(const llvm::Value *v, std::vector<const llvm::Value *> &ptsSet) {
+  std::vector<const Context*> contexts = nodeFactory.getAssociatedContexts(v);
+  for (const Context *ctx : contexts) {
+    std::vector<const llvm::Value*> childSet;
+    if (getTransitivePointsToSet(ctx, v, childSet)) {
+      for (const llvm::Value *v : childSet)
+        ptsSet.push_back(v);
+    }
+  }
+  return ptsSet.size() > 0;
+}
+
 bool Andersen::getTransitivePointsToSet(const Context *ctx, const llvm::Value *v,
                               std::vector<const llvm::Value *> &ptsSet) {
   std::queue<unsigned int> worklist;

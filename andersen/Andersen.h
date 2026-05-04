@@ -133,6 +133,9 @@ public:
   bool getPointsFromSet(const llvm::Value *v,
                       std::vector<const llvm::Value *> &ptsSet);
 
+  bool getTransitivePointsToSet(const llvm::Value *v,
+                      std::vector<const llvm::Value *> &ptsSet);
+
   bool getTransitivePointsToSet(const Context *ctx, const llvm::Value *v,
                       std::vector<const llvm::Value *> &ptsSet);
 

@@ -33,6 +33,7 @@ public:
   bool getPointsToSet(const llvm::Value *v, PtsSetType &ptsSet);
 
   bool getTransitivePointsToSet(const Context*, const llvm::Value *v, PtsSetType &ptsSet);
+  bool getTransitivePointsToSet(const llvm::Value *v, PtsSetType &ptsSet);
 
   bool getPointsFromSet(const Context*, const llvm::Value *v, PtsSetType&ptsSet);
   bool getPointsFromSet(unsigned int, const llvm::Value *v, PtsSetType &ptsSet);
