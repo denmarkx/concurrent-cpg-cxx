@@ -307,7 +307,7 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
 
     // P1 = getelementptr P2, ... --> <Copy/P1/P2>
 
-    auto fields = nodeFactory.getFields(inst);
+    auto fields = nodeFactory.getFields(context, inst);
 
     // We don't create every field for every aggregate during AllocaInst.
     // ..so we need to check if this exists:

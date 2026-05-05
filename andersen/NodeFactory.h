@@ -147,7 +147,7 @@ public:
   NodeIndex getReturnNodeFor(const Context *context, const llvm::Function *f) const;
   NodeIndex getVarargNodeFor(const llvm::Function *f) const;
 
-  llvm::SmallVector<unsigned int, 4> getFields(const llvm::Value *v) const;
+  llvm::SmallVector<unsigned int, 4> getFields(const Context *ctx, const llvm::Value *v) const;
 
   // Node merge interfaces
   void mergeNode(NodeIndex n0, NodeIndex n1); // Merge n1 into n0

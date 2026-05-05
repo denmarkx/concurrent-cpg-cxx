@@ -100,7 +100,7 @@ NodeIndex AndersNodeFactory::getValueNodeForConstant(const Context *context, con
     // Pointer to any field within a struct is treated as a pointer to the first
     // field
     case Instruction::GetElementPtr:
-      return getValueNodeFor(context, c->getOperand(0), getFields(c));
+      return getValueNodeFor(context, c->getOperand(0), getFields(context, c));
     case Instruction::IntToPtr:
     case Instruction::PtrToInt:
       return createValueNode(context);
@@ -169,8 +169,8 @@ NodeIndex AndersNodeFactory::getVarargNodeFor(const llvm::Function *f) const {
     return itr->second;
 }
 
-llvm::SmallVector<unsigned int, 4> AndersNodeFactory::getFields(const llvm::Value *v) const {
-  return valueNodeMap.getFields(v);
+llvm::SmallVector<unsigned int, 4> AndersNodeFactory::getFields(const Context *ctx, const llvm::Value *v) const {
+  return valueNodeMap.getFields(ctx, v);
 }
 
 void AndersNodeFactory::mergeNode(NodeIndex n0, NodeIndex n1) {
@@ -224,6 +224,14 @@ void AndersNodeFactory::dumpNode(NodeIndex idx) const {
 
 void AndersNodeFactory::dumpNodeInfo() const {
   errs() << "\n----- Print AndersNodeFactory Info -----\n";
+  errs() << "Value Node Map:\n";
+  for (auto const &x : valueNodeMap) {
+    errs() << "[" << x.getSecond() << ", C= ";
+    errs() << std::get<0>(x.getFirst())->id << " ]: "; 
+    errs() << *std::get<1>(x.getFirst()) << "\n"; 
+  }
+  errs() << "\n";
+
   for (auto const &node : nodes) {
     dumpNode(node.getIndex());
     errs() << ", val = ";
