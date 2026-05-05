@@ -225,6 +225,11 @@ void Andersen::addGlobalAggregateConstraints(const llvm::Value *aggregate, const
     newFields.append(fields);
     newFields.push_back(i);
 
+    if (element->getType()->isAggregateType()) {
+      addGlobalAggregateConstraints(aggregate, element, newFields);
+      continue;
+    }
+
     NodeIndex valIdx = nodeFactory.getValueNodeFor(_globalCtx, aggregate, newFields);
     NodeIndex objIdx = nodeFactory.getObjectNodeFor(_globalCtx, aggregate, newFields);
     if (objIdx == AndersNodeFactory::InvalidIndex) {

@@ -875,3 +875,110 @@ TEST_CASE("Andersen[FieldSensitivity_InlineGEP_All_Offset_0]") {
     CHECK(ptsContains(s2Pts, f1));
     CHECK(ptsContains(s2Pts, f3));
 }
+
+TEST_CASE("Andersen[FieldSensitivity_Nested]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        %S = type { [8 x ptr], ptr }
+        %D = type { [8 x [8 x ptr] ], ptr }
+
+        define i32 @main() {
+            %1 = alloca %S, align 8
+            %x = alloca i32, align 4
+            %y = alloca i32, align 4
+
+            %s1 = getelementptr inbounds %D, ptr %1, i32 0, i32 0, i32 5, i32 2
+            store ptr %x, ptr %s1, align 8
+
+            %s2 = getelementptr inbounds %D, ptr %1, i32 0, i32 0, i32 2, i32 7
+            store ptr %y, ptr %s2, align 8
+
+            ret i32 0
+        }
+    )");
+
+    auto anders = std::make_unique<AndersenAAResult>(*module);
+    const Function *F = module->getFunction("main");
+
+    const Value *x = findInstr(F, "x");
+    const Value *y = findInstr(F, "y");
+
+    const Value *s1 = findInstr(F, "s1");
+    const Value *s2 = findInstr(F, "s2");
+
+    PtsSetType s1Pts;
+    anders->getTransitivePointsToSet(s1, s1Pts);
+
+    PtsSetType s2Pts;
+    anders->getTransitivePointsToSet(s2, s2Pts);
+
+    CHECK(ptsContains(s1Pts, x));
+    CHECK(!ptsContains(s1Pts, y));
+
+    CHECK(ptsContains(s2Pts, y));
+    CHECK(!ptsContains(s2Pts, x));
+}
+
+TEST_CASE("Andersen[FieldSensitivity_Nested_Global]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        @h = internal global [2 x [2 x ptr]] [
+            [2 x ptr] [ptr @f1, ptr @f2],
+            [2 x ptr] [ptr @f3, ptr @f4]
+        ]
+
+        define i32 @main() {
+            %x = alloca i32, align 4
+            %y = alloca i32, align 4
+
+            %s1 = getelementptr inbounds [2 x [2 x ptr]], ptr @h, i32 0, i32 0, i32 1
+            store ptr %x, ptr %s1, align 8
+
+            %s2 = getelementptr inbounds [2 x [2 x ptr]], ptr @h, i32 0, i32 1, i32 0
+            store ptr %y, ptr %s2, align 8
+
+            ret i32 0
+        }
+
+        define void @f1() { ret void }
+        define void @f2() { ret void }
+        define void @f3() { ret void }
+        define void @f4() { ret void }
+    )");
+
+    auto anders = std::make_unique<AndersenAAResult>(*module);
+    const Function *F = module->getFunction("main");
+    const Function *f1 = module->getFunction("f1");
+    const Function *f2 = module->getFunction("f2");
+    const Function *f3 = module->getFunction("f3");
+    const Function *f4 = module->getFunction("f4");
+
+    const Value *x = findInstr(F, "x");
+    const Value *y = findInstr(F, "y");
+
+    const Value *s1 = findInstr(F, "s1");
+    const Value *s2 = findInstr(F, "s2");
+
+    anders->printTransitivePointsToSet(s1);
+    anders->printTransitivePointsToSet(s2);
+
+    PtsSetType s1Pts;
+    anders->getTransitivePointsToSet(s1, s1Pts);
+
+    PtsSetType s2Pts;
+    anders->getTransitivePointsToSet(s2, s2Pts);
+
+    CHECK(ptsContains(s1Pts, x));
+    CHECK(ptsContains(s1Pts, f2));
+    CHECK(!ptsContains(s1Pts, y));
+    CHECK(!ptsContains(s1Pts, f1));
+    CHECK(!ptsContains(s1Pts, f3));
+    CHECK(!ptsContains(s1Pts, f4));
+
+    CHECK(ptsContains(s2Pts, y));
+    CHECK(ptsContains(s2Pts, f3));
+    CHECK(!ptsContains(s2Pts, x));
+    CHECK(!ptsContains(s2Pts, f1));
+    CHECK(!ptsContains(s2Pts, f2));
+    CHECK(!ptsContains(s2Pts, f4));
+}
