@@ -17,8 +17,7 @@ const llvm::Value* NodeMap::findAggregateFromParam(
     if (isa<LoadInst>(param)) {
         // This is only hit when previously itr = users().end.
         // ..so the user, in this case, is the 1st operand.
-        const auto *a = findAggregateFromParam(startCtx, ctx, dyn_cast<LoadInst>(param)->getOperand(0));
-        return a;
+        return findAggregateFromParam(startCtx, ctx, dyn_cast<LoadInst>(param)->getOperand(0));
     }
 
     auto itr = std::find_if(param->users().begin(), param->users().end(), [&](const User *user) {
