@@ -1064,3 +1064,114 @@ TEST_CASE("Andersen[FieldSensitivity_Nested_Depth]") {
     CHECK(ptsContains(s2Pts, F3));
 
 }
+
+TEST_CASE("Andersen[FieldSensitivity_PointerOffset]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        %I = type { ptr, ptr }
+        %S = type { %I, %I }
+
+        define i32 @main() {
+            %p = alloca %S
+            %q = alloca i32
+
+            ; i64 1: move by sizeof(%I) (second %I field of %S)
+            ; i32 1: select the second pointer field within that %I
+            ; Equivalent to ..ptr %p, i32 0, i32 1, i32 1
+            %field = getelementptr %I, ptr %p, i64 1, i32 1
+            store ptr %q, ptr %field
+
+            %field2 = getelementptr %S, ptr %p, i64 0, i32 0
+
+            %field3 = getelementptr %S, ptr %p, i64 0, i32 1, i32 1
+
+            ret i32 0
+        }
+    )");
+
+    auto anders = std::make_unique<AndersenAAResult>(*module);
+    const Function *F = module->getFunction("main");
+
+    const Value *field = findInstr(F, "field");
+    const Value *field2 = findInstr(F, "field2");
+    const Value *field3 = findInstr(F, "field3");
+    const Value *q = findInstr(F, "q");
+
+    PtsSetType s1Pts;
+    anders->getTransitivePointsToSet(field, s1Pts);
+
+    PtsSetType s2Pts;
+    anders->getTransitivePointsToSet(field2, s2Pts);
+
+    PtsSetType s3Pts;
+    anders->getTransitivePointsToSet(field3, s3Pts);
+
+    CHECK(ptsContains(s1Pts, q));
+    CHECK(!ptsContains(s2Pts, q));
+    CHECK(ptsContains(s3Pts, q));
+}
+
+TEST_CASE("Andersen[FieldSensitivity_Byte]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        %S = type { [64 x i8] }
+
+        define i32 @main() {
+            %p = alloca %S
+            %q = alloca i8
+            %h = alloca i8
+
+            ; First field: [64 x i8]
+            %base = getelementptr inbounds %S, ptr %p, i32 0, i32 0
+
+            ; Move 8 bytes..yields &S->field[1]
+            %ptr = getelementptr inbounds i8, ptr %base, i64 1
+            store ptr %q, ptr %ptr
+
+            ; Equivalent to %ptr
+            %eq = getelementptr inbounds %S, ptr %p, i32 0, i32 0, i32 1
+
+            %other = getelementptr inbounds %S, ptr %p, i32 0, i32 0, i32 20
+            store ptr %h, ptr %other
+
+            ret i32 0
+        }
+    )");
+
+    auto anders = std::make_unique<AndersenAAResult>(*module);
+    const Function *F = module->getFunction("main");
+
+    const Value *base = findInstr(F, "base");
+    const Value *ptr = findInstr(F, "ptr");
+    const Value *eq = findInstr(F, "eq");
+    const Value *other = findInstr(F, "other");
+
+    const Value *q = findInstr(F, "q");
+    const Value *h = findInstr(F, "h");
+
+    PtsSetType s1Pts, s2Pts, s3Pts, s4Pts;
+    anders->getTransitivePointsToSet(base, s1Pts);
+    anders->getTransitivePointsToSet(ptr, s2Pts);
+    anders->getTransitivePointsToSet(eq, s3Pts);
+    anders->getTransitivePointsToSet(other, s4Pts);
+
+    anders->printTransitivePointsToSet(ptr);
+    anders->printTransitivePointsToSet(eq);
+    anders->printTransitivePointsToSet(other);
+
+    // tPts(base) = {p}
+    CHECK(!ptsContains(s1Pts, q));
+    CHECK(!ptsContains(s1Pts, h));
+
+    // // tPts(ptr) = {p, q}
+    CHECK(!ptsContains(s2Pts, h));
+    CHECK(ptsContains(s2Pts, q));
+
+    // // tPts(eq) = tPts(ptr) = {p, q}
+    CHECK(!ptsContains(s3Pts, h));
+    CHECK(ptsContains(s3Pts, q));
+
+    // // tPts(other) = {p, h}
+    CHECK(!ptsContains(s4Pts, q));
+    CHECK(ptsContains(s4Pts, h));
+}
