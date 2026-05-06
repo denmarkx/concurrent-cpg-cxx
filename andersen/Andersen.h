@@ -96,8 +96,6 @@ private:
 
   const AllocaInst* findAlloc(const llvm::Value *v) const;
 
-  const bool createParamField(const Context *ctx, const llvm::Value *v);
-
   const std::vector<unsigned int> getFieldIds(const llvm::Value *v) const;
 
   // For debugging
