@@ -56,10 +56,6 @@ void Andersen::collectConstraints(const Module &M) {
       scanFunction(globalCtx, &f);
   }
 
-  // for (const auto &[k, v] : nodeFactory.getFieldMap()) {
-    // NodeIndex fieldObjIdx = nodeFactory.createFieldObjNode(k->ctx, k->value, k->fieldIdxs);
-    // constraints.emplace_back(AndersConstraint::ADDR_OF, v, fieldObjIdx);
-  // }
 }
 
 static bool typeContainsPointer(const Type *t) {
@@ -206,14 +202,10 @@ void Andersen::addGlobalInitializerConstraints(NodeIndex objNode,
     // array/struct are pointed-to by the 1st-field pointer
     assert(isa<ConstantArray>(c) || isa<ConstantDataSequential>(c) ||
            isa<ConstantStruct>(c));
-    // errs() << "GLOBAL INIT: " << *c << "\n\n";
 
     FieldType fields;
     addGlobalAggregateConstraints(nodeFactory.getValueForNode(objNode), c, fields);
 
-    // for (unsigned i = 0, e = c->getNumOperands(); i != e; ++i)
-      // addGlobalInitializerConstraints(objNode,
-                                      // cast<Constant>(c->getOperand(i)));
   }
 }
 

@@ -174,6 +174,7 @@ bool Andersen::getTransitivePointsToSet(const Context *ctx, const llvm::Value *v
 }
 
 bool Andersen::runOnModule(const Module &M) {
+  nodeFactory.setDataLayout(&M.getDataLayout());
   collectConstraints(M);
 
   if (DumpDebugInfo)
