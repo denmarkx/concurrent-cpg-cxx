@@ -50,7 +50,7 @@ public:
             }
             std::vector<const llvm::Value *> ptsSet{};
             AndersenAAResult *AA = GraphManager::get()->getAliasResult();
-            AA->getPointsToSet(nullptr, funcPtrV, ptsSet); // TODO
+            AA->getTransitivePointsToSet(funcPtrV, ptsSet); // TODO
 
             functions.reserve(ptsSet.size());
             for (auto &v : ptsSet) {
