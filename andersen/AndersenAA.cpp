@@ -247,19 +247,19 @@ void AndersenAAResult::printTransitivePointsToSet(const Value *v) {
 }
 
 
+/*
+ * Adds constraint for all possible contexts for lhs and rhs.
+*/
 void AndersenAAResult::addConstraint(AndersConstraint::ConstraintType type, 
   const llvm::Value *lhs, const llvm::Value *rhs) {
 
   auto lCtxs = anders.nodeFactory.getAssociatedContexts(lhs);
-  auto rCtxs = anders.nodeFactory.getAssociatedContexts(lhs);
+  auto rCtxs = anders.nodeFactory.getAssociatedContexts(rhs);
 
-  // shitty way to do this, but it works and differential propagation does indeed work
   for (const Context *ctxL : lCtxs) {
     for (const Context *ctxR : rCtxs) {
       NodeIndex lhsIdx = anders.nodeFactory.getValueNodeFor(ctxL, lhs);
       NodeIndex rhsIdx = anders.nodeFactory.getValueNodeFor(ctxR, rhs);
-      errs() << lhsIdx << "\n";
-      errs() << rhsIdx << "\n";
       anders.constraints.emplace_back(type, lhsIdx, rhsIdx);
     }
   }
