@@ -9,6 +9,7 @@
 #include "andersen/SparseBitVectorGraph.h"
 
 #include "llvm/IR/Module.h"
+#include "llvm/IRReader/IRReader.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/Support/SourceMgr.h"
 
@@ -126,6 +127,21 @@ public:
         std::string errMsg;
         raw_string_ostream os(errMsg);
         Error.print("", os);
+
+        if (!module) {
+            // A failure here means that the test itself is buggy.
+            report_fatal_error(os.str().c_str());
+        }
+
+        return module.get();
+    }
+
+    Module* ParseFile(const char* filename) {
+        SMDiagnostic error;
+        module = parseIRFile(filename, error, ctx);
+        std::string errMsg;
+        raw_string_ostream os(errMsg);
+        error.print("", os);
 
         if (!module) {
             // A failure here means that the test itself is buggy.
@@ -1174,4 +1190,23 @@ TEST_CASE("Andersen[FieldSensitivity_Byte]") {
     // // tPts(other) = {p, h}
     CHECK(!ptsContains(s4Pts, q));
     CHECK(ptsContains(s4Pts, h));
+}
+
+TEST_CASE("Andersen[TestALC]") {
+    AndersPassTest pass;
+    auto module = pass.ParseFile("tests/TestALC.ll");
+    auto anders = std::make_unique<AndersenAAResult>(*module);
+
+    // _4.i and q should alias
+
+    auto f = module->getFunction("_start");
+    auto *i = findInstr(f, "_4.i");
+    auto *i1 = findInstr(f, "_4.i1");
+    auto *y = findInstr(f, "ptr");
+    auto *q = findInstr(f, "q");
+
+    anders->printTransitivePointsToSet(i1);
+    anders->printTransitivePointsToSet(q);
+    anders->printTransitivePointsToSet(y);
+    errs() << anders->alias(i1, y, 0u, 0u) << "\n";
 }
