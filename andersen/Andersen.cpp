@@ -58,7 +58,7 @@ bool Andersen::getPointsToSet(const Context *ctx, const llvm::Value *v,
 bool Andersen::getPointsToSet(unsigned int ctxId, const llvm::Value *v,
                               std::vector<const llvm::Value *> &ptsSet) {
   assert(ctxId < nodeFactory.getNumContexts());
-  return getPointsToSet(nodeFactory.getContext(ctxId), v, ptsSet);
+  return getPointsToSet(nodeFactory.getContextByID(ctxId), v, ptsSet);
 }
 
 /**
@@ -104,7 +104,7 @@ bool Andersen::getPointsFromSet(const Context* ctx, const llvm::Value *v,
 bool Andersen::getPointsFromSet(unsigned int ctxId, const llvm::Value *v,
                               std::vector<const llvm::Value *> &ptsSet) {
   assert(ctxId < nodeFactory.getNumContexts());
-  return getPointsFromSet(nodeFactory.getContext(ctxId), v, ptsSet);
+  return getPointsFromSet(nodeFactory.getContextByID(ctxId), v, ptsSet);
 }
 
 /**
@@ -137,6 +137,39 @@ bool Andersen::getTransitivePointsToSet(const llvm::Value *v, std::vector<const 
     }
   }
   return ptsSet.size() > 0;
+}
+
+void Andersen::getDebugTransitivePointsToSet(const Context* ctx, const llvm::Value *v,
+    DebugPtsSetType &ptsSet) {
+  std::queue<unsigned int> worklist;
+
+  NodeIndex ptrTgt = nodeFactory.getMergeTarget(nodeFactory.getValueNodeFor(ctx, v));
+
+  auto ptsItr = ptsGraph.find(ptrTgt);
+  if (ptsItr == ptsGraph.end()) return;
+  for (auto vx : ptsItr->second) {
+    if (vx == nodeFactory.getNullObjectNode()) continue;
+    worklist.push(vx);
+  }
+
+  while (!worklist.empty()) {
+    unsigned int c = worklist.front();
+    worklist.pop();
+
+    const llvm::Value *cv = nodeFactory.getValueForNode(c);
+    if (!cv) continue;
+
+    if (std::find(ptsSet.begin(), ptsSet.end(), std::make_tuple(cv, c)) == ptsSet.end()) {
+      ptsSet.push_back({cv, c});
+
+      auto ptsItr = ptsGraph.find(c);
+      if (ptsItr == ptsGraph.end()) continue;
+      for (auto vx : ptsItr->second) {
+        if (vx == nodeFactory.getNullObjectNode()) continue;
+        worklist.push(vx);
+      }
+    }
+  }
 }
 
 bool Andersen::getTransitivePointsToSet(const Context *ctx, const llvm::Value *v,

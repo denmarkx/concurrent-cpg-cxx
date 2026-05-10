@@ -1,4 +1,5 @@
 #include "AndersenAA.h"
+#include "NodeFactory.h"
 
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/MemoryLocation.h"
@@ -213,19 +214,22 @@ void AndersenAAResult::printPointsToSet(const Value *v) {
 }
 
 void AndersenAAResult::printTransitivePointsToSet(const Context* cs, const Value *v) {
-  PtsSetType ptsSet{};
-  getTransitivePointsToSet(cs, v, ptsSet);
+  DebugPtsSetType ptsSet;
+  anders.getDebugTransitivePointsToSet(cs, v, ptsSet);
 
   errs() << "Value: " << *v << "\n";
   if (ptsSet.size() == 0) {
     errs() << "\tptsSet is empty.\n";
     return;
   }
-  for (const llvm::Value *v : ptsSet) {
+
+  for (const auto n : ptsSet) {
+    const llvm::Value *v = std::get<0>(n);
+    unsigned int nodeIdx = std::get<1>(n);
     if (dyn_cast<Function>(v)) {
       errs() << "  ---> [F] " << v->getName() << "\n";
     } else {
-      errs() << "  ---> " << *v << "\n";
+      errs() << "  ---> [" << nodeIdx << "] " << *v << "\n";
     }
   }
   errs() << "\n";
@@ -243,7 +247,6 @@ void AndersenAAResult::printTransitivePointsToSet(const Value *v) {
     errs() << "Context: " << ctx->id << "\n";
     printTransitivePointsToSet(ctx, v);
   }
-  errs() << "===================== printTransitivePointsToSet =====================\n";
 }
 
 

@@ -56,6 +56,8 @@
 #include <vector>
 #include <map>
 
+typedef std::vector<std::tuple<const llvm::Value *, unsigned int>> DebugPtsSetType;
+
 class Andersen {
 private:
   // A factory object that knows how to manage AndersNodes
@@ -138,6 +140,9 @@ public:
 
   bool getTransitivePointsToSet(const Context *ctx, const llvm::Value *v,
                       std::vector<const llvm::Value *> &ptsSet);
+
+  void getDebugTransitivePointsToSet(const Context*, const llvm::Value *v,
+    DebugPtsSetType &ptsSet);
 
   // Put all allocation sites (i.e. all memory objects identified by the
   // analysis) into the first arugment
