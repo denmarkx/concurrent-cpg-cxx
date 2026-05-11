@@ -33,6 +33,10 @@ Node* GraphManager::getNode(const Instruction* instr) {
 }
 
 Node* GraphManager::getNode(const Value* value) {
+    // We should always try to see if this is an instruction.
+    if (const Instruction *instr = dyn_cast<Instruction>(value))
+        return getNode(instr);
+
     Node* node = _valueNodeMap[value];
     if (node == nullptr) {
         node = GraphParser::handleNode(value);
