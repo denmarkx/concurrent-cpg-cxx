@@ -26,7 +26,6 @@ public:
                 // errs() << "     unknown candidate: " << *incomingVal << "\n";
             // }
         }
-        errs() << "\n";
 
         return node;
     }
