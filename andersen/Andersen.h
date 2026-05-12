@@ -99,6 +99,8 @@ private:
   const AllocaInst* findAlloc(const llvm::Value *v) const;
 
   const std::vector<unsigned int> getFieldIds(const llvm::Value *v) const;
+  
+  std::vector<FieldType> lookupFields(const Context *, const llvm::Value*) const;
 
   // For debugging
   void dumpConstraint(const AndersConstraint &) const;
@@ -111,6 +113,10 @@ public:
 
   Andersen(const llvm::Module &);
   bool runOnModule(const llvm::Module &M);
+
+  // DNI
+  bool getTransitivePointsToSet(const Context *ctx, unsigned int id,
+                              std::vector<const llvm::Value *> &ptsSet);
 
   // Given a llvm pointer v,
   // - Return false if the analysis doesn't know where v points to. In other

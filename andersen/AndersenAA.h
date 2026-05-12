@@ -13,11 +13,11 @@ class AndersenAAResult : public llvm::AAResultBase {
 private:
   friend llvm::AAResultBase;
 
-  Andersen anders;
   llvm::AliasResult andersenAlias(const Context*, const Context*, const llvm::Value *, const llvm::Value *);
 
 public:
   AndersenAAResult(const llvm::Module &);
+  Andersen anders;
 
   llvm::AliasResult alias(const llvm::MemoryLocation &, const llvm::MemoryLocation &,
     const Context* ctxA, const Context* ctxB);
@@ -53,6 +53,10 @@ public:
   void addConstraint(AndersConstraint::ConstraintType type, 
     const llvm::Value *lhs, const llvm::Value *rhs);
   void solveConstraints();
+
+  std::vector<FieldType> lookupFields(const llvm::Value *v) const;
+
+  void test(const llvm::Value*);
 };
 
 class AndersenAAWrapperPass : public llvm::ModulePass {

@@ -225,6 +225,11 @@ void AndersenAAResult::printTransitivePointsToSet(const Context* cs, const Value
 
   for (const auto n : ptsSet) {
     const llvm::Value *v = std::get<0>(n);
+
+  if (v->getName().str() == "main") {
+    // test(v);
+  }
+
     unsigned int nodeIdx = std::get<1>(n);
     if (dyn_cast<Function>(v)) {
       errs() << "  ---> [F] " << v->getName() << "\n";
@@ -244,7 +249,7 @@ void AndersenAAResult::printTransitivePointsToSet(const Value *v) {
   std::vector<const Context*> contextPtrs = anders.nodeFactory.getAssociatedContexts(v);
   errs() << "===================== printTransitivePointsToSet =====================\n";
   for (const Context *ctx : contextPtrs) {
-    errs() << "Context: " << ctx->id << "\n";
+    errs() << "Context: " << ctx->id << " [ " << ctx << "]\n";
     printTransitivePointsToSet(ctx, v);
   }
 }
@@ -261,15 +266,57 @@ void AndersenAAResult::addConstraint(AndersConstraint::ConstraintType type,
 
   for (const Context *ctxL : lCtxs) {
     for (const Context *ctxR : rCtxs) {
+      // TODO: DNI; andersen/andersenaa needs to be refactored BADLY
       NodeIndex lhsIdx = anders.nodeFactory.getValueNodeFor(ctxL, lhs);
       NodeIndex rhsIdx = anders.nodeFactory.getValueNodeFor(ctxR, rhs);
       anders.constraints.emplace_back(type, lhsIdx, rhsIdx);
+      for (const auto &x : anders.nodeFactory.lookupFields(ctxR, rhs)) {
+        NodeIndex aFieldIdx = anders.nodeFactory.getValueNodeFor(ctxR, rhs, x);
+        assert(aFieldIdx != AndersNodeFactory::InvalidIndex && "Failed to find actual arg field node!");
+        anders.constraints.emplace_back(type, lhsIdx, aFieldIdx);
+      }
     }
   }
 }
 
 void AndersenAAResult::solveConstraints() {
   anders.solveConstraints();
+}
+
+void AndersenAAResult::test(const llvm::Value *v) {
+  errs() << "\n\n==========TEST==========\n    ";
+  errs() << *v << "\n";
+  auto ctxs = anders.nodeFactory.getAssociatedContexts(v);
+  for (const Context *ctx : ctxs) {
+    auto fields = anders.nodeFactory.lookupFields(ctx, v);
+    for (const auto &fs : fields) {
+      errs() << "    [";
+      for (const auto &x : fs) {
+        errs() << x << ", ";
+      }
+      errs() << "]";
+      unsigned int idx = anders.nodeFactory.getValueNodeFor(ctx, v, fs);
+      errs() << " -- value idx: " << idx << "\n";
+      std::vector<const llvm::Value*> set;
+      anders.getTransitivePointsToSet(ctx, idx, set);
+      if (!set.empty())
+        errs() << "         tPtsTo = {\n";
+      for (const auto &x : set) {
+        errs() << "             " << *x << "\n";
+      }
+      errs() << "\n";
+    }
+  }
+}
+
+std::vector<FieldType> AndersenAAResult::lookupFields(const llvm::Value *v) const {
+  auto ctxs = anders.nodeFactory.getAssociatedContexts(v);
+  std::vector<FieldType> vec;
+  for (const auto &ctx : ctxs) {
+    auto retval = anders.lookupFields(ctx, v);
+    vec.emplace(retval.begin());
+  }
+  return vec;
 }
 
 AndersenAAResult::AndersenAAResult(const Module &m) : anders(m) {}

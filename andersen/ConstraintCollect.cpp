@@ -334,6 +334,9 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
       srcIndex = nodeFactory.getValueNodeFor(context, alloc, fields);
       src = alloc;
     } else {
+      // If our source is a parameter, we take it as-is.
+      if (isa<Argument>(inst->getOperand(0)))
+        fields = {};
       // We don't create every field for every aggregate during AllocaInst.
       // ..so we need to check if this exists:
       srcIndex = nodeFactory.getValueNodeFor(context, inst->getOperand(0), fields);
@@ -646,6 +649,14 @@ void Andersen::addArgumentConstraintForCall(const Context *calleeCtx,
         assert(aIndex != AndersNodeFactory::InvalidIndex &&
                "Failed to find actual arg node!");
         // errs() << "new constraint: " << fIndex << ", arg=" << aIndex << "\n";
+        // errs() << "addArgumentConstraintForCall[COPY]: " << fIndex << " = " << aIndex << "\n";
+        // TODO: fIndex = aIndex is correct, but the way field sensitivity is implemented
+        // changes this to fIndex = {aIndex, aIndex_f_0,...,aIndex_f_n-1}
+        for (const auto &x : nodeFactory.lookupFields(context, actual)) {
+          NodeIndex aFieldIdx = nodeFactory.getValueNodeFor(context, actual, x);
+          assert(aFieldIdx != AndersNodeFactory::InvalidIndex && "Failed to find actual arg field node!");
+          constraints.emplace_back(AndersConstraint::COPY, fIndex, aFieldIdx);
+        }
         constraints.emplace_back(AndersConstraint::COPY, fIndex, aIndex);
       } else
         constraints.emplace_back(AndersConstraint::COPY, fIndex,

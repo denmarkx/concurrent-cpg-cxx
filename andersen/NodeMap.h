@@ -140,6 +140,10 @@ public:
 
         FieldType fields;
 
+        // If we're an alloca, fields = {}.
+        if (isa<AllocaInst>(value))
+            return {};
+
         // Global Variable:
         if (const GlobalVariable *global = dyn_cast<GlobalVariable>(value)) {
             if (!global->hasInitializer()) return {};
