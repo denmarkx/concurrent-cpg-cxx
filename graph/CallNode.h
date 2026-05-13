@@ -112,7 +112,7 @@ public:
 
     void addFunctionPointer(const Value* value) {
         Node *ptrNode = GraphManager::get()->getNode(value);
-        _edges.push_back(pair("FUNCTION_POINTER", ptrNode));
+        addEdge("FUNCTION_POINTER", ptrNode);
     }
 
     void addArgument(const Use *value, size_t index) {
@@ -124,7 +124,7 @@ public:
 
         argNode->addProperty("argumentIndex", std::to_string(index));
 
-        _edges.push_back(pair("ARGUMENT", argNode));
+        addEdge("ARGUMENT", argNode, "argumentIndex", std::to_string(index));
         _arguments.push_back(argNode);
     }
 
@@ -139,7 +139,7 @@ public:
         // ..though I haven't actually confirmed what LLVM does here.
         Node *funcNode = GraphManager::get()->getNode(function);
 
-        _edges.push_back(pair("CALLS", funcNode));
+        addEdge("CALLS", funcNode);
         _functions.push_back(funcNode);
 
         for (int i = 0; i < _arguments.size(); i++) {

@@ -20,6 +20,6 @@ public:
     }
 
     void registerLoadEdge(Node* source) {
-        _edges.push_back(pair("DEREFERENCES", source));
+        addEdge("DEREFERENCES", source);
     }
 };

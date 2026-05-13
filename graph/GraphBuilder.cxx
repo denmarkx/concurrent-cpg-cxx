@@ -82,9 +82,14 @@ void GraphBuilder::persistAll() {
     std::vector<std::tuple<std::string, std::string, std::string, std::unordered_map<std::string, std::string>>> rels;
     for (auto* node : nodes) {
         auto edges = node->getEdges();
-        for (const auto& [type, end] : edges) {
-            if (end == nullptr) continue;
-            rels.push_back({std::to_string(node->getId()), type, std::to_string(end->getId()), {}});
+        for (const auto& edge : edges) {
+            if (edge.end == nullptr) continue;
+            rels.push_back({
+                std::to_string(node->getId()),
+                edge.name,
+                std::to_string(edge.end->getId()),
+                edge.properties,
+            });
         }
     }
 

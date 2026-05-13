@@ -21,8 +21,8 @@ public:
         Node *lhs = GraphManager::get()->getNodeFromOperand(I, 0);
         Node *rhs = GraphManager::get()->getNodeFromOperand(I, 1);
 
-        node->_edges.push_back(pair("LHS", lhs));
-        node->_edges.push_back(pair("RHS", rhs));
+        node->addEdge("LHS", lhs);
+        node->addEdge("RHS", rhs);
         return node;
     }
 

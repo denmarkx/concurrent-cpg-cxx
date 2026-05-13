@@ -15,6 +15,7 @@ using namespace std;
 using namespace llvm;
 
 struct AccessPath;
+struct Edge;
 
 class Node {
 public:
@@ -24,7 +25,7 @@ public:
     unsigned int getId() const;
     const std::string& getName() const;
 
-    const std::vector<std::pair<std::string, Node*>>& getEdges() const;
+    const std::vector<Edge>& getEdges() const;
     const std::vector<std::string>& getLabels() const;
     const std::unordered_map<std::string, std::string>& getProperties() const;
     const Value* getValue() const;
@@ -47,6 +48,8 @@ public:
     AccessPath* path;
 
     void addProperty(std::string key, std::string value);
+    void addEdge(std::string name, Node* end);
+    void addEdge(std::string name, Node* end, std::string key, std::string value);
 
 private:
     void setDefaultProperties(const Value *value);
@@ -62,7 +65,7 @@ private:
 protected:
     std::vector<std::string> _labels;
     std::unordered_map<std::string, std::string> _properties;
-    std::vector<std::pair<std::string, Node*>> _edges;
+    std::vector<Edge> _edges;
 
     std::string _name = "Node";
     static bool isIgnoredIntrinsic(const Value* value);
@@ -92,5 +95,16 @@ struct AccessPath {
 
     AccessPath* getPath(const Value* key) {
         return path[key];
+    }
+};
+
+struct Edge {
+    const std::string name;
+    const Node* start;
+    const Node* end;
+    std::unordered_map<std::string, std::string> properties;
+
+    void addProperty(std::string key, std::string value) {
+        properties[key] = value;
     }
 };

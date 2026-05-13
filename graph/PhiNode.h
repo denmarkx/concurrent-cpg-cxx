@@ -31,7 +31,7 @@ public:
     }
 
     void createCandidateEdge(Node *node) {
-        _edges.push_back(pair("CANDIDATE", node));
+        addEdge("CANDIDATE", node);
     }
 
 };

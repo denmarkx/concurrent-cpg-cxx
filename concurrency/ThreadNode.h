@@ -39,10 +39,10 @@ public:
                 node->revisitRoutine();
         }
 
-        node->_edges.push_back(pair("HANDLE", node->_handle));
-        node->_edges.push_back(pair("ROUTINE", node->_routine));
-        node->_edges.push_back(pair("CALLS", node->_routine));
-        node->_edges.push_back(pair("ARGUMENTS", node->_argNode));
+        // node->_edges.push_back(pair("HANDLE", node->_handle));
+        // node->_edges.push_back(pair("ROUTINE", node->_routine));
+        // node->_edges.push_back(pair("CALLS", node->_routine));
+        // node->_edges.push_back(pair("ARGUMENTS", node->_argNode));
         return node;
     }
 

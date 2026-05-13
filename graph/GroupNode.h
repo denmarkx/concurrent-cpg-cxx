@@ -40,7 +40,7 @@ public:
      * Edge name is what was specified in the constructor (or to ::make).
     */
     void storeEdge(Node* node) {
-        _edges.push_back(pair(_edge, node));
+        addEdge(_edge, node);
     }
 
 private:

@@ -27,8 +27,8 @@ public:
         lhs = lhsNode;
         rhs = rhsNode;
 
-        _edges.push_back(pair("LHS", lhsNode));
-        _edges.push_back(pair("RHS", rhsNode));
+        addEdge("LHS", lhsNode);
+        addEdge("RHS", rhsNode);
     }
 
 private:

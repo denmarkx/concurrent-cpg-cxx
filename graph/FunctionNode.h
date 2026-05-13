@@ -85,12 +85,12 @@ public:
     }
     
     void addParam(ParamNode* param) {
-        _edges.push_back(pair("PARAMETER", param));
+        addEdge("PARAMETER", param);
         _params.push_back(param);
     }
 
     void addReturn(Node* node) {
-        _edges.push_back(pair("RETURNS", node));
+        addEdge("RETURNS", node);
         _returns.push_back(node);
     }
 

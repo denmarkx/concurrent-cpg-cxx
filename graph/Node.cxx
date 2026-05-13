@@ -60,31 +60,41 @@ void Node::addProperty(std::string key, std::string value) {
     _properties[key] = value;
 }
 
+void Node::addEdge(std::string name, Node* end) {
+    _edges.push_back(Edge { name, this, end, {}});
+}
+
+void Node::addEdge(std::string name, Node* end, std::string key, std::string value) {
+    Edge e = Edge { name, this, end };
+    e.addProperty(key, value);
+    _edges.push_back(e);
+}
+
 void Node::registerStoreEdge(Node* node) {
-    _edges.push_back(pair("STORE", node));
+    addEdge("STORE", node);
 }
 
 void Node::registerAliasEdge(Node* node) {
-    _edges.push_back(pair("REFERS_TO", node));
+    addEdge("REFERS_TO", node);
 }
 
 void Node::registerCopyEdge(Node* node) {
-    _edges.push_back(pair("COPY", node));
+    addEdge("COPY", node);
 }
 
 void Node::registerGEPEdge(Node* node) {
     // TODO: while technically a read, its a read of n bits.
     // though technically we are bordering on the edge of field sensitivity with geps at all.
     // an alias is a better term, but that still is ambiguous in terms of stride.
-    _edges.push_back(pair("ALIAS", node));
+    addEdge("ALIAS", node);
 }
 
 void Node::registerFieldEdge(Node* node) {
-    _edges.push_back(pair("FIELD", node));
+    addEdge("FIELD", node);
 }
 
 void Node::registerCFGEdge(Node* node) {
-    _edges.push_back(pair("CFG", node));
+    addEdge("CFG", node);
 }
 
 unsigned int Node::getId() const {
@@ -99,7 +109,7 @@ const std::vector<std::string>& Node::getLabels() const {
     return _labels;
 }
 
-const std::vector<std::pair<std::string, Node*>>& Node::getEdges() const {
+const std::vector<Edge>& Node::getEdges() const {
     return _edges;
 }
 
