@@ -49,14 +49,20 @@
 #include "NodeFactory.h"
 #include "NodeMap.h"
 #include "PtsSet.h"
+
+#include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/MemoryLocation.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Metadata.h"
+#include "llvm/Pass.h"
 
 #include <vector>
 #include <map>
 
-typedef std::vector<std::tuple<const llvm::Value *, unsigned int>> DebugPtsSetType;
+typedef std::vector<const llvm::Value *> PtsSetType;
+constexpr unsigned int GenericContextID = ~0u;
 
 class Andersen {
 private:
@@ -102,6 +108,8 @@ private:
   
   std::vector<FieldType> lookupFields(const Context *, const llvm::Value*) const;
 
+  void fillPointsToSet(const llvm::Value*, PtsSetType &ptsSet, unsigned int contextId);
+
   // For debugging
   void dumpConstraint(const AndersConstraint &) const;
   void dumpConstraints() const;
@@ -114,50 +122,26 @@ public:
   Andersen(const llvm::Module &);
   bool runOnModule(const llvm::Module &M);
 
-  // DNI
-  bool getTransitivePointsToSet(const Context *ctx, unsigned int id,
-                              std::vector<const llvm::Value *> &ptsSet);
-
-  // Given a llvm pointer v,
-  // - Return false if the analysis doesn't know where v points to. In other
-  // words, the client must conservatively assume v can points to everything.
-  // - Return true otherwise, and the points-to set of v is put into the second
-  // argument.
-  bool getPointsToSet(const Context *ctx, const llvm::Value *v,
-                      std::vector<const llvm::Value *> &ptsSet);
-
-  bool getPointsToSet(unsigned int ctxId, const llvm::Value *v,
-                      std::vector<const llvm::Value *> &ptsSet);
-
-  bool getPointsToSet(const llvm::Value *v,
-                      std::vector<const llvm::Value *> &ptsSet);
-
-  bool getPointsFromSet(const Context *ctx, const llvm::Value *v,
-                      std::vector<const llvm::Value *> &ptsSet);
-
-  bool getPointsFromSet(unsigned int ctxId, const llvm::Value *v,
-                      std::vector<const llvm::Value *> &ptsSet);
-
-  bool getPointsFromSet(const llvm::Value *v,
-                      std::vector<const llvm::Value *> &ptsSet);
-
-  bool getTransitivePointsToSet(const llvm::Value *v,
-                      std::vector<const llvm::Value *> &ptsSet);
-
-  bool getTransitivePointsToSet(const Context *ctx, const llvm::Value *v,
-                      std::vector<const llvm::Value *> &ptsSet);
-
-  void getDebugTransitivePointsToSet(const Context*, const llvm::Value *v,
-    DebugPtsSetType &ptsSet);
-
-  // Put all allocation sites (i.e. all memory objects identified by the
-  // analysis) into the first arugment
-  void
-  getAllAllocationSites(std::vector<std::pair<const Context*, const llvm::Value *>> &allocSites) const;
+  llvm::AliasResult alias(const Value*, const Value*, unsigned int ctxIdA=GenericContextID, unsigned int ctxIdB=GenericContextID);
+  void getPointsToSet(const llvm::Value *v, PtsSetType &ptsSet, unsigned int contextId=GenericContextID);
+  void printPointsToSet(const llvm::Value *v, unsigned int contextId=GenericContextID);
 
   Context* getGlobalCtx() const;
+};
 
-  friend class AndersenAAResult;
+class AndersenAAWrapperPass : public llvm::ModulePass {
+private:
+  std::unique_ptr<Andersen> result;
+
+public:
+  static char ID;
+  AndersenAAWrapperPass();
+
+  Andersen &getResult() { return *result; }
+  const Andersen &getResult() const { return *result; }
+
+  bool runOnModule(llvm::Module &) override;
+  void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
 };
 
 #endif

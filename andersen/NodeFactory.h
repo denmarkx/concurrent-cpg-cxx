@@ -15,8 +15,6 @@ using namespace llvm;
 #include <vector>
 #include <utility>
 
-static unsigned int ctxCounter = 0;
-
 struct Context {
   unsigned int id;
   Context* prevCtx;
@@ -24,8 +22,8 @@ struct Context {
   const llvm::CallBase* callSite;
   llvm::DenseMap<const llvm::CallBase*, Context*> children;
 
-  Context(Context* _prevCtx, const llvm::CallBase* _callSite) {
-    id = ctxCounter++;
+  Context(unsigned int _id, Context* _prevCtx, const llvm::CallBase* _callSite) {
+    id = _id;
     prevCtx = _prevCtx;
     callSite = _callSite;
 
@@ -124,6 +122,8 @@ private:
   llvm::DenseMap<const llvm::Function *, NodeIndex> varargMap;
 
   std::vector<const Context*> _contexts;
+
+  unsigned int _ctxCounter = 0;
 
 public:
   AndersNodeFactory();

@@ -1,335 +1,149 @@
 #include "Andersen.h"
 
-#include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/raw_ostream.h"
 #include <queue>
 
 using namespace llvm;
 
-cl::opt<bool> DumpDebugInfo("dump-debug",
-                            cl::desc("Dump debug info into stderr"),
-                            cl::init(false), cl::Hidden);
-cl::opt<bool> DumpResultInfo("dump-result",
-                             cl::desc("Dump result info into stderr"),
-                             cl::init(false), cl::Hidden);
-cl::opt<bool> DumpConstraintInfo("dump-cons",
-                                 cl::desc("Dump constraint info into stderr"),
-                                 cl::init(false), cl::Hidden);
-
 Andersen::Andersen(const Module &module) { runOnModule(module); }
 
-void Andersen::getAllAllocationSites(
-    std::vector<std::pair<const Context*, const llvm::Value *>> &allocSites) const {
-  nodeFactory.getAllocSites(allocSites);
-}
-
-// TODO: context should be const
-bool Andersen::getPointsToSet(const Context *ctx, const llvm::Value *v,
-                              std::vector<const llvm::Value *> &ptsSet) {
-  NodeIndex ptrIndex = nodeFactory.getValueNodeFor(ctx, v);
-  // We have no idea what v is...
-  if (ptrIndex == AndersNodeFactory::InvalidIndex ||
-      ptrIndex == nodeFactory.getUniversalPtrNode())
-    return false;
-
-  NodeIndex ptrTgt = nodeFactory.getMergeTarget(ptrIndex);
-  ptsSet.clear();
-
-  auto ptsItr = ptsGraph.find(ptrTgt);
-  if (ptsItr == ptsGraph.end()) {
-    // Can't find ptrTgt. The reason might be that ptrTgt is an undefined
-    // pointer. Dereferencing it is undefined behavior anyway, so we might just
-    // want to treat it as a nullptr pointer
-    return true;
-  }
-  for (auto v : ptsItr->second) {
-    if (v == nodeFactory.getNullObjectNode())
-      continue;
-
-    const llvm::Value *val = nodeFactory.getValueForNode(v);
-    if (val != nullptr)
-      ptsSet.push_back(val);
-  }
-  return true;
-}
-
-bool Andersen::getPointsToSet(unsigned int ctxId, const llvm::Value *v,
-                              std::vector<const llvm::Value *> &ptsSet) {
-  assert(ctxId < nodeFactory.getNumContexts());
-  return getPointsToSet(nodeFactory.getContextByID(ctxId), v, ptsSet);
-}
-
-/**
- * Given a value, populates ptsSet with all possible pointsTo
- * values among ALL associated contexts.
+/*
+ * Determines if valueA is an alias of valueB. Returns AliasResult:
+ *  - NoAlias
+ *  - MayAlias
+ *  - MustAlias
 */
-bool Andersen::getPointsToSet(const llvm::Value *v, std::vector<const llvm::Value *> &ptsSet) {
-  std::vector<const Context*> contexts = nodeFactory.getAssociatedContexts(v);
+llvm::AliasResult Andersen::alias(const Value *valueA, const Value *valueB, unsigned int ctxIdA, unsigned int ctxIdB) {
+    if (!valueA || !valueB) return AliasResult::NoAlias;
+    if (!valueA->getType()->isPointerTy() || !valueB->getType()->isPointerTy()) return AliasResult::NoAlias;
+    if (valueA == valueB) return AliasResult::MustAlias;
 
-  for (const Context *ctx : contexts) {
-    std::vector<const llvm::Value*> childSet;
-    if (getPointsToSet(ctx, v, childSet)) {
-      for (const llvm::Value *v : childSet)
-        ptsSet.push_back(v);
+    MemoryLocation m1(valueA, MemoryLocation::UnknownSize);
+    MemoryLocation m2(valueB, MemoryLocation::UnknownSize);
+
+    // We may be requesting a specific ctx, but we require both if one is given.
+    if (ctxIdA != GenericContextID && ctxIdB != GenericContextID) {
+        const Context* ctxA = nodeFactory.getContextByID(ctxIdA);
+        const Context* ctxB = nodeFactory.getContextByID(ctxIdA);
+        assert(ctxA != nullptr || ctxB != nullptr && "Andersen::alias - ctxIdA/B invalid.");
+
+        NodeIndex n1 = nodeFactory.getMergeTarget(nodeFactory.getValueNodeFor(ctxA, valueA));
+        NodeIndex n2 = nodeFactory.getMergeTarget(nodeFactory.getValueNodeFor(ctxB, valueB));
+    
+        // Merge target is the same: we'll say it aliases:
+        if (n1 == n2)
+          return AliasResult::MustAlias;
+
+        auto itr1 = ptsGraph.find(n1);
+        auto itr2 = ptsGraph.find(n2);
+
+        // If we know nothing about at least one, we'll say this may alias.
+        if (itr1 == ptsGraph.end() || itr2 == ptsGraph.end()) return AliasResult::MayAlias;
+
+        AndersPtsSet &s1 = itr1->second;
+        AndersPtsSet &s2 = itr2->second;
+
+        // If any of them is null, we know they do not alias.
+        bool isNull1 = s1.isSetContainingOnly(nodeFactory.getNullObjectNode());
+        bool isNull2 = s2.isSetContainingOnly(nodeFactory.getNullObjectNode());
+        if (isNull1 || isNull2)
+          return AliasResult::NoAlias;
+
+        // This is a bit conservative, but it helps prior to checking each node.
+        if (s1.getSize() == 1 && s2.getSize() == 1 && *s1.begin() == *s2.begin())
+          return AliasResult::MustAlias;
+
+        // If s1 and s2 are the same except for nodes 0-3, we'll say this must alias.
+        if (s1.compareExclude(s2))
+          return AliasResult::MustAlias;
+
+        // If s1 and s2 contain any overlapping values, except for 0-3, this may alias..
+        if (s1.compareIntersectionExclude(s2))
+          return AliasResult::MayAlias;
+
+        return AliasResult::NoAlias;
     }
-  }
-  return ptsSet.size() > 0;
-}
 
-// TODO: context should be const
-bool Andersen::getPointsFromSet(const Context* ctx, const llvm::Value *v,
-                                std::vector<const llvm::Value *> &ptsSet) {
-  NodeIndex ptrIndex = nodeFactory.getValueNodeFor(ctx, v);
-  if (ptrIndex == AndersNodeFactory::InvalidIndex ||
-      ptrIndex == nodeFactory.getUniversalPtrNode())
-    return false;
+    // Otherwise..if no explicit ctx is given, we try for all associated.
+    AliasResult result = AliasResult::NoAlias;
+    AliasResult prevResult = AliasResult::MayAlias;
+    bool seenNoAlias = false;
 
-  NodeIndex ptrTgt = nodeFactory.getMergeTarget(ptrIndex);
-  ptsSet.clear();
+    for (const Context *ctxA : nodeFactory.getAssociatedContexts(valueA)) {
+        for (const Context *ctxB : nodeFactory.getAssociatedContexts(valueB)) {
+            result = alias(valueA, valueB, ctxA->id, ctxB->id);
 
-  for (unsigned i = 0, e = nodeFactory.getNumNodes(); i < e; ++i) {
-    NodeIndex rep = nodeFactory.getMergeTarget(i);
-    auto ptsItr = ptsGraph.find(rep);
-    if (ptsItr != ptsGraph.end() && ptsItr->second.has(ptrIndex)) {
-      const llvm::Value *val = nodeFactory.getValueForNode(ptsItr->first);
-      if (val != nullptr)
-        ptsSet.push_back(val);
+            // If we get a MustAlias, but previously recorded a NoAlias, we negate the MustAlias
+            // and instead say it MayAlias. A MustAlias must be unanimous.
+            if (result == AliasResult::MustAlias && seenNoAlias) {
+              result = AliasResult::MayAlias;
+            }
+
+            // If we receive a NoAlias, but previously were at a May or Must, we'll say it May.
+            if (result == AliasResult::NoAlias && 
+                (prevResult == AliasResult::MustAlias || prevResult == AliasResult::MayAlias)) {
+              seenNoAlias = true;
+              result = AliasResult::MayAlias;
+            }
+
+            prevResult = result;
+        }
     }
-  }
-  return true;
+    return AliasResult::NoAlias;
 }
 
-bool Andersen::getPointsFromSet(unsigned int ctxId, const llvm::Value *v,
-                              std::vector<const llvm::Value *> &ptsSet) {
-  assert(ctxId < nodeFactory.getNumContexts());
-  return getPointsFromSet(nodeFactory.getContextByID(ctxId), v, ptsSet);
-}
-
-/**
- * Given a value, populates ptsSet with all possible pointsTo
- * values among ALL associated contexts.
+/*
+ * Fills in the transitive pointsTo set for a given context.
+ * This differs from getPointsToSet in the fact that the context is not the default context ID.
 */
-bool Andersen::getPointsFromSet(const llvm::Value *v, std::vector<const llvm::Value *> &ptsSet) {
-  std::vector<const Context*> contexts = nodeFactory.getAssociatedContexts(v);
+void Andersen::fillPointsToSet(const llvm::Value* v, PtsSetType &ptsSet, unsigned int contextId) {
+    std::queue<unsigned int> worklist;
 
-  for (const Context *ctx : contexts) {
-    std::vector<const llvm::Value*> childSet;
-    if (getPointsFromSet(ctx, v, childSet)) {
-      for (const llvm::Value *v : childSet)
-        ptsSet.push_back(v);
+    NodeIndex ptrTgt = nodeFactory.getMergeTarget(
+      nodeFactory.getValueNodeFor(nodeFactory.getContextByID(contextId), v));
+
+    auto ptsItr = ptsGraph.find(ptrTgt);
+    if (ptsItr == ptsGraph.end()) return;
+    for (auto vx : ptsItr->second) {
+      if (vx == nodeFactory.getNullObjectNode()) continue;
+      worklist.push(vx);
+    }
+
+    while (!worklist.empty()) {
+      unsigned int c = worklist.front();
+      worklist.pop();
+
+        const llvm::Value *cv = nodeFactory.getValueForNode(c);
+        if (!cv) continue;
+
+        if (std::find(ptsSet.begin(), ptsSet.end(), cv) == ptsSet.end()) {
+        ptsSet.push_back(cv);
+
+        auto ptsItr = ptsGraph.find(c);
+        if (ptsItr == ptsGraph.end()) continue;
+        for (auto vx : ptsItr->second) {
+          if (vx == nodeFactory.getNullObjectNode()) continue;
+          worklist.push(vx);
+        }
     }
   }
-  return ptsSet.size() > 0;
 }
 
-/**
- * Where no ctx is given, all associated contexts are assumed.
+/*
+ * Places all the reachable values from the given value into the ptsSet.
+ * The third parameter details the specific contextId to filter for. If this is not provided,
+ * the function will assume all associated contexts with the given value.
 */
-bool Andersen::getTransitivePointsToSet(const llvm::Value *v, std::vector<const llvm::Value *> &ptsSet) {
-  std::vector<const Context*> contexts = nodeFactory.getAssociatedContexts(v);
-  for (const Context *ctx : contexts) {
-    std::vector<const llvm::Value*> childSet;
-    if (getTransitivePointsToSet(ctx, v, childSet)) {
-      for (const llvm::Value *v : childSet)
-        ptsSet.push_back(v);
+void Andersen::getPointsToSet(const llvm::Value *v, PtsSetType &ptsSet, unsigned int contextId) {
+    // Requesting for a certain context rather than all associated ones:
+    if (contextId != GenericContextID) {
+      fillPointsToSet(v, ptsSet, contextId);
+      return;
     }
-  }
-  return ptsSet.size() > 0;
-}
 
-void Andersen::getDebugTransitivePointsToSet(const Context* ctx, const llvm::Value *v,
-    DebugPtsSetType &ptsSet) {
-  std::queue<unsigned int> worklist;
-
-  NodeIndex ptrTgt = nodeFactory.getMergeTarget(nodeFactory.getValueNodeFor(ctx, v));
-
-  auto ptsItr = ptsGraph.find(ptrTgt);
-  if (ptsItr == ptsGraph.end()) return;
-  for (auto vx : ptsItr->second) {
-    if (vx == nodeFactory.getNullObjectNode()) continue;
-    worklist.push(vx);
-  }
-
-  while (!worklist.empty()) {
-    unsigned int c = worklist.front();
-    worklist.pop();
-
-    const llvm::Value *cv = nodeFactory.getValueForNode(c);
-    if (!cv) continue;
-
-    if (std::find(ptsSet.begin(), ptsSet.end(), std::make_tuple(cv, c)) == ptsSet.end()) {
-      ptsSet.push_back({cv, c});
-
-      auto ptsItr = ptsGraph.find(c);
-      if (ptsItr == ptsGraph.end()) continue;
-      for (auto vx : ptsItr->second) {
-        if (vx == nodeFactory.getNullObjectNode()) continue;
-        worklist.push(vx);
-      }
+    // Otherwise, we need to fill for all associated contexts.
+    for (const Context *ctx : nodeFactory.getAssociatedContexts(v)) {
+      fillPointsToSet(v, ptsSet, ctx->id);
     }
-  }
-}
-
-// DNI
-bool Andersen::getTransitivePointsToSet(const Context *ctx, unsigned int id,
-                              std::vector<const llvm::Value *> &ptsSet) {
-  std::queue<unsigned int> worklist;
-
-  NodeIndex ptrTgt = nodeFactory.getMergeTarget(id);
-
-  auto ptsItr = ptsGraph.find(ptrTgt);
-  if (ptsItr == ptsGraph.end()) return false;
-  for (auto vx : ptsItr->second) {
-    if (vx == nodeFactory.getNullObjectNode()) continue;
-    worklist.push(vx);
-  }
-
-  while (!worklist.empty()) {
-    unsigned int c = worklist.front();
-    worklist.pop();
-
-    const llvm::Value *cv = nodeFactory.getValueForNode(c);
-    if (!cv) continue;
-
-    if (std::find(ptsSet.begin(), ptsSet.end(), cv) == ptsSet.end()) {
-      ptsSet.push_back(cv);
-
-      auto ptsItr = ptsGraph.find(c);
-      if (ptsItr == ptsGraph.end()) continue;
-      for (auto vx : ptsItr->second) {
-        if (vx == nodeFactory.getNullObjectNode()) continue;
-        worklist.push(vx);
-      }
-    }
-  }
-  return true;
-}
-
-bool Andersen::getTransitivePointsToSet(const Context *ctx, const llvm::Value *v,
-                              std::vector<const llvm::Value *> &ptsSet) {
-  std::queue<unsigned int> worklist;
-
-  NodeIndex ptrTgt = nodeFactory.getMergeTarget(nodeFactory.getValueNodeFor(ctx, v));
-
-  auto ptsItr = ptsGraph.find(ptrTgt);
-  if (ptsItr == ptsGraph.end()) return false;
-  for (auto vx : ptsItr->second) {
-    if (vx == nodeFactory.getNullObjectNode()) continue;
-    worklist.push(vx);
-  }
-
-  while (!worklist.empty()) {
-    unsigned int c = worklist.front();
-    worklist.pop();
-
-    const llvm::Value *cv = nodeFactory.getValueForNode(c);
-    if (!cv) continue;
-
-    if (std::find(ptsSet.begin(), ptsSet.end(), cv) == ptsSet.end()) {
-      ptsSet.push_back(cv);
-
-      auto ptsItr = ptsGraph.find(c);
-      if (ptsItr == ptsGraph.end()) continue;
-      for (auto vx : ptsItr->second) {
-        if (vx == nodeFactory.getNullObjectNode()) continue;
-        worklist.push(vx);
-      }
-    }
-  }
-  return true;
-}
-
-bool Andersen::runOnModule(const Module &M) {
-  nodeFactory.setDataLayout(&M.getDataLayout());
-  collectConstraints(M);
-
-  if (DumpDebugInfo)
-    dumpConstraintsPlainVanilla();
-
-  optimizeConstraints();
-
-  if (DumpConstraintInfo)
-    dumpConstraints();
-
-  solveConstraints();
-
-  if (DumpDebugInfo) {
-    errs() << "\n";
-    dumpPtsGraphPlainVanilla();
-  }
-
-  if (DumpResultInfo) {
-    nodeFactory.dumpNodeInfo();
-    errs() << "\n";
-    dumpPtsGraphPlainVanilla();
-  }
-
-  return false;
-}
-
-void Andersen::dumpConstraint(const AndersConstraint &item) const {
-  NodeIndex dest = item.getDest();
-  NodeIndex src = item.getSrc();
-
-  switch (item.getType()) {
-  case AndersConstraint::COPY: {
-    nodeFactory.dumpNode(dest);
-    errs() << " = ";
-    nodeFactory.dumpNode(src);
-    break;
-  }
-  case AndersConstraint::LOAD: {
-    nodeFactory.dumpNode(dest);
-    errs() << " = *";
-    nodeFactory.dumpNode(src);
-    break;
-  }
-  case AndersConstraint::STORE: {
-    errs() << "*";
-    nodeFactory.dumpNode(dest);
-    errs() << " = ";
-    nodeFactory.dumpNode(src);
-    break;
-  }
-  case AndersConstraint::ADDR_OF: {
-    nodeFactory.dumpNode(dest);
-    errs() << " = &";
-    nodeFactory.dumpNode(src);
-  }
-  }
-
-  errs() << "\n";
-}
-
-void Andersen::dumpConstraints() const {
-  errs() << "\n----- Constraints -----\n";
-  for (auto const &item : constraints)
-    dumpConstraint(item);
-  errs() << "----- End of Print -----\n";
-}
-
-void Andersen::dumpConstraintsPlainVanilla() const {
-  for (auto const &item : constraints) {
-    errs() << item.getType() << " " << item.getDest() << " " << item.getSrc()
-           << " 0\n";
-  }
-}
-
-void Andersen::dumpPtsGraphPlainVanilla() const {
-  for (unsigned i = 0, e = nodeFactory.getNumNodes(); i < e; ++i) {
-    NodeIndex rep = nodeFactory.getMergeTarget(i);
-    auto ptsItr = ptsGraph.find(rep);
-    if (ptsItr != ptsGraph.end()) {
-      errs() << i << " ";
-      for (auto v : ptsItr->second)
-        errs() << v << " ";
-      errs() << "\n";
-    }
-  }
-}
-
-std::vector<FieldType> Andersen::lookupFields(const Context *ctx, const llvm::Value *v) const {
-  return nodeFactory.lookupFields(ctx, v);
 }

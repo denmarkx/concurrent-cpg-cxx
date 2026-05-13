@@ -39,6 +39,45 @@ public:
     return bitvec.intersects(other.bitvec);
   }
 
+  /*
+   * Returns boolean indicating if the set contains only the given node.
+  */
+  bool isSetContainingOnly(unsigned int i) const {
+    return (getSize() == 1) && (*begin() == i);
+  }
+
+  /*
+   * Returns boolean indicating if two sets contain the same values
+   * EXCEPT for nodes 0-3.
+  */
+  bool compareExclude(const AndersPtsSet& other) const {
+    if (getSize() != other.getSize()) return false;
+
+    bool same = true;
+    for (auto const &idx : *this) {
+      if (idx <= 3) continue;
+      if (!other.has(idx)) {
+        same = false;
+        break;
+      }
+    }
+    return same;
+  }
+
+  /*
+   * Returns boolean indicating if two sets contain at least one overlapping value
+   * EXCEPT for nodes 0-3.
+  */
+  bool compareIntersectionExclude(const AndersPtsSet& other) const {
+    for (auto const &idx : *this) {
+      if (idx <= 3)
+        continue;
+      if (other.has(idx))
+        return true;
+    }
+    return false;
+  }
+
   // Return true if the ptsset changes
   bool unionWith(const AndersPtsSet &other) { return bitvec |= other.bitvec; }
 

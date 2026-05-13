@@ -32,7 +32,7 @@ set(NEO4J_LIBRARY_DIR "/usr/local/lib")
 
 set (ANDERSEN_FILES
     andersen/Andersen.cpp
-    andersen/AndersenAA.cpp
+    andersen/AndersenInfo.cpp
     andersen/ConstraintCollect.cpp
     andersen/ConstraintOptimize.cpp
     andersen/ConstraintSolving.cpp
