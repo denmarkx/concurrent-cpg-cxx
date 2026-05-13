@@ -83,6 +83,9 @@ void ControlFlowGraph::parseModule(const Module& module) {
                 }
 
                 // Connect prev -> this node.
+                if (GraphManager::isNonSSA(instr.getOpcode()))
+                    continue;
+
                 Node *node = GraphManager::get()->getNode(&instr);
 
                 if (prevNode && node)

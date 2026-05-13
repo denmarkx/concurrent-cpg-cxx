@@ -70,6 +70,12 @@ void Node::addEdge(std::string name, Node* end, std::string key, std::string val
     _edges.push_back(e);
 }
 
+bool Node::hasEdge(const std::string name, Node* end) {
+    return std::find_if(_edges.begin(), _edges.end(), [name, end](const Edge &e){
+        return e.name == name && e.end == end;
+    }) != _edges.end();
+}
+
 void Node::registerStoreEdge(Node* node) {
     addEdge("STORE", node);
 }
@@ -79,7 +85,8 @@ void Node::registerAliasEdge(Node* node) {
 }
 
 void Node::registerCopyEdge(Node* node) {
-    addEdge("COPY", node);
+    if (!hasEdge("COPY", node))
+        addEdge("COPY", node);
 }
 
 void Node::registerGEPEdge(Node* node) {
