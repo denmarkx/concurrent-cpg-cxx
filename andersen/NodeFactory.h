@@ -4,6 +4,7 @@
 #include "NodeMap.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Hashing.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
@@ -63,13 +64,14 @@ public:
   enum AndersNodeType { VALUE_NODE, OBJ_NODE };
 
 private:
+  unsigned int contextId;
   AndersNodeType type;
   NodeIndex idx, mergeTarget;
   const llvm::Value *value;
 
 public:
-  AndersNode(AndersNodeType t, unsigned i, const llvm::Value *v = nullptr)
-      : type(t), idx(i), mergeTarget(i), value(v) {}
+  AndersNode(AndersNodeType t, unsigned ctxId, unsigned i, const llvm::Value *v = nullptr)
+      : type(t), contextId(ctxId), idx(i), mergeTarget(i), value(v) {}
 
   NodeIndex getIndex() const { return idx; }
   const llvm::Value *getValue() const { return value; }
@@ -90,6 +92,7 @@ class AndersNodeFactory {
 public:
   // The largest unsigned int is reserved for invalid index
   static const unsigned InvalidIndex;
+  static const unsigned GlobalContextID;
 
 private:
   // The set of nodes

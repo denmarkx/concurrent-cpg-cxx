@@ -10,12 +10,11 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include <algorithm>
-#include <limits>
 
 using namespace llvm;
 
-const unsigned AndersNodeFactory::InvalidIndex =
-    std::numeric_limits<unsigned int>::max();
+constexpr unsigned AndersNodeFactory::InvalidIndex = ~0u;
+constexpr unsigned AndersNodeFactory::GlobalContextID = ~0u;
 
 AndersNodeFactory::AndersNodeFactory() {
   // Note that we can't use std::vector::emplace_back() here because
@@ -23,36 +22,37 @@ AndersNodeFactory::AndersNodeFactory() {
 
   // Node #0 is always the universal ptr: the ptr that we don't know anything
   // about.
-  nodes.push_back(AndersNode(AndersNode::VALUE_NODE, 0));
+  nodes.push_back(AndersNode(AndersNode::VALUE_NODE, GlobalContextID, 0));
   // Node #0 is always the universal obj: the obj that we don't know anything
   // about.
-  nodes.push_back(AndersNode(AndersNode::OBJ_NODE, 1));
+  nodes.push_back(AndersNode(AndersNode::OBJ_NODE, GlobalContextID, 1));
   // Node #2 always represents the null pointer.
-  nodes.push_back(AndersNode(AndersNode::VALUE_NODE, 2));
+  nodes.push_back(AndersNode(AndersNode::VALUE_NODE, GlobalContextID, 2));
   // Node #3 is the object that null pointer points to
-  nodes.push_back(AndersNode(AndersNode::OBJ_NODE, 3));
+  nodes.push_back(AndersNode(AndersNode::OBJ_NODE, GlobalContextID, 3));
 
   assert(nodes.size() == 4);
 }
 
 NodeIndex AndersNodeFactory::createValueNode(const Context *context, const Value *val, FieldType fields) {
+  unsigned contextId = context != nullptr ? context->id : GlobalContextID;
   unsigned nextIdx = nodes.size();
-  nodes.push_back(AndersNode(AndersNode::VALUE_NODE, nextIdx, val));
+  nodes.push_back(AndersNode(AndersNode::VALUE_NODE, contextId, nextIdx, val));
   if (val != nullptr) {
     assert(!valueNodeMap.contains(context, val, fields) &&
-           "Trying to insert two mappings to revValueNodeMap!");
+           "Trying to insert two mappings to valueNodeMap!");
     valueNodeMap[{context, val, fields}] = nextIdx;
   }
   return nextIdx;
 }
 
 NodeIndex AndersNodeFactory::createObjectNode(const Context *context, const Value *val, FieldType fields) {
+  unsigned contextId = context != nullptr ? context->id : GlobalContextID;
   unsigned nextIdx = nodes.size();
-  nodes.push_back(AndersNode(AndersNode::OBJ_NODE, nextIdx, val));
+  nodes.push_back(AndersNode(AndersNode::OBJ_NODE, contextId, nextIdx, val));
   if (val != nullptr) {
-    if (objNodeMap.contains(context, val, fields)) return objNodeMap[{context, val}];
     assert(!objNodeMap.contains(context, val, fields) &&
-           "Trying to insert two mappings to revObjNodeMap!");
+           "Trying to insert two mappings to objNodeMap!");
     objNodeMap[{context, val, fields}] = nextIdx;
   }
 
@@ -63,15 +63,16 @@ NodeIndex AndersNodeFactory::createReturnNode(const Context *context, const llvm
   auto existing = returnMap.find({context, f});
   if (existing != returnMap.end()) return existing->second;
 
+  unsigned contextId = context != nullptr ? context->id : GlobalContextID;
   unsigned nextIdx = nodes.size();
-  nodes.push_back(AndersNode(AndersNode::VALUE_NODE, nextIdx, f));
+  nodes.push_back(AndersNode(AndersNode::VALUE_NODE, contextId, nextIdx, f));
   returnMap[{context, f}] = nextIdx;
   return nextIdx;
 }
 
 NodeIndex AndersNodeFactory::createVarargNode(const llvm::Function *f) {
   unsigned nextIdx = nodes.size();
-  nodes.push_back(AndersNode(AndersNode::OBJ_NODE, nextIdx, f));
+  nodes.push_back(AndersNode(AndersNode::OBJ_NODE, GlobalContextID, nextIdx, f));
 
   assert(!varargMap.count(f) && "Trying to insert two mappings to varargMap!");
   varargMap[f] = nextIdx;
@@ -155,19 +156,16 @@ AndersNodeFactory::getObjectNodeForConstant(const Context *context, const llvm::
 
 NodeIndex AndersNodeFactory::getReturnNodeFor(const Context *context, const llvm::Function *f) const {
   auto itr = returnMap.find({context, f});
-  if (itr == returnMap.end())
-    return InvalidIndex;
-  else {
-    return itr->second;
-  }
+  return itr != returnMap.end()
+    ? itr->second
+    : InvalidIndex;
 }
 
 NodeIndex AndersNodeFactory::getVarargNodeFor(const llvm::Function *f) const {
   auto itr = varargMap.find(f);
-  if (itr == varargMap.end())
-    return InvalidIndex;
-  else
-    return itr->second;
+  return itr != varargMap.end()
+    ? itr->second
+    : InvalidIndex;
 }
 
 llvm::SmallVector<unsigned int, 4> AndersNodeFactory::getFields(const Context *ctx, const llvm::Value *v) const {
@@ -219,7 +217,8 @@ void AndersNodeFactory::dumpNode(NodeIndex idx) const {
     errs() << "[O ";
   else
     assert(false && "Wrong type number!");
-  errs() << "#" << n.idx;
+  errs() << "\033[38;2;174;245;184m#" << n.idx << "\033[0m";
+  errs() << ", C \033[38;2;255;253;161m#" << n.contextId << "\033[0m";
   errs() << "]";
 }
 
@@ -316,12 +315,9 @@ const Context* AndersNodeFactory::getGlobalCtx() const {
   return _contexts[0];
 }
 
-// TODO: this is wrong, see: getContextByID
-const Context* AndersNodeFactory::getContext(unsigned int ctxId) const {
-  assert(ctxId < _contexts.size());
-  return _contexts[ctxId];
-}
-
+/*
+ * Returns the Context* or nullptr given a valid ID.
+*/
 const Context* AndersNodeFactory::getContextByID(unsigned int ctxId) const {
   auto itr = std::find_if(_contexts.begin(), _contexts.end(), [ctxId](const Context *candidate) {
     return candidate->id == ctxId;
