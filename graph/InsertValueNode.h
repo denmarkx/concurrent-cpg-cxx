@@ -23,8 +23,8 @@ public:
         const Value *aggVal = I->getAggregateOperand();
         Node *aggNode = GraphManager::get()->getNode(aggVal);
 
-        if (aggNode) // will be null if poison
-            node->registerAggregateValue(node);
+        if (aggNode) // will be null if poison 
+            node->registerAggregateValue(aggNode);
 
         const Value *insVal = I->getInsertedValueOperand();
         Node *insValNode = GraphManager::get()->getNode(insVal);
@@ -33,11 +33,10 @@ public:
     }
 
     void registerAggregateValue(Node *node) {
-        node->addEdge("PREVIOUS_AGGREGATE", node);
+        addEdge("PREVIOUS_AGGREGATE", node);
     }
 
     void registerFieldValue(Node *node, int idx) {
-        // TODO: idx
-        node->addEdge("FIELD", node);
+        addEdge("FIELD", node, "index", std::to_string(idx));
     }
 };

@@ -26,7 +26,6 @@ public:
     }
 
     void registerIndexEdge(Node *aggregate, int index) {
-        // TODO: index should be a field prop
-        addEdge("FIELD", aggregate);
+        addEdge("FIELD", aggregate, "index", std::to_string(index));
     }
 };
