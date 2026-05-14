@@ -4,8 +4,10 @@
 #include "GraphManager.h"
 #include "Node.h"
 #include "APIHelper.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/Support/AtomicOrdering.h"
 
-Node::Node(const Value* value, const std::string label) { 
+Node::Node(const Value* value, const std::string label) {
     _idCounter++;
     _id = _idCounter;
     _label = label;
@@ -70,10 +72,24 @@ void Node::addEdge(std::string name, Node* end, std::string key, std::string val
     _edges.push_back(e);
 }
 
+void Node::addEdge(std::string name, Node* end, std::unordered_map<std::string, std::string> properties) {
+    Edge e = Edge { name, this, end };
+    for (auto &[k, v] : properties)
+        e.addProperty(k, v);
+    _edges.push_back(e);
+}
+
 bool Node::hasEdge(const std::string name, Node* end) {
     return std::find_if(_edges.begin(), _edges.end(), [name, end](const Edge &e){
         return e.name == name && e.end == end;
     }) != _edges.end();
+}
+
+void Node::registerAtomicStoreEdge(Node* node, const StoreInst *instr) {
+    addEdge("STORE", node, {
+        {"isAtomic", "true"},
+        {"ordering", toIRString(instr->getOrdering())}
+    });
 }
 
 void Node::registerStoreEdge(Node* node) {
