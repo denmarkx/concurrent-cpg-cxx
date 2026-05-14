@@ -22,8 +22,8 @@ public:
         Node *rhs = GraphManager::get()->getNode(I->getOperand(1));
         assert(lhs != nullptr && rhs != nullptr);
 
-        node->addEdge("lhs", lhs);
-        node->addEdge("rhs", rhs);
+        node->addEdge("LHS", lhs);
+        node->addEdge("RHS", rhs);
         return node;
     }
 };
