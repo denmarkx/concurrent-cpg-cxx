@@ -68,13 +68,29 @@ private:
   AndersNodeType type;
   NodeIndex idx, mergeTarget;
   const llvm::Value *value;
+  llvm::SmallVector<unsigned int, 4> _fields;
 
 public:
-  AndersNode(AndersNodeType t, unsigned ctxId, unsigned i, const llvm::Value *v = nullptr)
-      : type(t), contextId(ctxId), idx(i), mergeTarget(i), value(v) {}
+  AndersNode(AndersNodeType t, unsigned ctxId, unsigned i,
+    const llvm::Value *v = nullptr, llvm::SmallVector<unsigned int, 4> fields={})
+      : type(t), contextId(ctxId), idx(i), mergeTarget(i), value(v), _fields(fields) {}
 
   NodeIndex getIndex() const { return idx; }
   const llvm::Value *getValue() const { return value; }
+
+  void printFields() const {
+    errs() << "[";
+    unsigned int fieldsSize = _fields.size();
+    for (unsigned int i=0; i < fieldsSize-1; i++)
+      errs() << _fields[i] << ", ";
+    if (fieldsSize > 0)
+      errs() << _fields[fieldsSize-1];
+    errs() << "]";
+  }
+
+  bool hasFields() const {
+    return _fields.size() > 0;
+  }
 
   friend class AndersNodeFactory;
 };
@@ -146,8 +162,6 @@ public:
   NodeIndex getObjectNodeForConstant(const Context *context, const llvm::Constant *c, FieldType fields={}) const;
   NodeIndex getReturnNodeFor(const Context *context, const llvm::Function *f) const;
   NodeIndex getVarargNodeFor(const llvm::Function *f) const;
-
-  std::vector<FieldType> lookupFields(const Context *, const llvm::Value*) const;
 
   llvm::SmallVector<unsigned int, 4> getFields(const Context *ctx, const llvm::Value *v) const;
 

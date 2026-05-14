@@ -105,8 +105,6 @@ private:
 
   const std::vector<unsigned int> getFieldIds(const llvm::Value *v) const;
   
-  std::vector<FieldType> lookupFields(const Context *, const llvm::Value*) const;
-
   void fillPointsToSet(const llvm::Value*, PtsSetType &ptsSet, unsigned int contextId);
 
   // For debugging

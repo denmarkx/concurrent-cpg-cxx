@@ -625,13 +625,6 @@ void Andersen::addArgumentConstraintForCall(const Context *calleeCtx,
                "Failed to find actual arg node!");
         // errs() << "new constraint: " << fIndex << ", arg=" << aIndex << "\n";
         // errs() << "addArgumentConstraintForCall[COPY]: " << fIndex << " = " << aIndex << "\n";
-        // TODO: fIndex = aIndex is correct, but the way field sensitivity is implemented
-        // changes this to fIndex = {aIndex, aIndex_f_0,...,aIndex_f_n-1}
-        for (const auto &x : nodeFactory.lookupFields(context, actual)) {
-          NodeIndex aFieldIdx = nodeFactory.getValueNodeFor(context, actual, x);
-          assert(aFieldIdx != AndersNodeFactory::InvalidIndex && "Failed to find actual arg field node!");
-          constraints.emplace_back(AndersConstraint::COPY, fIndex, aFieldIdx);
-        }
         constraints.emplace_back(AndersConstraint::COPY, fIndex, aIndex);
       } else
         constraints.emplace_back(AndersConstraint::COPY, fIndex,
