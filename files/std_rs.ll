@@ -74,7 +74,6 @@ target triple = "x86_64-unknown-linux-gnu"
 %"std::sys::pal::unix::locks::futex_mutex::Mutex" = type { %"core::sync::atomic::AtomicU32" }
 %"std::sync::poison::Flag" = type { %"core::sync::atomic::AtomicBool" }
 %"core::cell::UnsafeCell<alloc::vec::Vec<u8>>" = type { %"alloc::vec::Vec<u8>" }
-%"core::fmt::rt::Argument<'_>" = type { ptr, ptr }
 %"alloc::ffi::c_str::NulError" = type { %"alloc::vec::Vec<u8>", i64 }
 %"core::result::Result<alloc::ffi::c_str::CString, alloc::ffi::c_str::NulError>::Ok" = type { [1 x i64], %"alloc::ffi::c_str::CString" }
 %"alloc::ffi::c_str::CString" = type { %"alloc::boxed::Box<[u8]>" }
@@ -92,6 +91,7 @@ target triple = "x86_64-unknown-linux-gnu"
 %"alloc::sync::ArcInner<std::thread::Inner>" = type { %"core::sync::atomic::AtomicUsize", %"core::sync::atomic::AtomicUsize", %"std::thread::Inner" }
 %"core::option::Option<(core::ptr::non_null::NonNull<u8>, core::alloc::layout::Layout)>" = type { [1 x i64], i64, [1 x i64] }
 %"core::alloc::layout::Layout" = type { i64, i64 }
+%"core::fmt::rt::Argument<'_>" = type { ptr, ptr }
 %"alloc::boxed::Box<dyn core::any::Any + core::marker::Send>" = type { %"core::ptr::unique::Unique<dyn core::any::Any + core::marker::Send>", %"alloc::alloc::Global" }
 %"core::ptr::unique::Unique<dyn core::any::Any + core::marker::Send>" = type { %"core::ptr::non_null::NonNull<dyn core::any::Any + core::marker::Send>", %"core::marker::PhantomData<dyn core::any::Any + core::marker::Send>" }
 %"core::ptr::non_null::NonNull<dyn core::any::Any + core::marker::Send>" = type { { ptr, ptr } }
@@ -124,33 +124,6 @@ target triple = "x86_64-unknown-linux-gnu"
 @alloc_429c82a8a757ba4eb6ada2ea4793308e = private unnamed_addr constant <{ ptr, [16 x i8] }> <{ ptr @alloc_4e392ee20eb14981b7228e69488c1dfe, [16 x i8] c"K\00\00\00\00\00\00\00M\01\00\00\0D\00\00\00" }>, align 8
 @alloc_559f2ae733243bf212b88f542e1f898f = private unnamed_addr constant <{ [80 x i8] }> <{ [80 x i8] c"/rustc/11f32b73e0dc9287e305b5b9980d24aecdc8c17f/library/core/src/char/methods.rs" }>, align 1
 @alloc_41a0379ed06a3b1c22d2313ff030dc3d = private unnamed_addr constant <{ ptr, [16 x i8] }> <{ ptr @alloc_559f2ae733243bf212b88f542e1f898f, [16 x i8] c"P\00\00\00\00\00\00\00\05\07\00\00\0D\00\00\00" }>, align 8
-@alloc_6b031f9bca8204235732c7c365d04a1d = private unnamed_addr constant <{ [18 x i8] }> <{ [18 x i8] c"encode_utf8: need " }>, align 1
-@alloc_28d13efb0f9a95ccb5d02ec33dd195cf = private unnamed_addr constant <{ [19 x i8] }> <{ [19 x i8] c" bytes to encode U+" }>, align 1
-@alloc_0d928972d2befd736e581c7fcc5a2f9a = private unnamed_addr constant <{ [21 x i8] }> <{ [21 x i8] c", but the buffer has " }>, align 1
-@alloc_d51214f097f67314513b76e97e13aa6b = private unnamed_addr constant <{ ptr, [8 x i8], ptr, [8 x i8], ptr, [8 x i8] }> <{ ptr @alloc_6b031f9bca8204235732c7c365d04a1d, [8 x i8] c"\12\00\00\00\00\00\00\00", ptr @alloc_28d13efb0f9a95ccb5d02ec33dd195cf, [8 x i8] c"\13\00\00\00\00\00\00\00", ptr @alloc_0d928972d2befd736e581c7fcc5a2f9a, [8 x i8] c"\15\00\00\00\00\00\00\00" }>, align 8
-@alloc_269dcc21cdcd001c5a23eaa9fef31ea5 = private unnamed_addr constant <{ ptr, [16 x i8] }> <{ ptr @alloc_559f2ae733243bf212b88f542e1f898f, [16 x i8] c"P\00\00\00\00\00\00\00\FE\06\00\00\0E\00\00\00" }>, align 8
-@alloc_9cd20c3e415f4d39f0ceb012cb758628 = private unnamed_addr constant <{ [40 x i8] }> <{ [40 x i8] c"there is no such thing as a release load" }>, align 1
-@alloc_cf8f91dd8bc9347b20052f6ccc905cd7 = private unnamed_addr constant <{ ptr, [8 x i8] }> <{ ptr @alloc_9cd20c3e415f4d39f0ceb012cb758628, [8 x i8] c"(\00\00\00\00\00\00\00" }>, align 8
-@alloc_196f94690fab901901497c39584a3f13 = private unnamed_addr constant <{ [79 x i8] }> <{ [79 x i8] c"/rustc/11f32b73e0dc9287e305b5b9980d24aecdc8c17f/library/core/src/sync/atomic.rs" }>, align 1
-@alloc_48d392bf0e2643281b82a9991a80ce3e = private unnamed_addr constant <{ ptr, [16 x i8] }> <{ ptr @alloc_196f94690fab901901497c39584a3f13, [16 x i8] c"O\00\00\00\00\00\00\00\E0\0C\00\00\18\00\00\00" }>, align 8
-@alloc_96ab912d0054b46da785b206a96c9a45 = private unnamed_addr constant <{ [49 x i8] }> <{ [49 x i8] c"there is no such thing as an acquire-release load" }>, align 1
-@alloc_7e8e9a1d4bc7d0bbec692f0a50681e22 = private unnamed_addr constant <{ ptr, [8 x i8] }> <{ ptr @alloc_96ab912d0054b46da785b206a96c9a45, [8 x i8] c"1\00\00\00\00\00\00\00" }>, align 8
-@alloc_dfe44fb7fb031d2db16abc42497398bf = private unnamed_addr constant <{ ptr, [16 x i8] }> <{ ptr @alloc_196f94690fab901901497c39584a3f13, [16 x i8] c"O\00\00\00\00\00\00\00\E1\0C\00\00\17\00\00\00" }>, align 8
-@alloc_bf39103a6db665396aab4632362d9353 = private unnamed_addr constant <{ [42 x i8] }> <{ [42 x i8] c"there is no such thing as an acquire store" }>, align 1
-@alloc_47c752ba42fbab56d43a37cfd56e4899 = private unnamed_addr constant <{ ptr, [8 x i8] }> <{ ptr @alloc_bf39103a6db665396aab4632362d9353, [8 x i8] c"*\00\00\00\00\00\00\00" }>, align 8
-@alloc_ae843a8c84d655d10428a15ea18409eb = private unnamed_addr constant <{ ptr, [16 x i8] }> <{ ptr @alloc_196f94690fab901901497c39584a3f13, [16 x i8] c"O\00\00\00\00\00\00\00\D1\0C\00\00\18\00\00\00" }>, align 8
-@alloc_00c0bce0fa6327f8ec8e69d6d765d508 = private unnamed_addr constant <{ [50 x i8] }> <{ [50 x i8] c"there is no such thing as an acquire-release store" }>, align 1
-@alloc_f8dbac861f87e25e445761cc4af66745 = private unnamed_addr constant <{ ptr, [8 x i8] }> <{ ptr @alloc_00c0bce0fa6327f8ec8e69d6d765d508, [8 x i8] c"2\00\00\00\00\00\00\00" }>, align 8
-@alloc_175c4e9c9b5a5695d7238272ea88fed9 = private unnamed_addr constant <{ ptr, [16 x i8] }> <{ ptr @alloc_196f94690fab901901497c39584a3f13, [16 x i8] c"O\00\00\00\00\00\00\00\D2\0C\00\00\17\00\00\00" }>, align 8
-@alloc_5a43f8d94dd4505c1dba43832ce73af8 = private unnamed_addr constant <{ [52 x i8] }> <{ [52 x i8] c"there is no such thing as a release failure ordering" }>, align 1
-@alloc_04ab601c54c6e0a22ff11d72dc7f4511 = private unnamed_addr constant <{ ptr, [8 x i8] }> <{ ptr @alloc_5a43f8d94dd4505c1dba43832ce73af8, [8 x i8] c"4\00\00\00\00\00\00\00" }>, align 8
-@alloc_e136ecadd4afd23d3c318b2f9131f147 = private unnamed_addr constant <{ ptr, [16 x i8] }> <{ ptr @alloc_196f94690fab901901497c39584a3f13, [16 x i8] c"O\00\00\00\00\00\00\005\0D\00\00\1D\00\00\00" }>, align 8
-@alloc_7adef5546d83b439c7829602020737c6 = private unnamed_addr constant <{ [61 x i8] }> <{ [61 x i8] c"there is no such thing as an acquire-release failure ordering" }>, align 1
-@alloc_dd7d8f77c173bf31726eae321f955bec = private unnamed_addr constant <{ ptr, [8 x i8] }> <{ ptr @alloc_7adef5546d83b439c7829602020737c6, [8 x i8] c"=\00\00\00\00\00\00\00" }>, align 8
-@alloc_5b8026f8d09c21930e514945f405087f = private unnamed_addr constant <{ ptr, [16 x i8] }> <{ ptr @alloc_196f94690fab901901497c39584a3f13, [16 x i8] c"O\00\00\00\00\00\00\004\0D\00\00\1C\00\00\00" }>, align 8
-@alloc_929e9b2e7b7429614ca4fc017efff666 = private unnamed_addr constant <{ [41 x i8] }> <{ [41 x i8] c"there is no such thing as a relaxed fence" }>, align 1
-@alloc_39071d8363362e29009d9bb27c1e4df5 = private unnamed_addr constant <{ ptr, [8 x i8] }> <{ ptr @alloc_929e9b2e7b7429614ca4fc017efff666, [8 x i8] c")\00\00\00\00\00\00\00" }>, align 8
-@alloc_e41ef13ada11c98de2875566174169a7 = private unnamed_addr constant <{ ptr, [16 x i8] }> <{ ptr @alloc_196f94690fab901901497c39584a3f13, [16 x i8] c"O\00\00\00\00\00\00\008\0E\00\00\18\00\00\00" }>, align 8
 @alloc_b9a6dd3adc2673cdd0ef4b9d96fd7520 = private unnamed_addr constant <{ [80 x i8] }> <{ [80 x i8] c"/rustc/11f32b73e0dc9287e305b5b9980d24aecdc8c17f/library/core/src/slice/memchr.rs" }>, align 1
 @alloc_65452916cca6d97cc375fac7cb56cd3a = private unnamed_addr constant <{ ptr, [16 x i8] }> <{ ptr @alloc_b9a6dd3adc2673cdd0ef4b9d96fd7520, [16 x i8] c"P\00\00\00\00\00\00\00+\00\00\00\0C\00\00\00" }>, align 8
 @vtable.5 = private unnamed_addr constant <{ ptr, [16 x i8], ptr }> <{ ptr @"_ZN4core3ptr48drop_in_place$LT$alloc..ffi..c_str..NulError$GT$17h9e8886b3dfeaaf35E", [16 x i8] c" \00\00\00\00\00\00\00\08\00\00\00\00\00\00\00", ptr @"_ZN64_$LT$alloc..ffi..c_str..NulError$u20$as$u20$core..fmt..Debug$GT$3fmt17h4b6eb45657ae5800E" }>, align 8
@@ -174,14 +147,14 @@ target triple = "x86_64-unknown-linux-gnu"
 @alloc_f62552dbfd9ec9b3b5c22b0dda30b91d = private unnamed_addr constant <{ [27 x i8] }> <{ [27 x i8] c"[files/std_rs.rs:17:9] z = " }>, align 1
 @alloc_3540addb1ff9d570f8b9e92348c7768f = private unnamed_addr constant <{ ptr, [8 x i8], ptr, [8 x i8] }> <{ ptr @alloc_f62552dbfd9ec9b3b5c22b0dda30b91d, [8 x i8] c"\1B\00\00\00\00\00\00\00", ptr @alloc_49a1e817e911805af64bbc7efb390101, [8 x i8] c"\01\00\00\00\00\00\00\00" }>, align 8
 
-; Function Attrs: nonlazybind uwtable
+; Function Attrs: nounwind nonlazybind uwtable
 define internal fastcc void @"_ZN104_$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$T$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h02da2f82e1afd6baE"(ptr align 8 %self) unnamed_addr #0 {
 start:
   tail call fastcc void @"_ZN4core3ptr62drop_in_place$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$17h1022437b15102989E"(ptr align 8 %self)
   ret void
 }
 
-; Function Attrs: nonlazybind uwtable
+; Function Attrs: nounwind nonlazybind uwtable
 define internal fastcc void @"_ZN104_$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$T$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h14eb6e8c357ce55fE"(ptr align 8 %self) unnamed_addr #0 {
 start:
   tail call fastcc void @"_ZN4core3ptr62drop_in_place$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$17h1e2d20d11bf7e77cE"(ptr align 8 %self)
@@ -189,17 +162,17 @@ start:
 }
 
 ; Function Attrs: inlinehint nonlazybind uwtable
-define internal fastcc { ptr, i64 } @"_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$9index_mut17h8483439eb291afceE"(i64 %self.0, i64 %self.1, ptr align 1 %slice.0, i64 %slice.1, ptr align 8 %0) unnamed_addr #1 {
+define internal fastcc { ptr, i64 } @"_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$9index_mut17h8483439eb291afceE"(i64 %self.0, i64 %self.1, ptr align 1 %slice.0, i64 %slice.1, ptr nocapture readnone align 8 %0) unnamed_addr #1 {
 start:
   %_3 = icmp ugt i64 %self.0, %self.1
   br i1 %_3, label %bb1, label %bb2
 
 bb2:                                              ; preds = %start
-  %_7 = icmp ugt i64 %self.1, %slice.1
+  %_7 = icmp ugt i64 %self.1, 4
   br i1 %_7, label %bb3, label %bb4
 
 bb1:                                              ; preds = %start
-  tail call void @_ZN4core5slice5index22slice_index_order_fail17h1fd59e78f9534eb8E(i64 %self.0, i64 %self.1, ptr align 8 %0) #27
+  tail call void @_ZN4core5slice5index22slice_index_order_fail17h1fd59e78f9534eb8E(i64 %self.0, i64 %self.1, ptr nonnull align 8 @alloc_41a0379ed06a3b1c22d2313ff030dc3d) #30
   unreachable
 
 bb4:                                              ; preds = %bb2
@@ -210,7 +183,7 @@ bb4:                                              ; preds = %bb2
   ret { ptr, i64 } %2
 
 bb3:                                              ; preds = %bb2
-  tail call void @_ZN4core5slice5index24slice_end_index_len_fail17h23a8c1ae2d2af720E(i64 %self.1, i64 %slice.1, ptr align 8 %0) #27
+  tail call void @_ZN4core5slice5index24slice_end_index_len_fail17h23a8c1ae2d2af720E(i64 %self.1, i64 4, ptr nonnull align 8 @alloc_41a0379ed06a3b1c22d2313ff030dc3d) #30
   unreachable
 }
 
@@ -239,7 +212,7 @@ start:
 define internal fastcc void @_ZN3std10sys_common9backtrace28__rust_begin_short_backtrace17h21f420b989e87ceeE(ptr nocapture readonly %f) unnamed_addr #2 {
 start:
   tail call fastcc void @_ZN4core3ops8function6FnOnce9call_once17ha152b1e98a996738E(ptr %f)
-  tail call void asm sideeffect "", "~{memory}"() #28, !srcloc !4
+  tail call void asm sideeffect "", "~{memory}"() #31, !srcloc !4
   ret void
 }
 
@@ -247,7 +220,7 @@ start:
 define internal fastcc void @_ZN3std10sys_common9backtrace28__rust_begin_short_backtrace17h5fc8190fc031b3f4E(ptr %f) unnamed_addr #2 {
 start:
   tail call fastcc void @"_ZN6std_rs4main28_$u7b$$u7b$closure$u7d$$u7d$17h06082d96af712f96E"(ptr %f)
-  tail call void asm sideeffect "", "~{memory}"() #28, !srcloc !4
+  tail call void asm sideeffect "", "~{memory}"() #31, !srcloc !4
   ret void
 }
 
@@ -255,12 +228,12 @@ start:
 define internal fastcc void @_ZN3std10sys_common9backtrace28__rust_begin_short_backtrace17he2b1bc2e68677099E(ptr %f) unnamed_addr #2 {
 start:
   tail call fastcc void @"_ZN6std_rs4main28_$u7b$$u7b$closure$u7d$$u7d$17he13a5ec719c5485fE"(ptr %f)
-  tail call void asm sideeffect "", "~{memory}"() #28, !srcloc !4
+  tail call void asm sideeffect "", "~{memory}"() #31, !srcloc !4
   ret void
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc ptr @_ZN3std2io5Write9write_all17hc8981c373f82d5b3E(ptr align 1 %self, ptr align 1 %0, i64 %1) unnamed_addr #0 personality ptr @rust_eh_personality {
+define internal fastcc ptr @_ZN3std2io5Write9write_all17hc8981c373f82d5b3E(ptr align 1 %self, ptr align 1 %0, i64 %1) unnamed_addr #3 personality ptr @rust_eh_personality {
 start:
   %_4 = alloca %"core::result::Result<usize, std::io::error::Error>", align 8
   %2 = icmp eq i64 %1, 0
@@ -299,7 +272,7 @@ bb21:                                             ; preds = %bb7
   br label %bb17
 
 bb20:                                             ; preds = %bb7
-  invoke void @_ZN4core5slice5index26slice_start_index_len_fail17hb6e6adbe9bcaa20aE(i64 %5, i64 %self.110, ptr nonnull align 8 @alloc_ad59c95d882f83cd0956f19d31e44c98) #27
+  invoke void @_ZN4core5slice5index26slice_start_index_len_fail17hb6e6adbe9bcaa20aE(i64 %5, i64 %self.110, ptr nonnull align 8 @alloc_ad59c95d882f83cd0956f19d31e44c98) #30
           to label %unreachable unwind label %cleanup.loopexit.split-lp
 
 bb17:                                             ; preds = %bb9.bb17_crit_edge, %bb21
@@ -350,7 +323,7 @@ bb15:                                             ; preds = %bb16, %bb17
 
 bb18:                                             ; preds = %bb19
   %10 = getelementptr inbounds %"core::result::Result<usize, std::io::error::Error>::Err", ptr %_4, i64 0, i32 1
-  invoke void @"_ZN4core3ptr42drop_in_place$LT$std..io..error..Error$GT$17h7d1d75c373ff4d89E"(ptr nonnull align 8 %10) #29
+  invoke void @"_ZN4core3ptr42drop_in_place$LT$std..io..error..Error$GT$17h7d1d75c373ff4d89E"(ptr nonnull align 8 %10) #32
           to label %bb14 unwind label %terminate
 
 bb14:                                             ; preds = %bb18, %bb19
@@ -359,12 +332,12 @@ bb14:                                             ; preds = %bb18, %bb19
 terminate:                                        ; preds = %bb18
   %11 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc ptr @_ZN3std2io5Write9write_fmt17h0b706e90561dee7aE(ptr align 1 %self, ptr align 8 %fmt) unnamed_addr #0 personality ptr @rust_eh_personality {
+define internal fastcc ptr @_ZN3std2io5Write9write_fmt17h0b706e90561dee7aE(ptr align 1 %self, ptr align 8 %fmt) unnamed_addr #3 personality ptr @rust_eh_personality {
 start:
   %output = alloca %"std::io::Write::write_fmt::Adapter<'_, std::sys::pal::unix::stdio::Stderr>", align 8
   store ptr %self, ptr %output, align 8
@@ -376,7 +349,7 @@ start:
 bb7:                                              ; preds = %start
   %2 = landingpad { ptr, i32 }
           cleanup
-  invoke void @"_ZN4core3ptr97drop_in_place$LT$std..io..Write..write_fmt..Adapter$LT$std..sys..pal..unix..stdio..Stderr$GT$$GT$17he284c5d95baded8aE"(ptr nonnull align 8 %output) #29
+  invoke void @"_ZN4core3ptr97drop_in_place$LT$std..io..Write..write_fmt..Adapter$LT$std..sys..pal..unix..stdio..Stderr$GT$$GT$17he284c5d95baded8aE"(ptr nonnull align 8 %output) #32
           to label %bb8 unwind label %terminate
 
 bb1:                                              ; preds = %start
@@ -399,7 +372,7 @@ bb10:                                             ; preds = %bb1, %bb2
 terminate:                                        ; preds = %bb7
   %4 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 
 bb8:                                              ; preds = %bb7
@@ -407,7 +380,7 @@ bb8:                                              ; preds = %bb7
 }
 
 ; Function Attrs: inlinehint mustprogress nofree nosync nonlazybind willreturn memory(argmem: write, inaccessiblemem: readwrite) uwtable
-define internal fastcc void @_ZN3std2io5error14repr_bitpacked11decode_repr17h46f54ffe6340d171E(ptr nocapture writeonly sret(%"std::io::error::ErrorData<&std::io::error::Custom>") align 8 %_0, ptr %ptr) unnamed_addr #3 personality ptr @rust_eh_personality {
+define internal fastcc void @_ZN3std2io5error14repr_bitpacked11decode_repr17h46f54ffe6340d171E(ptr nocapture writeonly sret(%"std::io::error::ErrorData<&std::io::error::Custom>") align 8 %_0, ptr %ptr) unnamed_addr #4 personality ptr @rust_eh_personality {
 start:
   %0 = ptrtoint ptr %ptr to i64
   %_5 = and i64 %0, 3
@@ -464,7 +437,7 @@ bb9:                                              ; preds = %bb2, %bb4, %bb5, %b
 }
 
 ; Function Attrs: inlinehint mustprogress nofree nosync nonlazybind willreturn memory(argmem: write, inaccessiblemem: readwrite) uwtable
-define internal fastcc void @_ZN3std2io5error14repr_bitpacked11decode_repr17hec7db7554076d0ffE(ptr nocapture writeonly sret(%"std::io::error::ErrorData<alloc::boxed::Box<std::io::error::Custom>>") align 8 %_0, ptr %ptr) unnamed_addr #3 personality ptr @rust_eh_personality {
+define internal fastcc void @_ZN3std2io5error14repr_bitpacked11decode_repr17hec7db7554076d0ffE(ptr nocapture writeonly sret(%"std::io::error::ErrorData<alloc::boxed::Box<std::io::error::Custom>>") align 8 %_0, ptr %ptr) unnamed_addr #4 personality ptr @rust_eh_personality {
 start:
   %0 = ptrtoint ptr %ptr to i64
   %_5 = and i64 %0, 3
@@ -522,7 +495,7 @@ bb9:                                              ; preds = %bb2, %bb4, %bb5, %b
 }
 
 ; Function Attrs: inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(none) uwtable
-define internal fastcc i8 @_ZN3std2io5error14repr_bitpacked14kind_from_prim17hba169c3f279ce0e8E(i32 %0) unnamed_addr #4 {
+define internal fastcc i8 @_ZN3std2io5error14repr_bitpacked14kind_from_prim17hba169c3f279ce0e8E(i32 %0) unnamed_addr #5 {
 start:
   switch i32 %0, label %bb82 [
     i32 0, label %bb83
@@ -697,7 +670,7 @@ bb82:                                             ; preds = %start
 }
 
 ; Function Attrs: inlinehint mustprogress nofree nosync nonlazybind willreturn uwtable
-define internal fastcc zeroext i1 @_ZN3std2io5error5Error14is_interrupted17h1770f77dc1a41363E(ptr nocapture readonly align 8 %self) unnamed_addr #5 {
+define internal fastcc zeroext i1 @_ZN3std2io5error5Error14is_interrupted17h1770f77dc1a41363E(ptr nocapture readonly align 8 %self) unnamed_addr #6 {
 start:
   %_2 = alloca %"std::io::error::ErrorData<&std::io::error::Custom>", align 8
   %_12 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
@@ -748,7 +721,7 @@ bb5:                                              ; preds = %bb3, %bb1, %bb4, %b
 }
 
 ; Function Attrs: nonlazybind uwtable
-define hidden i64 @_ZN3std2rt10lang_start17hf0e5005b6eeaa845E(ptr %main, i64 %argc, ptr %argv, i8 %sigpipe) unnamed_addr #0 {
+define hidden i64 @_ZN3std2rt10lang_start17hf0e5005b6eeaa845E(ptr %main, i64 %argc, ptr %argv, i8 %sigpipe) unnamed_addr #3 {
 start:
   %_8 = alloca ptr, align 8
   store ptr %main, ptr %_8, align 8
@@ -761,13 +734,11 @@ define internal i32 @"_ZN3std2rt10lang_start28_$u7b$$u7b$closure$u7d$$u7d$17h7fa
 start:
   %_4 = load ptr, ptr %_1, align 8, !nonnull !6, !noundef !6
   tail call fastcc void @_ZN3std10sys_common9backtrace28__rust_begin_short_backtrace17h21f420b989e87ceeE(ptr nonnull %_4)
-  %0 = tail call fastcc i8 @"_ZN54_$LT$$LP$$RP$$u20$as$u20$std..process..Termination$GT$6report17h3112a672afa1f854E"()
-  %_0 = zext i8 %0 to i32
-  ret i32 %_0
+  ret i32 0
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc { ptr, ptr } @"_ZN3std6thread18JoinInner$LT$T$GT$4join17hb112370f7b8b0233E"(ptr align 8 %self) unnamed_addr #0 personality ptr @rust_eh_personality {
+define internal fastcc { ptr, ptr } @"_ZN3std6thread18JoinInner$LT$T$GT$4join17hb112370f7b8b0233E"(ptr align 8 %self) unnamed_addr #3 personality ptr @rust_eh_personality {
 start:
   %src = alloca %"core::option::Option<core::result::Result<(), alloc::boxed::Box<dyn core::any::Any + core::marker::Send>>>", align 8
   %result = alloca %"core::option::Option<core::result::Result<(), alloc::boxed::Box<dyn core::any::Any + core::marker::Send>>>", align 8
@@ -776,22 +747,22 @@ start:
   invoke void @_ZN3std3sys3pal4unix6thread6Thread4join17h895d97bd495144ffE(i64 %_3)
           to label %bb1 unwind label %bb7
 
-bb7:                                              ; preds = %start, %bb1, %bb12, %bb15
+bb7:                                              ; preds = %start, %bb12, %bb15
   %1 = landingpad { ptr, i32 }
           cleanup
-  invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr nonnull align 8 %self) #29
+  invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr nonnull align 8 %self) #32
           to label %bb6 unwind label %terminate
 
 bb1:                                              ; preds = %start
   %this = getelementptr inbounds %"std::thread::JoinInner<'_, ()>", ptr %self, i64 0, i32 1
-  %_10 = invoke fastcc zeroext i1 @"_ZN5alloc4sync16Arc$LT$T$C$A$GT$9is_unique17h3fab591f54f57a44E"(ptr nonnull align 8 %this)
-          to label %bb8 unwind label %bb7
+  %_10 = call fastcc zeroext i1 @"_ZN5alloc4sync16Arc$LT$T$C$A$GT$9is_unique17h3fab591f54f57a44E"(ptr nonnull align 8 %this)
+  br label %bb8
 
 bb8:                                              ; preds = %bb1
   br i1 %_10, label %bb14, label %bb12
 
 bb12:                                             ; preds = %bb8
-  invoke void @_ZN4core6option13unwrap_failed17h8a484d2e9090c178E(ptr nonnull align 8 @alloc_df98b5df7eeb714409f256abec08df6f) #27
+  invoke void @_ZN4core6option13unwrap_failed17h8a484d2e9090c178E(ptr nonnull align 8 @alloc_df98b5df7eeb714409f256abec08df6f) #30
           to label %unreachable unwind label %bb7
 
 bb14:                                             ; preds = %bb8
@@ -808,7 +779,7 @@ unreachable:                                      ; preds = %bb15, %bb12
   unreachable
 
 bb15:                                             ; preds = %bb14
-  invoke void @_ZN4core6option13unwrap_failed17h8a484d2e9090c178E(ptr nonnull align 8 @alloc_248e7424ac947085569c564717f94fa4) #27
+  invoke void @_ZN4core6option13unwrap_failed17h8a484d2e9090c178E(ptr nonnull align 8 @alloc_248e7424ac947085569c564717f94fa4) #30
           to label %unreachable unwind label %bb7
 
 bb16:                                             ; preds = %bb14
@@ -822,7 +793,7 @@ bb16:                                             ; preds = %bb14
 bb4:                                              ; preds = %bb16
   %6 = landingpad { ptr, i32 }
           cleanup
-  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %this) #29
+  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %this) #32
           to label %bb2 unwind label %terminate
 
 bb5:                                              ; preds = %bb16
@@ -834,7 +805,7 @@ bb5:                                              ; preds = %bb16
 terminate:                                        ; preds = %bb6, %bb4, %bb7
   %9 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  tail call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  tail call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 
 bb2:                                              ; preds = %bb6, %bb4
@@ -843,12 +814,12 @@ bb2:                                              ; preds = %bb6, %bb4
 
 bb6:                                              ; preds = %bb7
   %10 = getelementptr inbounds %"std::thread::JoinInner<'_, ()>", ptr %self, i64 0, i32 1
-  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %10) #29
+  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %10) #32
           to label %bb2 unwind label %terminate
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc { ptr, ptr } @"_ZN3std6thread19JoinHandle$LT$T$GT$4join17hb506c82f2aeba70cE"(ptr nocapture readonly align 8 %self) unnamed_addr #0 {
+define internal fastcc { ptr, ptr } @"_ZN3std6thread19JoinHandle$LT$T$GT$4join17hb506c82f2aeba70cE"(ptr nocapture readonly align 8 %self) unnamed_addr #3 {
 start:
   %_2 = alloca %"std::thread::JoinInner<'_, ()>", align 8
   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(24) %_2, ptr noundef nonnull align 8 dereferenceable(24) %self, i64 24, i1 false)
@@ -857,7 +828,7 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @_ZN3std6thread5spawn17h59ed9669f5235feeE(ptr nocapture writeonly sret(%"std::thread::JoinHandle<()>") align 8 %_0, ptr %f) unnamed_addr #0 {
+define internal fastcc void @_ZN3std6thread5spawn17h59ed9669f5235feeE(ptr nocapture writeonly sret(%"std::thread::JoinHandle<()>") align 8 %_0, ptr %f) unnamed_addr #3 {
 start:
   %_5 = alloca %"core::option::Option<alloc::string::String>", align 8
   %self = alloca %"std::thread::Builder", align 8
@@ -872,7 +843,7 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @_ZN3std6thread5spawn17hbd81c1df7aff50d1E(ptr nocapture writeonly sret(%"std::thread::JoinHandle<()>") align 8 %_0, ptr %f) unnamed_addr #0 {
+define internal fastcc void @_ZN3std6thread5spawn17hbd81c1df7aff50d1E(ptr nocapture writeonly sret(%"std::thread::JoinHandle<()>") align 8 %_0, ptr %f) unnamed_addr #3 {
 start:
   %_5 = alloca %"core::option::Option<alloc::string::String>", align 8
   %self = alloca %"std::thread::Builder", align 8
@@ -887,7 +858,7 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @_ZN3std6thread7Builder15spawn_unchecked17h4b7e703370d9ed91E(ptr nocapture writeonly sret(%"core::result::Result<std::thread::JoinHandle<()>, std::io::error::Error>") align 8 %_0, ptr nocapture readonly align 8 %self, ptr %f) unnamed_addr #0 {
+define internal fastcc void @_ZN3std6thread7Builder15spawn_unchecked17h4b7e703370d9ed91E(ptr nocapture writeonly sret(%"core::result::Result<std::thread::JoinHandle<()>, std::io::error::Error>") align 8 %_0, ptr nocapture readonly align 8 %self, ptr %f) unnamed_addr #3 {
 start:
   %v = alloca %"std::thread::JoinInner<'_, ()>", align 8
   %val = alloca %"std::thread::JoinInner<'_, ()>", align 8
@@ -937,7 +908,7 @@ bb4:                                              ; preds = %bb3, %bb2
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @_ZN3std6thread7Builder15spawn_unchecked17hfbeecaa17d4c619fE(ptr nocapture writeonly sret(%"core::result::Result<std::thread::JoinHandle<()>, std::io::error::Error>") align 8 %_0, ptr nocapture readonly align 8 %self, ptr %f) unnamed_addr #0 {
+define internal fastcc void @_ZN3std6thread7Builder15spawn_unchecked17hfbeecaa17d4c619fE(ptr nocapture writeonly sret(%"core::result::Result<std::thread::JoinHandle<()>, std::io::error::Error>") align 8 %_0, ptr nocapture readonly align 8 %self, ptr %f) unnamed_addr #3 {
 start:
   %v = alloca %"std::thread::JoinInner<'_, ()>", align 8
   %val = alloca %"std::thread::JoinInner<'_, ()>", align 8
@@ -987,7 +958,7 @@ bb4:                                              ; preds = %bb3, %bb2
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @_ZN3std6thread7Builder16spawn_unchecked_17h019f696881696a30E(ptr nocapture writeonly sret(%"core::result::Result<std::thread::JoinInner<'_, ()>, std::io::error::Error>") align 8 %_0, ptr nocapture readonly align 8 %self, ptr %0, ptr %1) unnamed_addr #0 personality ptr @rust_eh_personality {
+define internal fastcc void @_ZN3std6thread7Builder16spawn_unchecked_17h019f696881696a30E(ptr nocapture writeonly sret(%"core::result::Result<std::thread::JoinInner<'_, ()>, std::io::error::Error>") align 8 %_0, ptr nocapture readonly align 8 %self, ptr %0, ptr nocapture readnone %1) unnamed_addr #3 personality ptr @rust_eh_personality {
 start:
   %_64 = alloca %"alloc::sync::ArcInner<std::thread::Packet<'_, ()>>", align 8
   %_57 = alloca %"core::result::Result<alloc::ffi::c_str::CString, alloc::ffi::c_str::NulError>", align 8
@@ -1010,7 +981,7 @@ start:
   %scope_data = alloca ptr, align 8
   %f = alloca ptr, align 8
   store ptr %0, ptr %f, align 8
-  store ptr %1, ptr %scope_data, align 8
+  store ptr null, ptr %scope_data, align 8
   %2 = getelementptr inbounds %"std::thread::Builder", ptr %self, i64 0, i32 1
   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(24) %name, ptr noundef nonnull align 8 dereferenceable(24) %2, i64 24, i1 false)
   %3 = load i64, ptr %self, align 8, !range !5, !noundef !6
@@ -1069,17 +1040,17 @@ bb1:                                              ; preds = %bb39
   br label %bb42
 
 bb18:                                             ; preds = %bb28, %bb29
-  %16 = phi i32 [ %56, %bb28 ], [ %26, %bb29 ]
-  %17 = phi ptr [ %57, %bb28 ], [ %25, %bb29 ]
+  %16 = phi i32 [ %56, %bb28 ], [ %24, %bb29 ]
+  %17 = phi ptr [ %57, %bb28 ], [ %23, %bb29 ]
   %_51.1 = phi i8 [ %_48.014, %bb28 ], [ %_48.1, %bb29 ]
-  invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr nonnull align 8 %my_thread) #29
+  invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr nonnull align 8 %my_thread) #32
           to label %bb19 unwind label %terminate
 
 bb42:                                             ; preds = %bb1
   store ptr %_61, ptr %their_thread, align 8
   store i64 0, ptr %value, align 8
   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(24) %_15, ptr noundef nonnull align 8 dereferenceable(24) %value, i64 24, i1 false)
-  store ptr %1, ptr %data, align 8
+  store ptr null, ptr %data, align 8
   %18 = getelementptr inbounds %"std::thread::Packet<'_, ()>", ptr %data, i64 0, i32 1
   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(24) %18, ptr noundef nonnull align 8 dereferenceable(24) %_15, i64 24, i1 false)
   store i64 1, ptr %_64, align 8
@@ -1093,24 +1064,24 @@ bb42:                                             ; preds = %bb1
 cleanup.i:                                        ; preds = %bb42
   %21 = landingpad { ptr, i32 }
           cleanup
-  invoke fastcc void @"_ZN4core3ptr85drop_in_place$LT$alloc..sync..ArcInner$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17h4a7a9fc5db3d1201E"(ptr nonnull align 8 %_64) #29
-          to label %bb3.i unwind label %terminate.i
+  invoke fastcc void @"_ZN4core3ptr85drop_in_place$LT$alloc..sync..ArcInner$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17h4a7a9fc5db3d1201E"(ptr nonnull align 8 %_64) #32
+          to label %bb29.thread unwind label %terminate.i
 
 terminate.i:                                      ; preds = %cleanup.i
   %22 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 
-bb3.i:                                            ; preds = %cleanup.i
-  %23 = extractvalue { ptr, i32 } %21, 1
-  %24 = extractvalue { ptr, i32 } %21, 0
-  br label %bb28
-
 bb29:                                             ; preds = %bb17
-  %25 = extractvalue { ptr, i32 } %.pn.pn, 0
-  %26 = extractvalue { ptr, i32 } %.pn.pn, 1
+  %23 = extractvalue { ptr, i32 } %.pn.pn, 0
+  %24 = extractvalue { ptr, i32 } %.pn.pn, 1
   br i1 %.not2, label %bb18, label %bb28
+
+bb29.thread:                                      ; preds = %cleanup.i
+  %25 = extractvalue { ptr, i32 } %21, 1
+  %26 = extractvalue { ptr, i32 } %21, 0
+  br label %bb28
 
 bb43:                                             ; preds = %bb42
   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(48) %_4.i, ptr noundef nonnull align 8 dereferenceable(48) %_64, i64 48, i1 false)
@@ -1122,7 +1093,7 @@ bb17:                                             ; preds = %bb22, %bb23.thread,
   %.pn.pn = phi { ptr, i32 } [ %.pn, %bb26 ], [ %40, %bb23 ], [ %38, %bb23.thread ], [ %54, %bb22 ]
   %.not2 = phi i1 [ false, %bb26 ], [ true, %bb23 ], [ true, %bb23.thread ], [ true, %bb22 ]
   %_48.1 = phi i8 [ 1, %bb26 ], [ 0, %bb23 ], [ 0, %bb23.thread ], [ 0, %bb22 ]
-  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %my_packet) #29
+  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %my_packet) #32
           to label %bb29 unwind label %terminate
 
 bb2:                                              ; preds = %bb43
@@ -1185,13 +1156,13 @@ bb8:                                              ; preds = %bb6, %bb5
 cleanup.i28:                                      ; preds = %bb8
   %38 = landingpad { ptr, i32 }
           cleanup
-  invoke void @"_ZN4core3ptr148drop_in_place$LT$std..thread..Builder..spawn_unchecked_$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$C$$LP$$RP$$GT$..$u7b$$u7b$closure$u7d$$u7d$$GT$17h9a15adcd150c8f51E"(ptr nonnull align 8 %_33) #29
+  invoke void @"_ZN4core3ptr148drop_in_place$LT$std..thread..Builder..spawn_unchecked_$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$C$$LP$$RP$$GT$..$u7b$$u7b$closure$u7d$$u7d$$GT$17h9a15adcd150c8f51E"(ptr nonnull align 8 %_33) #32
           to label %bb23.thread unwind label %terminate.i29
 
 terminate.i29:                                    ; preds = %cleanup.i28
   %39 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 
 bb23.thread:                                      ; preds = %cleanup.i28
@@ -1242,7 +1213,7 @@ bb16:                                             ; preds = %bb12
           cleanup
   %48 = extractvalue { ptr, i32 } %47, 0
   %49 = extractvalue { ptr, i32 } %47, 1
-  invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr nonnull align 8 %my_thread) #29
+  invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr nonnull align 8 %my_thread) #32
           to label %bb21 unwind label %terminate
 
 bb13:                                             ; preds = %bb12
@@ -1259,34 +1230,34 @@ cleanup26:                                        ; preds = %bb13
   %52 = extractvalue { ptr, i32 } %50, 1
   br label %bb21
 
-terminate:                                        ; preds = %bb33, %bb32, %bb30, %bb28, %bb26, %bb24, %bb22, %bb16, %bb17, %bb18
+terminate:                                        ; preds = %bb32, %bb30, %bb28, %bb26, %bb24, %bb22, %bb16, %bb17, %bb18
   %53 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 
 bb22:                                             ; preds = %bb6
   %54 = landingpad { ptr, i32 }
           cleanup
-  invoke void @"_ZN4core3ptr148drop_in_place$LT$std..thread..Builder..spawn_unchecked_$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$C$$LP$$RP$$GT$..$u7b$$u7b$closure$u7d$$u7d$$GT$17h9a15adcd150c8f51E"(ptr nonnull align 8 %main) #29
+  invoke void @"_ZN4core3ptr148drop_in_place$LT$std..thread..Builder..spawn_unchecked_$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$C$$LP$$RP$$GT$..$u7b$$u7b$closure$u7d$$u7d$$GT$17h9a15adcd150c8f51E"(ptr nonnull align 8 %main) #32
           to label %bb17 unwind label %terminate
 
 bb24:                                             ; preds = %bb4, %bb44
   %55 = landingpad { ptr, i32 }
           cleanup
-  invoke fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hb0b9a9dea83cab12E"(ptr nonnull align 8 %output_capture) #29
+  invoke fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hb0b9a9dea83cab12E"(ptr nonnull align 8 %output_capture) #32
           to label %bb27 unwind label %terminate
 
 bb26:                                             ; preds = %bb27, %bb27.thread
   %.pn = phi { ptr, i32 } [ %55, %bb27 ], [ %29, %bb27.thread ]
-  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %their_packet) #29
+  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %their_packet) #32
           to label %bb17 unwind label %terminate
 
-bb28:                                             ; preds = %bb3.i, %bb29
-  %56 = phi i32 [ %23, %bb3.i ], [ %26, %bb29 ]
-  %57 = phi ptr [ %24, %bb3.i ], [ %25, %bb29 ]
-  %_48.014 = phi i8 [ 1, %bb3.i ], [ %_48.1, %bb29 ]
-  invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr nonnull align 8 %their_thread) #29
+bb28:                                             ; preds = %bb29.thread, %bb29
+  %56 = phi i32 [ %25, %bb29.thread ], [ %24, %bb29 ]
+  %57 = phi ptr [ %26, %bb29.thread ], [ %23, %bb29 ]
+  %_48.014 = phi i8 [ 1, %bb29.thread ], [ %_48.1, %bb29 ]
+  invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr nonnull align 8 %their_thread) #32
           to label %bb18 unwind label %terminate
 
 bb30:                                             ; preds = %bb34
@@ -1294,7 +1265,7 @@ bb30:                                             ; preds = %bb34
           cleanup
   %58 = extractvalue { ptr, i32 } %lpad.thr_comm.split-lp, 0
   %59 = extractvalue { ptr, i32 } %lpad.thr_comm.split-lp, 1
-  invoke fastcc void @"_ZN4core3ptr70drop_in_place$LT$core..option..Option$LT$alloc..string..String$GT$$GT$17he9731f028b4d5240E"(ptr nonnull align 8 %name) #29
+  invoke fastcc void @"_ZN4core3ptr70drop_in_place$LT$core..option..Option$LT$alloc..string..String$GT$$GT$17he9731f028b4d5240E"(ptr nonnull align 8 %name) #32
           to label %bb32 unwind label %terminate
 
 bb20:                                             ; preds = %bb19, %bb32
@@ -1308,10 +1279,10 @@ bb20:                                             ; preds = %bb19, %bb32
 bb32:                                             ; preds = %bb31.thread9, %bb30
   %63 = phi i32 [ %59, %bb30 ], [ %9, %bb31.thread9 ]
   %64 = phi ptr [ %58, %bb30 ], [ %8, %bb31.thread9 ]
-  invoke fastcc void @"_ZN4core3ptr103drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..thread..scoped..ScopeData$GT$$GT$$GT$17h34ae5684014898a2E"(ptr nonnull align 8 %scope_data) #29
+  invoke fastcc void @"_ZN4core3ptr103drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..thread..scoped..ScopeData$GT$$GT$$GT$17h34ae5684014898a2E"(ptr nonnull align 8 %scope_data) #32
           to label %bb20 unwind label %terminate
 
-bb21:                                             ; preds = %cleanup26, %bb16, %bb33, %bb20
+bb21:                                             ; preds = %bb33, %cleanup26, %bb16, %bb20
   %65 = phi i32 [ %52, %cleanup26 ], [ %49, %bb16 ], [ %60, %bb33 ], [ %60, %bb20 ]
   %66 = phi ptr [ %51, %cleanup26 ], [ %48, %bb16 ], [ %61, %bb33 ], [ %61, %bb20 ]
   %67 = insertvalue { ptr, i32 } poison, ptr %66, 0
@@ -1319,12 +1290,12 @@ bb21:                                             ; preds = %cleanup26, %bb16, %
   resume { ptr, i32 } %68
 
 bb33:                                             ; preds = %bb20
-  invoke fastcc void @"_ZN4core3ptr62drop_in_place$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$17h1e2d20d11bf7e77cE"(ptr nonnull align 8 %f) #29
-          to label %bb21 unwind label %terminate
+  call fastcc void @"_ZN4core3ptr62drop_in_place$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$17h1e2d20d11bf7e77cE"(ptr nonnull align 8 %f) #32
+  br label %bb21
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @_ZN3std6thread7Builder16spawn_unchecked_17h0614afa9c4685266E(ptr nocapture writeonly sret(%"core::result::Result<std::thread::JoinInner<'_, ()>, std::io::error::Error>") align 8 %_0, ptr nocapture readonly align 8 %self, ptr %0, ptr %1) unnamed_addr #0 personality ptr @rust_eh_personality {
+define internal fastcc void @_ZN3std6thread7Builder16spawn_unchecked_17h0614afa9c4685266E(ptr nocapture writeonly sret(%"core::result::Result<std::thread::JoinInner<'_, ()>, std::io::error::Error>") align 8 %_0, ptr nocapture readonly align 8 %self, ptr %0, ptr nocapture readnone %1) unnamed_addr #3 personality ptr @rust_eh_personality {
 start:
   %_64 = alloca %"alloc::sync::ArcInner<std::thread::Packet<'_, ()>>", align 8
   %_57 = alloca %"core::result::Result<alloc::ffi::c_str::CString, alloc::ffi::c_str::NulError>", align 8
@@ -1347,7 +1318,7 @@ start:
   %scope_data = alloca ptr, align 8
   %f = alloca ptr, align 8
   store ptr %0, ptr %f, align 8
-  store ptr %1, ptr %scope_data, align 8
+  store ptr null, ptr %scope_data, align 8
   %2 = getelementptr inbounds %"std::thread::Builder", ptr %self, i64 0, i32 1
   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(24) %name, ptr noundef nonnull align 8 dereferenceable(24) %2, i64 24, i1 false)
   %3 = load i64, ptr %self, align 8, !range !5, !noundef !6
@@ -1406,17 +1377,17 @@ bb1:                                              ; preds = %bb39
   br label %bb42
 
 bb18:                                             ; preds = %bb28, %bb29
-  %16 = phi i32 [ %56, %bb28 ], [ %26, %bb29 ]
-  %17 = phi ptr [ %57, %bb28 ], [ %25, %bb29 ]
+  %16 = phi i32 [ %56, %bb28 ], [ %24, %bb29 ]
+  %17 = phi ptr [ %57, %bb28 ], [ %23, %bb29 ]
   %_51.1 = phi i8 [ %_48.014, %bb28 ], [ %_48.1, %bb29 ]
-  invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr nonnull align 8 %my_thread) #29
+  invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr nonnull align 8 %my_thread) #32
           to label %bb19 unwind label %terminate
 
 bb42:                                             ; preds = %bb1
   store ptr %_61, ptr %their_thread, align 8
   store i64 0, ptr %value, align 8
   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(24) %_15, ptr noundef nonnull align 8 dereferenceable(24) %value, i64 24, i1 false)
-  store ptr %1, ptr %data, align 8
+  store ptr null, ptr %data, align 8
   %18 = getelementptr inbounds %"std::thread::Packet<'_, ()>", ptr %data, i64 0, i32 1
   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(24) %18, ptr noundef nonnull align 8 dereferenceable(24) %_15, i64 24, i1 false)
   store i64 1, ptr %_64, align 8
@@ -1430,24 +1401,24 @@ bb42:                                             ; preds = %bb1
 cleanup.i28:                                      ; preds = %bb42
   %21 = landingpad { ptr, i32 }
           cleanup
-  invoke fastcc void @"_ZN4core3ptr85drop_in_place$LT$alloc..sync..ArcInner$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17h4a7a9fc5db3d1201E"(ptr nonnull align 8 %_64) #29
-          to label %bb3.i30 unwind label %terminate.i29
+  invoke fastcc void @"_ZN4core3ptr85drop_in_place$LT$alloc..sync..ArcInner$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17h4a7a9fc5db3d1201E"(ptr nonnull align 8 %_64) #32
+          to label %bb29.thread unwind label %terminate.i29
 
 terminate.i29:                                    ; preds = %cleanup.i28
   %22 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 
-bb3.i30:                                          ; preds = %cleanup.i28
-  %23 = extractvalue { ptr, i32 } %21, 1
-  %24 = extractvalue { ptr, i32 } %21, 0
-  br label %bb28
-
 bb29:                                             ; preds = %bb17
-  %25 = extractvalue { ptr, i32 } %.pn.pn, 0
-  %26 = extractvalue { ptr, i32 } %.pn.pn, 1
+  %23 = extractvalue { ptr, i32 } %.pn.pn, 0
+  %24 = extractvalue { ptr, i32 } %.pn.pn, 1
   br i1 %.not2, label %bb18, label %bb28
+
+bb29.thread:                                      ; preds = %cleanup.i28
+  %25 = extractvalue { ptr, i32 } %21, 1
+  %26 = extractvalue { ptr, i32 } %21, 0
+  br label %bb28
 
 bb43:                                             ; preds = %bb42
   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(48) %_4.i27, ptr noundef nonnull align 8 dereferenceable(48) %_64, i64 48, i1 false)
@@ -1459,7 +1430,7 @@ bb17:                                             ; preds = %bb22, %bb23.thread,
   %.pn.pn = phi { ptr, i32 } [ %.pn, %bb26 ], [ %40, %bb23 ], [ %38, %bb23.thread ], [ %54, %bb22 ]
   %.not2 = phi i1 [ false, %bb26 ], [ true, %bb23 ], [ true, %bb23.thread ], [ true, %bb22 ]
   %_48.1 = phi i8 [ 1, %bb26 ], [ 0, %bb23 ], [ 0, %bb23.thread ], [ 0, %bb22 ]
-  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %my_packet) #29
+  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %my_packet) #32
           to label %bb29 unwind label %terminate
 
 bb2:                                              ; preds = %bb43
@@ -1522,13 +1493,13 @@ bb8:                                              ; preds = %bb6, %bb5
 cleanup.i:                                        ; preds = %bb8
   %38 = landingpad { ptr, i32 }
           cleanup
-  invoke void @"_ZN4core3ptr148drop_in_place$LT$std..thread..Builder..spawn_unchecked_$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$C$$LP$$RP$$GT$..$u7b$$u7b$closure$u7d$$u7d$$GT$17ha03b63e1e465940cE"(ptr nonnull align 8 %_33) #29
+  invoke void @"_ZN4core3ptr148drop_in_place$LT$std..thread..Builder..spawn_unchecked_$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$C$$LP$$RP$$GT$..$u7b$$u7b$closure$u7d$$u7d$$GT$17ha03b63e1e465940cE"(ptr nonnull align 8 %_33) #32
           to label %bb23.thread unwind label %terminate.i
 
 terminate.i:                                      ; preds = %cleanup.i
   %39 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 
 bb23.thread:                                      ; preds = %cleanup.i
@@ -1579,7 +1550,7 @@ bb16:                                             ; preds = %bb12
           cleanup
   %48 = extractvalue { ptr, i32 } %47, 0
   %49 = extractvalue { ptr, i32 } %47, 1
-  invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr nonnull align 8 %my_thread) #29
+  invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr nonnull align 8 %my_thread) #32
           to label %bb21 unwind label %terminate
 
 bb13:                                             ; preds = %bb12
@@ -1596,34 +1567,34 @@ cleanup26:                                        ; preds = %bb13
   %52 = extractvalue { ptr, i32 } %50, 1
   br label %bb21
 
-terminate:                                        ; preds = %bb33, %bb32, %bb30, %bb28, %bb26, %bb24, %bb22, %bb16, %bb17, %bb18
+terminate:                                        ; preds = %bb32, %bb30, %bb28, %bb26, %bb24, %bb22, %bb16, %bb17, %bb18
   %53 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 
 bb22:                                             ; preds = %bb6
   %54 = landingpad { ptr, i32 }
           cleanup
-  invoke void @"_ZN4core3ptr148drop_in_place$LT$std..thread..Builder..spawn_unchecked_$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$C$$LP$$RP$$GT$..$u7b$$u7b$closure$u7d$$u7d$$GT$17ha03b63e1e465940cE"(ptr nonnull align 8 %main) #29
+  invoke void @"_ZN4core3ptr148drop_in_place$LT$std..thread..Builder..spawn_unchecked_$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$C$$LP$$RP$$GT$..$u7b$$u7b$closure$u7d$$u7d$$GT$17ha03b63e1e465940cE"(ptr nonnull align 8 %main) #32
           to label %bb17 unwind label %terminate
 
 bb24:                                             ; preds = %bb4, %bb44
   %55 = landingpad { ptr, i32 }
           cleanup
-  invoke fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hb0b9a9dea83cab12E"(ptr nonnull align 8 %output_capture) #29
+  invoke fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hb0b9a9dea83cab12E"(ptr nonnull align 8 %output_capture) #32
           to label %bb27 unwind label %terminate
 
 bb26:                                             ; preds = %bb27, %bb27.thread
   %.pn = phi { ptr, i32 } [ %55, %bb27 ], [ %29, %bb27.thread ]
-  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %their_packet) #29
+  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %their_packet) #32
           to label %bb17 unwind label %terminate
 
-bb28:                                             ; preds = %bb3.i30, %bb29
-  %56 = phi i32 [ %23, %bb3.i30 ], [ %26, %bb29 ]
-  %57 = phi ptr [ %24, %bb3.i30 ], [ %25, %bb29 ]
-  %_48.014 = phi i8 [ 1, %bb3.i30 ], [ %_48.1, %bb29 ]
-  invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr nonnull align 8 %their_thread) #29
+bb28:                                             ; preds = %bb29.thread, %bb29
+  %56 = phi i32 [ %25, %bb29.thread ], [ %24, %bb29 ]
+  %57 = phi ptr [ %26, %bb29.thread ], [ %23, %bb29 ]
+  %_48.014 = phi i8 [ 1, %bb29.thread ], [ %_48.1, %bb29 ]
+  invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr nonnull align 8 %their_thread) #32
           to label %bb18 unwind label %terminate
 
 bb30:                                             ; preds = %bb34
@@ -1631,7 +1602,7 @@ bb30:                                             ; preds = %bb34
           cleanup
   %58 = extractvalue { ptr, i32 } %lpad.thr_comm.split-lp, 0
   %59 = extractvalue { ptr, i32 } %lpad.thr_comm.split-lp, 1
-  invoke fastcc void @"_ZN4core3ptr70drop_in_place$LT$core..option..Option$LT$alloc..string..String$GT$$GT$17he9731f028b4d5240E"(ptr nonnull align 8 %name) #29
+  invoke fastcc void @"_ZN4core3ptr70drop_in_place$LT$core..option..Option$LT$alloc..string..String$GT$$GT$17he9731f028b4d5240E"(ptr nonnull align 8 %name) #32
           to label %bb32 unwind label %terminate
 
 bb20:                                             ; preds = %bb19, %bb32
@@ -1645,10 +1616,10 @@ bb20:                                             ; preds = %bb19, %bb32
 bb32:                                             ; preds = %bb31.thread9, %bb30
   %63 = phi i32 [ %59, %bb30 ], [ %9, %bb31.thread9 ]
   %64 = phi ptr [ %58, %bb30 ], [ %8, %bb31.thread9 ]
-  invoke fastcc void @"_ZN4core3ptr103drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..thread..scoped..ScopeData$GT$$GT$$GT$17h34ae5684014898a2E"(ptr nonnull align 8 %scope_data) #29
+  invoke fastcc void @"_ZN4core3ptr103drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..thread..scoped..ScopeData$GT$$GT$$GT$17h34ae5684014898a2E"(ptr nonnull align 8 %scope_data) #32
           to label %bb20 unwind label %terminate
 
-bb21:                                             ; preds = %cleanup26, %bb16, %bb33, %bb20
+bb21:                                             ; preds = %bb33, %cleanup26, %bb16, %bb20
   %65 = phi i32 [ %52, %cleanup26 ], [ %49, %bb16 ], [ %60, %bb33 ], [ %60, %bb20 ]
   %66 = phi ptr [ %51, %cleanup26 ], [ %48, %bb16 ], [ %61, %bb33 ], [ %61, %bb20 ]
   %67 = insertvalue { ptr, i32 } poison, ptr %66, 0
@@ -1656,8 +1627,8 @@ bb21:                                             ; preds = %cleanup26, %bb16, %
   resume { ptr, i32 } %68
 
 bb33:                                             ; preds = %bb20
-  invoke fastcc void @"_ZN4core3ptr62drop_in_place$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$17h1022437b15102989E"(ptr nonnull align 8 %f) #29
-          to label %bb21 unwind label %terminate
+  call fastcc void @"_ZN4core3ptr62drop_in_place$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$17h1022437b15102989E"(ptr nonnull align 8 %f) #32
+  br label %bb21
 }
 
 ; Function Attrs: inlinehint nonlazybind uwtable
@@ -1765,13 +1736,13 @@ bb11:                                             ; preds = %bb6, %bb5
   %.not = phi i1 [ false, %bb5 ], [ true, %bb6 ]
   %lpad.thr_comm = landingpad { ptr, i32 }
           cleanup
-  invoke fastcc void @"_ZN4core3ptr62drop_in_place$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$17h1e2d20d11bf7e77cE"(ptr nonnull align 8 %f) #29
-          to label %bb20 unwind label %terminate
+  call fastcc void @"_ZN4core3ptr62drop_in_place$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$17h1e2d20d11bf7e77cE"(ptr nonnull align 8 %f) #32
+  br label %bb20
 
-terminate:                                        ; preds = %bb14, %bb16, %bb18, %bb19, %bb11
+terminate:                                        ; preds = %bb14, %bb18, %bb19
   %22 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 
 bb17:                                             ; preds = %bb19
@@ -1782,7 +1753,7 @@ bb19:                                             ; preds = %bb20.thread, %bb20
   %24 = phi ptr [ %4, %bb20.thread ], [ %2, %bb20 ]
   %_26.012 = phi i1 [ %_26.1, %bb20.thread ], [ false, %bb20 ]
   %_25.010 = phi i1 [ true, %bb20.thread ], [ false, %bb20 ]
-  invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr align 8 %_1) #29
+  invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr align 8 %_1) #32
           to label %bb17 unwind label %terminate
 
 bb15:                                             ; preds = %bb18, %bb17
@@ -1790,10 +1761,10 @@ bb15:                                             ; preds = %bb18, %bb17
 
 bb18:                                             ; preds = %bb17
   %25 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
-  invoke fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hb0b9a9dea83cab12E"(ptr nonnull align 8 %25) #29
+  invoke fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hb0b9a9dea83cab12E"(ptr nonnull align 8 %25) #32
           to label %bb15 unwind label %terminate
 
-bb13:                                             ; preds = %bb12, %bb20, %bb16, %bb15
+bb13:                                             ; preds = %bb16, %bb12, %bb20, %bb15
   %26 = phi i32 [ %23, %bb16 ], [ %23, %bb15 ], [ %1, %bb20 ], [ %13, %bb12 ]
   %27 = phi ptr [ %24, %bb16 ], [ %24, %bb15 ], [ %2, %bb20 ], [ %12, %bb12 ]
   %_23.092831 = phi i8 [ 1, %bb16 ], [ 1, %bb15 ], [ 1, %bb20 ], [ %_23.2.ph, %bb12 ]
@@ -1803,8 +1774,8 @@ bb13:                                             ; preds = %bb12, %bb20, %bb16,
 
 bb16:                                             ; preds = %bb15
   %29 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
-  invoke fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17h2a47c24c5a2cb5f6E"(ptr nonnull align 8 %29) #29
-          to label %bb13 unwind label %terminate
+  call fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17h2a47c24c5a2cb5f6E"(ptr nonnull align 8 %29) #32
+  br label %bb13
 
 bb10:                                             ; preds = %bb14, %bb13
   %30 = phi i32 [ %34, %bb14 ], [ %26, %bb13 ]
@@ -1817,7 +1788,7 @@ bb14:                                             ; preds = %bb13.thread, %bb13
   %34 = phi i32 [ %20, %bb13.thread ], [ %26, %bb13 ]
   %35 = phi ptr [ %19, %bb13.thread ], [ %27, %bb13 ]
   %36 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
-  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %36) #29
+  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %36) #32
           to label %bb10 unwind label %terminate
 }
 
@@ -1926,13 +1897,13 @@ bb11:                                             ; preds = %bb6, %bb5
   %.not = phi i1 [ false, %bb5 ], [ true, %bb6 ]
   %lpad.thr_comm = landingpad { ptr, i32 }
           cleanup
-  invoke fastcc void @"_ZN4core3ptr62drop_in_place$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$17h1022437b15102989E"(ptr nonnull align 8 %f) #29
-          to label %bb20 unwind label %terminate
+  call fastcc void @"_ZN4core3ptr62drop_in_place$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$17h1022437b15102989E"(ptr nonnull align 8 %f) #32
+  br label %bb20
 
-terminate:                                        ; preds = %bb14, %bb16, %bb18, %bb19, %bb11
+terminate:                                        ; preds = %bb14, %bb18, %bb19
   %22 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 
 bb17:                                             ; preds = %bb19
@@ -1943,7 +1914,7 @@ bb19:                                             ; preds = %bb20.thread, %bb20
   %24 = phi ptr [ %4, %bb20.thread ], [ %2, %bb20 ]
   %_26.012 = phi i1 [ %_26.1, %bb20.thread ], [ false, %bb20 ]
   %_25.010 = phi i1 [ true, %bb20.thread ], [ false, %bb20 ]
-  invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr align 8 %_1) #29
+  invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr align 8 %_1) #32
           to label %bb17 unwind label %terminate
 
 bb15:                                             ; preds = %bb18, %bb17
@@ -1951,10 +1922,10 @@ bb15:                                             ; preds = %bb18, %bb17
 
 bb18:                                             ; preds = %bb17
   %25 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
-  invoke fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hb0b9a9dea83cab12E"(ptr nonnull align 8 %25) #29
+  invoke fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hb0b9a9dea83cab12E"(ptr nonnull align 8 %25) #32
           to label %bb15 unwind label %terminate
 
-bb13:                                             ; preds = %bb12, %bb20, %bb16, %bb15
+bb13:                                             ; preds = %bb16, %bb12, %bb20, %bb15
   %26 = phi i32 [ %23, %bb16 ], [ %23, %bb15 ], [ %1, %bb20 ], [ %13, %bb12 ]
   %27 = phi ptr [ %24, %bb16 ], [ %24, %bb15 ], [ %2, %bb20 ], [ %12, %bb12 ]
   %_23.092831 = phi i8 [ 1, %bb16 ], [ 1, %bb15 ], [ 1, %bb20 ], [ %_23.2.ph, %bb12 ]
@@ -1964,8 +1935,8 @@ bb13:                                             ; preds = %bb12, %bb20, %bb16,
 
 bb16:                                             ; preds = %bb15
   %29 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
-  invoke fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17h64c80effd66a67aeE"(ptr nonnull align 8 %29) #29
-          to label %bb13 unwind label %terminate
+  call fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17h64c80effd66a67aeE"(ptr nonnull align 8 %29) #32
+  br label %bb13
 
 bb10:                                             ; preds = %bb14, %bb13
   %30 = phi i32 [ %34, %bb14 ], [ %26, %bb13 ]
@@ -1978,7 +1949,7 @@ bb14:                                             ; preds = %bb13.thread, %bb13
   %34 = phi i32 [ %20, %bb13.thread ], [ %26, %bb13 ]
   %35 = phi ptr [ %19, %bb13.thread ], [ %27, %bb13 ]
   %36 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
-  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %36) #29
+  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %36) #32
           to label %bb10 unwind label %terminate
 }
 
@@ -1997,13 +1968,13 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc { ptr, ptr } @_ZN3std9panicking3try17h1180b512d3c6df28E(ptr %f) unnamed_addr #0 {
+define internal fastcc { ptr, ptr } @_ZN3std9panicking3try17h1180b512d3c6df28E(ptr %f) unnamed_addr #3 {
 start:
   %data = alloca %"std::panicking::try::Data<core::panic::unwind_safe::AssertUnwindSafe<{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}::{closure#0}}>, ()>", align 8
   %0 = icmp ne ptr %f, null
   tail call void @llvm.assume(i1 %0)
   store ptr %f, ptr %data, align 8
-  %1 = call fastcc i32 @__rust_try(ptr nonnull @_ZN3std9panicking3try7do_call17h7f1e88548aac6577E, ptr nonnull %data, ptr nonnull @_ZN3std9panicking3try8do_catch17hd9cdc6439e142313E)
+  %1 = call fastcc i32 @__rust_try(ptr nonnull @_ZN3std9panicking3try7do_call17h7f1e88548aac6577E, ptr nonnull %data, ptr nonnull @_ZN3std9panicking3try8do_catch17hd9cdc6439e142313E), !range !13
   %2 = icmp eq i32 %1, 0
   br i1 %2, label %bb2, label %bb3
 
@@ -2025,13 +1996,13 @@ bb4:                                              ; preds = %bb3, %bb2
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc { ptr, ptr } @_ZN3std9panicking3try17h2e729e5efe975db1E(ptr align 8 %f) unnamed_addr #0 {
+define internal fastcc { ptr, ptr } @_ZN3std9panicking3try17h2e729e5efe975db1E(ptr align 8 %f) unnamed_addr #3 {
 start:
   %data = alloca %"std::panicking::try::Data<core::panic::unwind_safe::AssertUnwindSafe<{closure@<std::thread::Packet<'_, ()> as core::ops::drop::Drop>::drop::{closure#0}}>, ()>", align 8
   %0 = icmp ne ptr %f, null
   tail call void @llvm.assume(i1 %0)
   store ptr %f, ptr %data, align 8
-  %1 = call fastcc i32 @__rust_try(ptr nonnull @_ZN3std9panicking3try7do_call17hc4d0324b6b2e9fecE, ptr nonnull %data, ptr nonnull @_ZN3std9panicking3try8do_catch17hc34136e473709636E)
+  %1 = call fastcc i32 @__rust_try(ptr nonnull @_ZN3std9panicking3try7do_call17hc4d0324b6b2e9fecE, ptr nonnull %data, ptr nonnull @_ZN3std9panicking3try8do_catch17hc34136e473709636E), !range !13
   %2 = icmp eq i32 %1, 0
   br i1 %2, label %bb2, label %bb3
 
@@ -2053,13 +2024,13 @@ bb4:                                              ; preds = %bb3, %bb2
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc { ptr, ptr } @_ZN3std9panicking3try17hb338a3e1f402b5c3E(ptr %f) unnamed_addr #0 {
+define internal fastcc { ptr, ptr } @_ZN3std9panicking3try17hb338a3e1f402b5c3E(ptr %f) unnamed_addr #3 {
 start:
   %data = alloca %"std::panicking::try::Data<core::panic::unwind_safe::AssertUnwindSafe<{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}::{closure#0}}>, ()>", align 8
   %0 = icmp ne ptr %f, null
   tail call void @llvm.assume(i1 %0)
   store ptr %f, ptr %data, align 8
-  %1 = call fastcc i32 @__rust_try(ptr nonnull @_ZN3std9panicking3try7do_call17h884d2486ad7a52f8E, ptr nonnull %data, ptr nonnull @_ZN3std9panicking3try8do_catch17h3b6757f55ce8cd1aE)
+  %1 = call fastcc i32 @__rust_try(ptr nonnull @_ZN3std9panicking3try7do_call17h884d2486ad7a52f8E, ptr nonnull %data, ptr nonnull @_ZN3std9panicking3try8do_catch17h3b6757f55ce8cd1aE), !range !13
   %2 = icmp eq i32 %1, 0
   br i1 %2, label %bb2, label %bb3
 
@@ -2105,7 +2076,7 @@ start:
 }
 
 ; Function Attrs: inlinehint nounwind nonlazybind uwtable
-define internal void @_ZN3std9panicking3try8do_catch17h3b6757f55ce8cd1aE(ptr nocapture writeonly %data, ptr %payload) unnamed_addr #6 personality ptr @rust_eh_personality {
+define internal void @_ZN3std9panicking3try8do_catch17h3b6757f55ce8cd1aE(ptr nocapture writeonly %data, ptr %payload) unnamed_addr #7 personality ptr @rust_eh_personality {
 start:
   %0 = invoke { ptr, ptr } @_ZN3std9panicking3try7cleanup17h6d4e570bbe25440aE(ptr %payload)
           to label %bb1 unwind label %terminate
@@ -2113,7 +2084,7 @@ start:
 terminate:                                        ; preds = %start
   %1 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  tail call void @_ZN4core9panicking19panic_cannot_unwind17hfa9f734a74de1f5aE() #25
+  tail call void @_ZN4core9panicking19panic_cannot_unwind17hfa9f734a74de1f5aE() #28
   unreachable
 
 bb1:                                              ; preds = %start
@@ -2126,7 +2097,7 @@ bb1:                                              ; preds = %start
 }
 
 ; Function Attrs: inlinehint nounwind nonlazybind uwtable
-define internal void @_ZN3std9panicking3try8do_catch17hc34136e473709636E(ptr nocapture writeonly %data, ptr %payload) unnamed_addr #6 personality ptr @rust_eh_personality {
+define internal void @_ZN3std9panicking3try8do_catch17hc34136e473709636E(ptr nocapture writeonly %data, ptr %payload) unnamed_addr #7 personality ptr @rust_eh_personality {
 start:
   %0 = invoke { ptr, ptr } @_ZN3std9panicking3try7cleanup17h6d4e570bbe25440aE(ptr %payload)
           to label %bb1 unwind label %terminate
@@ -2134,7 +2105,7 @@ start:
 terminate:                                        ; preds = %start
   %1 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  tail call void @_ZN4core9panicking19panic_cannot_unwind17hfa9f734a74de1f5aE() #25
+  tail call void @_ZN4core9panicking19panic_cannot_unwind17hfa9f734a74de1f5aE() #28
   unreachable
 
 bb1:                                              ; preds = %start
@@ -2147,7 +2118,7 @@ bb1:                                              ; preds = %start
 }
 
 ; Function Attrs: inlinehint nounwind nonlazybind uwtable
-define internal void @_ZN3std9panicking3try8do_catch17hd9cdc6439e142313E(ptr nocapture writeonly %data, ptr %payload) unnamed_addr #6 personality ptr @rust_eh_personality {
+define internal void @_ZN3std9panicking3try8do_catch17hd9cdc6439e142313E(ptr nocapture writeonly %data, ptr %payload) unnamed_addr #7 personality ptr @rust_eh_personality {
 start:
   %0 = invoke { ptr, ptr } @_ZN3std9panicking3try7cleanup17h6d4e570bbe25440aE(ptr %payload)
           to label %bb1 unwind label %terminate
@@ -2155,7 +2126,7 @@ start:
 terminate:                                        ; preds = %start
   %1 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  tail call void @_ZN4core9panicking19panic_cannot_unwind17hfa9f734a74de1f5aE() #25
+  tail call void @_ZN4core9panicking19panic_cannot_unwind17hfa9f734a74de1f5aE() #28
   unreachable
 
 bb1:                                              ; preds = %start
@@ -2168,7 +2139,7 @@ bb1:                                              ; preds = %start
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal zeroext i1 @"_ZN42_$LT$$RF$T$u20$as$u20$core..fmt..Debug$GT$3fmt17h22c52efaacbaa520E"(ptr nocapture readonly align 8 %self, ptr align 8 %f) unnamed_addr #0 {
+define internal zeroext i1 @"_ZN42_$LT$$RF$T$u20$as$u20$core..fmt..Debug$GT$3fmt17h22c52efaacbaa520E"(ptr nocapture readonly align 8 %self, ptr align 8 %f) unnamed_addr #3 {
 start:
   %_3 = load ptr, ptr %self, align 8, !nonnull !6, !align !10, !noundef !6
   %_0 = tail call fastcc zeroext i1 @"_ZN66_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..fmt..Debug$GT$3fmt17h55a3f328046c2aa2E"(ptr nonnull align 8 %_3, ptr align 8 %f)
@@ -2176,7 +2147,7 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal zeroext i1 @"_ZN42_$LT$$RF$T$u20$as$u20$core..fmt..Debug$GT$3fmt17h41685aa6829f33f8E"(ptr nocapture readonly align 8 %self, ptr align 8 %f) unnamed_addr #0 {
+define internal zeroext i1 @"_ZN42_$LT$$RF$T$u20$as$u20$core..fmt..Debug$GT$3fmt17h41685aa6829f33f8E"(ptr nocapture readonly align 8 %self, ptr align 8 %f) unnamed_addr #3 {
 start:
   %_3 = load ptr, ptr %self, align 8, !nonnull !6, !align !11, !noundef !6
   %_0 = tail call fastcc zeroext i1 @"_ZN4core3fmt3num49_$LT$impl$u20$core..fmt..Debug$u20$for$u20$u8$GT$3fmt17h64d915fbb64bb224E"(ptr nonnull align 1 %_3, ptr align 8 %f)
@@ -2184,7 +2155,7 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal zeroext i1 @"_ZN42_$LT$$RF$T$u20$as$u20$core..fmt..Debug$GT$3fmt17h607224b099d83a83E"(ptr nocapture readonly align 8 %self, ptr align 8 %f) unnamed_addr #0 {
+define internal zeroext i1 @"_ZN42_$LT$$RF$T$u20$as$u20$core..fmt..Debug$GT$3fmt17h607224b099d83a83E"(ptr nocapture readonly align 8 %self, ptr align 8 %f) unnamed_addr #3 {
 start:
   %_3 = load ptr, ptr %self, align 8, !nonnull !6, !align !10, !noundef !6
   %_0 = tail call fastcc zeroext i1 @"_ZN65_$LT$alloc..vec..Vec$LT$T$C$A$GT$$u20$as$u20$core..fmt..Debug$GT$3fmt17h4f2cee7706fd2bf2E"(ptr nonnull align 8 %_3, ptr align 8 %f)
@@ -2192,7 +2163,7 @@ start:
 }
 
 ; Function Attrs: inlinehint nounwind nonlazybind uwtable
-define internal fastcc void @"_ZN48_$LT$$RF$A$u20$as$u20$core..alloc..Allocator$GT$10deallocate17h8d6ce8045515862aE"(ptr nocapture readonly align 8 %self, ptr %ptr, i64 %layout.0, i64 %layout.1) unnamed_addr #6 {
+define internal fastcc void @"_ZN48_$LT$$RF$A$u20$as$u20$core..alloc..Allocator$GT$10deallocate17h8d6ce8045515862aE"(ptr nocapture readonly align 8 %self, ptr %ptr, i64 %layout.0, i64 %layout.1) unnamed_addr #7 {
 start:
   %_4 = load ptr, ptr %self, align 8, !nonnull !6, !align !11, !noundef !6
   tail call fastcc void @"_ZN63_$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$10deallocate17h7c478c2d7e6163acE"(ptr nonnull align 1 %_4, ptr %ptr, i64 %layout.0, i64 %layout.1)
@@ -2200,7 +2171,7 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc zeroext i1 @"_ZN48_$LT$$u5b$T$u5d$$u20$as$u20$core..fmt..Debug$GT$3fmt17h8dd2312df886f187E"(ptr align 1 %self.0, i64 %self.1, ptr align 8 %f) unnamed_addr #0 {
+define internal fastcc zeroext i1 @"_ZN48_$LT$$u5b$T$u5d$$u20$as$u20$core..fmt..Debug$GT$3fmt17h8dd2312df886f187E"(ptr align 1 %self.0, i64 %self.1, ptr align 8 %f) unnamed_addr #3 {
 bb6:
   %_5 = alloca %"core::fmt::builders::DebugList<'_, '_>", align 8
   call void @_ZN4core3fmt9Formatter10debug_list17h149015fd7be1ba26E(ptr nonnull sret(%"core::fmt::builders::DebugList<'_, '_>") align 8 %_5, ptr align 8 %f)
@@ -2306,7 +2277,7 @@ bb6:                                              ; preds = %bb4, %bb3, %bb1
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal zeroext i1 @_ZN4core3fmt5Write10write_char17haece77ece7164350E(ptr nocapture align 8 %self, i32 %c) unnamed_addr #0 {
+define internal zeroext i1 @_ZN4core3fmt5Write10write_char17haece77ece7164350E(ptr nocapture align 8 %self, i32 %c) unnamed_addr #3 {
 start:
   %_6 = alloca [4 x i8], align 4
   store i32 0, ptr %_6, align 4
@@ -2318,14 +2289,14 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal zeroext i1 @_ZN4core3fmt5Write9write_fmt17hb8dd255043e35a0dE(ptr align 8 %self, ptr align 8 %args) unnamed_addr #0 {
+define internal zeroext i1 @_ZN4core3fmt5Write9write_fmt17hb8dd255043e35a0dE(ptr align 8 %self, ptr align 8 %args) unnamed_addr #3 {
 start:
   %_0 = tail call fastcc zeroext i1 @"_ZN75_$LT$$RF$mut$u20$W$u20$as$u20$core..fmt..Write..write_fmt..SpecWriteFmt$GT$14spec_write_fmt17h0f721f9c2f458448E"(ptr align 8 %self, ptr align 8 %args)
   ret i1 %_0
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc align 8 ptr @_ZN4core3fmt8builders9DebugList7entries17h5ba5105ff2dffedcE(ptr returned align 8 %self, ptr %entries.0, ptr %entries.1) unnamed_addr #0 personality ptr @rust_eh_personality {
+define internal fastcc align 8 ptr @_ZN4core3fmt8builders9DebugList7entries17h5ba5105ff2dffedcE(ptr returned align 8 %self, ptr %entries.0, ptr %entries.1) unnamed_addr #3 personality ptr @rust_eh_personality {
 start:
   %entry = alloca ptr, align 8
   %iter = alloca %"core::slice::iter::Iter<'_, u8>", align 8
@@ -2363,19 +2334,19 @@ bb10:                                             ; preds = %bb4
 }
 
 ; Function Attrs: inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(argmem: write) uwtable
-define internal fastcc void @_ZN4core3fmt9Arguments16new_v1_formatted17h7aa3691dee6b70c6E(ptr nocapture writeonly sret(%"core::fmt::Arguments<'_>") align 8 %_0, ptr align 8 %pieces.0, i64 %pieces.1, ptr align 8 %args.0, i64 %args.1, ptr align 8 %fmt.0, i64 %fmt.1) unnamed_addr #7 {
+define internal fastcc void @_ZN4core3fmt9Arguments16new_v1_formatted17h7aa3691dee6b70c6E(ptr nocapture writeonly sret(%"core::fmt::Arguments<'_>") align 8 %_0, ptr align 8 %pieces.0, i64 %pieces.1, ptr align 8 %args.0, i64 %args.1, ptr align 8 %fmt.0, i64 %fmt.1) unnamed_addr #8 {
 start:
   store ptr %pieces.0, ptr %_0, align 8
   %0 = getelementptr inbounds i8, ptr %_0, i64 8
-  store i64 %pieces.1, ptr %0, align 8
+  store i64 2, ptr %0, align 8
   %1 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_0, i64 0, i32 2
   store ptr %fmt.0, ptr %1, align 8
   %2 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_0, i64 0, i32 2, i32 1
-  store i64 %fmt.1, ptr %2, align 8
+  store i64 1, ptr %2, align 8
   %3 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_0, i64 0, i32 1
   store ptr %args.0, ptr %3, align 8
   %4 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_0, i64 0, i32 1, i32 1
-  store i64 %args.1, ptr %4, align 8
+  store i64 1, ptr %4, align 8
   ret void
 }
 
@@ -2384,9 +2355,9 @@ define internal fastcc void @_ZN4core3fmt9Arguments6new_v117h6d95806376f8cb89E(p
 start:
   %_9 = alloca %"core::fmt::Arguments<'_>", align 8
   %_3 = icmp ult i64 %pieces.1, %args.1
-  %_7 = add i64 %args.1, 1
+  %_7 = add nuw nsw i64 %args.1, 1
   %_6 = icmp ult i64 %_7, %pieces.1
-  %or.cond = or i1 %_3, %_6
+  %or.cond = select i1 %_3, i1 true, i1 %_6
   br i1 %or.cond, label %bb6, label %bb3
 
 bb3:                                              ; preds = %start
@@ -2411,7 +2382,7 @@ bb6:                                              ; preds = %start
   store ptr @alloc_513570631223a12912d85da2bec3b15a, ptr %6, align 8
   %7 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_9, i64 0, i32 1, i32 1
   store i64 0, ptr %7, align 8
-  call void @_ZN4core9panicking9panic_fmt17ha3d303d496008cd4E(ptr nonnull align 8 %_9, ptr nonnull align 8 @alloc_429c82a8a757ba4eb6ada2ea4793308e) #27
+  call void @_ZN4core9panicking9panic_fmt17ha3d303d496008cd4E(ptr nonnull align 8 %_9, ptr nonnull align 8 @alloc_429c82a8a757ba4eb6ada2ea4793308e) #30
   unreachable
 }
 
@@ -2433,7 +2404,7 @@ start:
 define internal i32 @"_ZN4core3ops8function6FnOnce40call_once$u7b$$u7b$vtable.shim$u7d$$u7d$17hdb5d1a81f27fa1bdE"(ptr nocapture readonly %_1) unnamed_addr #1 {
 start:
   %0 = load ptr, ptr %_1, align 8, !nonnull !6, !noundef !6
-  %_0 = tail call fastcc i32 @_ZN4core3ops8function6FnOnce9call_once17he9af646701908836E(ptr nonnull %0)
+  %_0 = tail call fastcc i32 @_ZN4core3ops8function6FnOnce9call_once17he9af646701908836E(ptr nonnull %0), !range !14
   ret i32 %_0
 }
 
@@ -2474,7 +2445,7 @@ start:
   %_1 = alloca ptr, align 8
   store ptr %0, ptr %_1, align 8
   %_0 = invoke i32 @"_ZN3std2rt10lang_start28_$u7b$$u7b$closure$u7d$$u7d$17h7fa128403f6a9962E"(ptr nonnull align 8 %_1)
-          to label %bb1 unwind label %bb3
+          to label %bb1 unwind label %bb3, !range !14
 
 bb3:                                              ; preds = %start
   %1 = landingpad { ptr, i32 }
@@ -2486,14 +2457,14 @@ bb1:                                              ; preds = %start
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr101drop_in_place$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$17heb00ceacde916619E"(ptr align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr101drop_in_place$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$17heb00ceacde916619E"(ptr align 8 %_1) unnamed_addr #3 {
 start:
   tail call fastcc void @"_ZN71_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h30c76118a26b338aE"(ptr align 8 %_1)
   ret void
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr101drop_in_place$LT$std..io..error..ErrorData$LT$alloc..boxed..Box$LT$std..io..error..Custom$GT$$GT$$GT$17h6c0fd03ae9cb2524E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr101drop_in_place$LT$std..io..error..ErrorData$LT$alloc..boxed..Box$LT$std..io..error..Custom$GT$$GT$$GT$17h6c0fd03ae9cb2524E"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 {
 start:
   %0 = load i8, ptr %_1, align 8, !range !8, !noundef !6
   %_2 = zext i8 %0 to i64
@@ -2512,7 +2483,7 @@ bb1:                                              ; preds = %bb2, %start, %start
   ret void
 }
 
-; Function Attrs: nonlazybind uwtable
+; Function Attrs: nounwind nonlazybind uwtable
 define internal fastcc void @"_ZN4core3ptr103drop_in_place$LT$alloc..sync..Weak$LT$std..thread..scoped..ScopeData$C$$RF$alloc..alloc..Global$GT$$GT$17ha285c91d6c4611b4E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
 start:
   tail call fastcc void @"_ZN72_$LT$alloc..sync..Weak$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17ha1201885555766bcE"(ptr align 8 %_1)
@@ -2520,7 +2491,7 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr103drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..thread..scoped..ScopeData$GT$$GT$$GT$17h34ae5684014898a2E"(ptr align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr103drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..thread..scoped..ScopeData$GT$$GT$$GT$17h34ae5684014898a2E"(ptr align 8 %_1) unnamed_addr #3 {
 start:
   %0 = load ptr, ptr %_1, align 8, !noundef !6
   %1 = icmp eq ptr %0, null
@@ -2534,7 +2505,7 @@ bb2:                                              ; preds = %start
   br label %bb1
 }
 
-; Function Attrs: nonlazybind uwtable
+; Function Attrs: nounwind nonlazybind uwtable
 define internal fastcc void @"_ZN4core3ptr108drop_in_place$LT$alloc..sync..Weak$LT$std..thread..Packet$LT$$LP$$RP$$GT$$C$$RF$alloc..alloc..Global$GT$$GT$17he123a7eabf47f862E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
 start:
   tail call fastcc void @"_ZN72_$LT$alloc..sync..Weak$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17ha07c092f71fc2ebeE"(ptr align 8 %_1)
@@ -2542,7 +2513,7 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr118drop_in_place$LT$alloc..boxed..Box$LT$dyn$u20$core..error..Error$u2b$core..marker..Send$u2b$core..marker..Sync$GT$$GT$17h4599f0e61a8f1175E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 personality ptr @rust_eh_personality {
+define internal fastcc void @"_ZN4core3ptr118drop_in_place$LT$alloc..boxed..Box$LT$dyn$u20$core..error..Error$u2b$core..marker..Send$u2b$core..marker..Sync$GT$$GT$17h4599f0e61a8f1175E"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 personality ptr @rust_eh_personality {
 start:
   %_6.0 = load ptr, ptr %_1, align 8, !noundef !6
   %0 = getelementptr inbounds i8, ptr %_1, i64 8
@@ -2554,7 +2525,7 @@ start:
 bb4:                                              ; preds = %start
   %2 = landingpad { ptr, i32 }
           cleanup
-  call fastcc void @"_ZN72_$LT$alloc..boxed..Box$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17he35e4951fc4d56c2E"(ptr nonnull align 8 %_1) #29
+  call fastcc void @"_ZN72_$LT$alloc..boxed..Box$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17he35e4951fc4d56c2E"(ptr nonnull align 8 %_1) #32
   br label %bb1
 
 bb3:                                              ; preds = %start
@@ -2565,21 +2536,21 @@ bb1:                                              ; preds = %bb4
   resume { ptr, i32 } %2
 }
 
-; Function Attrs: nonlazybind uwtable
+; Function Attrs: nounwind nonlazybind uwtable
 define internal fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17h2a47c24c5a2cb5f6E"(ptr align 8 %_1) unnamed_addr #0 {
 start:
   tail call fastcc void @"_ZN104_$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$T$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h14eb6e8c357ce55fE"(ptr align 8 %_1)
   ret void
 }
 
-; Function Attrs: nonlazybind uwtable
+; Function Attrs: nounwind nonlazybind uwtable
 define internal fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17h64c80effd66a67aeE"(ptr align 8 %_1) unnamed_addr #0 {
 start:
   tail call fastcc void @"_ZN104_$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$T$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h02da2f82e1afd6baE"(ptr align 8 %_1)
   ret void
 }
 
-; Function Attrs: nonlazybind uwtable
+; Function Attrs: nounwind nonlazybind uwtable
 define internal fastcc void @"_ZN4core3ptr129drop_in_place$LT$alloc..sync..Weak$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$C$$RF$alloc..alloc..Global$GT$$GT$17h37250d1cd3654365E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
 start:
   tail call fastcc void @"_ZN72_$LT$alloc..sync..Weak$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17ha481c71cf98ea80dE"(ptr align 8 %_1)
@@ -2587,7 +2558,7 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hb0b9a9dea83cab12E"(ptr align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hb0b9a9dea83cab12E"(ptr align 8 %_1) unnamed_addr #3 {
 start:
   %0 = load ptr, ptr %_1, align 8, !noundef !6
   %1 = icmp eq ptr %0, null
@@ -2602,7 +2573,7 @@ bb2:                                              ; preds = %start
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr130drop_in_place$LT$core..result..Result$LT$$LP$$RP$$C$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$$GT$17h65e6886abc00f331E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr130drop_in_place$LT$core..result..Result$LT$$LP$$RP$$C$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$$GT$17h65e6886abc00f331E"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 {
 start:
   %0 = load ptr, ptr %_1, align 8, !noundef !6
   %1 = icmp eq ptr %0, null
@@ -2617,7 +2588,7 @@ bb2:                                              ; preds = %start
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal void @"_ZN4core3ptr148drop_in_place$LT$std..thread..Builder..spawn_unchecked_$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$C$$LP$$RP$$GT$..$u7b$$u7b$closure$u7d$$u7d$$GT$17h9a15adcd150c8f51E"(ptr align 8 %_1) unnamed_addr #0 personality ptr @rust_eh_personality {
+define internal void @"_ZN4core3ptr148drop_in_place$LT$std..thread..Builder..spawn_unchecked_$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$C$$LP$$RP$$GT$..$u7b$$u7b$closure$u7d$$u7d$$GT$17h9a15adcd150c8f51E"(ptr align 8 %_1) unnamed_addr #3 personality ptr @rust_eh_personality {
 start:
   invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr align 8 %_1)
           to label %bb8 unwind label %bb5
@@ -2626,7 +2597,7 @@ bb5:                                              ; preds = %start
   %0 = landingpad { ptr, i32 }
           cleanup
   %1 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
-  invoke fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hb0b9a9dea83cab12E"(ptr nonnull align 8 %1) #29
+  invoke fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hb0b9a9dea83cab12E"(ptr nonnull align 8 %1) #32
           to label %bb4 unwind label %terminate
 
 bb8:                                              ; preds = %start
@@ -2637,8 +2608,8 @@ bb8:                                              ; preds = %start
 bb4:                                              ; preds = %cleanup1, %bb5
   %.pn = phi { ptr, i32 } [ %4, %cleanup1 ], [ %0, %bb5 ]
   %3 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
-  invoke fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17h2a47c24c5a2cb5f6E"(ptr nonnull align 8 %3) #29
-          to label %bb3 unwind label %terminate
+  call fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17h2a47c24c5a2cb5f6E"(ptr nonnull align 8 %3) #32
+  br label %bb3
 
 cleanup1:                                         ; preds = %bb8
   %4 = landingpad { ptr, i32 }
@@ -2647,37 +2618,31 @@ cleanup1:                                         ; preds = %bb8
 
 bb7:                                              ; preds = %bb8
   %5 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
-  invoke fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17h2a47c24c5a2cb5f6E"(ptr nonnull align 8 %5)
-          to label %bb6 unwind label %cleanup2
+  call fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17h2a47c24c5a2cb5f6E"(ptr nonnull align 8 %5)
+  br label %bb6
 
-bb3:                                              ; preds = %cleanup2, %bb4
-  %.pn2 = phi { ptr, i32 } [ %7, %cleanup2 ], [ %.pn, %bb4 ]
+bb3:                                              ; preds = %bb4
   %6 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
-  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %6) #29
+  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %6) #32
           to label %bb1 unwind label %terminate
 
-cleanup2:                                         ; preds = %bb7
-  %7 = landingpad { ptr, i32 }
-          cleanup
-  br label %bb3
-
 bb6:                                              ; preds = %bb7
-  %8 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
-  tail call fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %8)
+  %7 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:16:28: 16:35}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
+  tail call fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %7)
   ret void
 
-terminate:                                        ; preds = %bb3, %bb4, %bb5
-  %9 = landingpad { ptr, i32 }
+terminate:                                        ; preds = %bb3, %bb5
+  %8 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  tail call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  tail call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 
 bb1:                                              ; preds = %bb3
-  resume { ptr, i32 } %.pn2
+  resume { ptr, i32 } %.pn
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal void @"_ZN4core3ptr148drop_in_place$LT$std..thread..Builder..spawn_unchecked_$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$C$$LP$$RP$$GT$..$u7b$$u7b$closure$u7d$$u7d$$GT$17ha03b63e1e465940cE"(ptr align 8 %_1) unnamed_addr #0 personality ptr @rust_eh_personality {
+define internal void @"_ZN4core3ptr148drop_in_place$LT$std..thread..Builder..spawn_unchecked_$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$C$$LP$$RP$$GT$..$u7b$$u7b$closure$u7d$$u7d$$GT$17ha03b63e1e465940cE"(ptr align 8 %_1) unnamed_addr #3 personality ptr @rust_eh_personality {
 start:
   invoke fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr align 8 %_1)
           to label %bb8 unwind label %bb5
@@ -2686,7 +2651,7 @@ bb5:                                              ; preds = %start
   %0 = landingpad { ptr, i32 }
           cleanup
   %1 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 2
-  invoke fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hb0b9a9dea83cab12E"(ptr nonnull align 8 %1) #29
+  invoke fastcc void @"_ZN4core3ptr129drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$$GT$$GT$17hb0b9a9dea83cab12E"(ptr nonnull align 8 %1) #32
           to label %bb4 unwind label %terminate
 
 bb8:                                              ; preds = %start
@@ -2697,8 +2662,8 @@ bb8:                                              ; preds = %start
 bb4:                                              ; preds = %cleanup1, %bb5
   %.pn = phi { ptr, i32 } [ %4, %cleanup1 ], [ %0, %bb5 ]
   %3 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
-  invoke fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17h64c80effd66a67aeE"(ptr nonnull align 8 %3) #29
-          to label %bb3 unwind label %terminate
+  call fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17h64c80effd66a67aeE"(ptr nonnull align 8 %3) #32
+  br label %bb3
 
 cleanup1:                                         ; preds = %bb8
   %4 = landingpad { ptr, i32 }
@@ -2707,37 +2672,31 @@ cleanup1:                                         ; preds = %bb8
 
 bb7:                                              ; preds = %bb8
   %5 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
-  invoke fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17h64c80effd66a67aeE"(ptr nonnull align 8 %5)
-          to label %bb6 unwind label %cleanup2
+  call fastcc void @"_ZN4core3ptr123drop_in_place$LT$std..thread..Builder..spawn_unchecked_..MaybeDangling$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$$GT$17h64c80effd66a67aeE"(ptr nonnull align 8 %5)
+  br label %bb6
 
-bb3:                                              ; preds = %cleanup2, %bb4
-  %.pn2 = phi { ptr, i32 } [ %7, %cleanup2 ], [ %.pn, %bb4 ]
+bb3:                                              ; preds = %bb4
   %6 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
-  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %6) #29
+  invoke fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %6) #32
           to label %bb1 unwind label %terminate
 
-cleanup2:                                         ; preds = %bb7
-  %7 = landingpad { ptr, i32 }
-          cleanup
-  br label %bb3
-
 bb6:                                              ; preds = %bb7
-  %8 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
-  tail call fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %8)
+  %7 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
+  tail call fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr nonnull align 8 %7)
   ret void
 
-terminate:                                        ; preds = %bb3, %bb4, %bb5
-  %9 = landingpad { ptr, i32 }
+terminate:                                        ; preds = %bb3, %bb5
+  %8 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  tail call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  tail call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 
 bb1:                                              ; preds = %bb3
-  resume { ptr, i32 } %.pn2
+  resume { ptr, i32 } %.pn
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr158drop_in_place$LT$core..option..Option$LT$core..result..Result$LT$$LP$$RP$$C$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$$GT$$GT$17hc6d8376cb0915d32E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr158drop_in_place$LT$core..option..Option$LT$core..result..Result$LT$$LP$$RP$$C$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$$GT$$GT$17hc6d8376cb0915d32E"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 {
 start:
   %_2 = load i64, ptr %_1, align 8, !range !5, !noundef !6
   %0 = icmp eq i64 %_2, 0
@@ -2753,26 +2712,26 @@ bb2:                                              ; preds = %start
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr188drop_in_place$LT$core..cell..UnsafeCell$LT$core..option..Option$LT$core..result..Result$LT$$LP$$RP$$C$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$$GT$$GT$$GT$17hed197b31cfad7610E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr188drop_in_place$LT$core..cell..UnsafeCell$LT$core..option..Option$LT$core..result..Result$LT$$LP$$RP$$C$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$$GT$$GT$$GT$17hed197b31cfad7610E"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 {
 start:
   tail call fastcc void @"_ZN4core3ptr158drop_in_place$LT$core..option..Option$LT$core..result..Result$LT$$LP$$RP$$C$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$$GT$$GT$17hc6d8376cb0915d32E"(ptr align 8 %_1)
   ret void
 }
 
 ; Function Attrs: inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(none) uwtable
-define internal void @"_ZN4core3ptr26drop_in_place$LT$usize$GT$17hfb66c53a5a521ee8E"(ptr nocapture readnone align 8 %_1) unnamed_addr #4 {
+define internal void @"_ZN4core3ptr26drop_in_place$LT$usize$GT$17hfb66c53a5a521ee8E"(ptr nocapture readnone align 8 %_1) unnamed_addr #5 {
 start:
   ret void
 }
 
 ; Function Attrs: inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(none) uwtable
-define internal void @"_ZN4core3ptr27drop_in_place$LT$$RF$u8$GT$17h6cd7d665a9d04546E"(ptr nocapture readnone align 8 %_1) unnamed_addr #4 {
+define internal void @"_ZN4core3ptr27drop_in_place$LT$$RF$u8$GT$17h6cd7d665a9d04546E"(ptr nocapture readnone align 8 %_1) unnamed_addr #5 {
 start:
   ret void
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr39drop_in_place$LT$std..thread..Inner$GT$17hed6807f3af19e972E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr39drop_in_place$LT$std..thread..Inner$GT$17hed6807f3af19e972E"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 {
 start:
   %0 = getelementptr inbounds %"std::thread::Inner", ptr %_1, i64 0, i32 1
   tail call fastcc void @"_ZN4core3ptr75drop_in_place$LT$core..option..Option$LT$alloc..ffi..c_str..CString$GT$$GT$17h3aa54ca79e952464E"(ptr nonnull align 8 %0)
@@ -2780,35 +2739,35 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr align 8 %_1) unnamed_addr #3 {
 start:
   tail call fastcc void @"_ZN4core3ptr85drop_in_place$LT$core..pin..Pin$LT$alloc..sync..Arc$LT$std..thread..Inner$GT$$GT$$GT$17h8b60135d25248713E"(ptr align 8 %_1)
   ret void
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr42drop_in_place$LT$alloc..string..String$GT$17h2ec68369b105f4feE"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr42drop_in_place$LT$alloc..string..String$GT$17h2ec68369b105f4feE"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 {
 start:
   tail call fastcc void @"_ZN4core3ptr46drop_in_place$LT$alloc..vec..Vec$LT$u8$GT$$GT$17h5abab8083f94f39aE"(ptr align 8 %_1)
   ret void
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal void @"_ZN4core3ptr42drop_in_place$LT$std..io..error..Error$GT$17h7d1d75c373ff4d89E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
+define internal void @"_ZN4core3ptr42drop_in_place$LT$std..io..error..Error$GT$17h7d1d75c373ff4d89E"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 {
 start:
   tail call fastcc void @"_ZN4core3ptr57drop_in_place$LT$std..io..error..repr_bitpacked..Repr$GT$17h773f12d2ed4c78f8E"(ptr align 8 %_1)
   ret void
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr43drop_in_place$LT$std..io..error..Custom$GT$17h41e640860dfa8d1cE"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr43drop_in_place$LT$std..io..error..Custom$GT$17h41e640860dfa8d1cE"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 {
 start:
   tail call fastcc void @"_ZN4core3ptr118drop_in_place$LT$alloc..boxed..Box$LT$dyn$u20$core..error..Error$u2b$core..marker..Send$u2b$core..marker..Sync$GT$$GT$17h4599f0e61a8f1175E"(ptr align 8 %_1)
   ret void
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr46drop_in_place$LT$alloc..vec..Vec$LT$u8$GT$$GT$17h5abab8083f94f39aE"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 personality ptr @rust_eh_personality {
+define internal fastcc void @"_ZN4core3ptr46drop_in_place$LT$alloc..vec..Vec$LT$u8$GT$$GT$17h5abab8083f94f39aE"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 personality ptr @rust_eh_personality {
 start:
   br label %bb4
 
@@ -2818,7 +2777,7 @@ bb4:                                              ; preds = %start
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr47drop_in_place$LT$alloc..ffi..c_str..CString$GT$17hd930ed50f616ea2dE"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 personality ptr @rust_eh_personality {
+define internal fastcc void @"_ZN4core3ptr47drop_in_place$LT$alloc..ffi..c_str..CString$GT$17hd930ed50f616ea2dE"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 personality ptr @rust_eh_personality {
 start:
   call fastcc void @"_ZN68_$LT$alloc..ffi..c_str..CString$u20$as$u20$core..ops..drop..Drop$GT$4drop17h0b9bc1f84a3eb08aE"(ptr align 8 %_1)
   br label %bb4
@@ -2829,13 +2788,13 @@ bb4:                                              ; preds = %start
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal void @"_ZN4core3ptr48drop_in_place$LT$alloc..ffi..c_str..NulError$GT$17h9e8886b3dfeaaf35E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
+define internal void @"_ZN4core3ptr48drop_in_place$LT$alloc..ffi..c_str..NulError$GT$17h9e8886b3dfeaaf35E"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 {
 start:
   tail call fastcc void @"_ZN4core3ptr46drop_in_place$LT$alloc..vec..Vec$LT$u8$GT$$GT$17h5abab8083f94f39aE"(ptr align 8 %_1)
   ret void
 }
 
-; Function Attrs: nonlazybind uwtable
+; Function Attrs: nounwind nonlazybind uwtable
 define internal fastcc void @"_ZN4core3ptr48drop_in_place$LT$alloc..sync..Arc$LT$i32$GT$$GT$17h1f25d607f7e62a6aE"(ptr align 8 %_1) unnamed_addr #0 {
 start:
   tail call fastcc void @"_ZN71_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17hc4ebf5a3e7bee33dE"(ptr align 8 %_1)
@@ -2843,27 +2802,27 @@ start:
 }
 
 ; Function Attrs: inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(none) uwtable
-define internal void @"_ZN4core3ptr50drop_in_place$LT$$RF$alloc..vec..Vec$LT$u8$GT$$GT$17hfcc93603a5391f48E"(ptr nocapture readnone align 8 %_1) unnamed_addr #4 {
+define internal void @"_ZN4core3ptr50drop_in_place$LT$$RF$alloc..vec..Vec$LT$u8$GT$$GT$17hfcc93603a5391f48E"(ptr nocapture readnone align 8 %_1) unnamed_addr #5 {
 start:
   ret void
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr51drop_in_place$LT$std..thread..scoped..ScopeData$GT$17h4f50f4a07c4b36eeE"(ptr align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr51drop_in_place$LT$std..thread..scoped..ScopeData$GT$17h4f50f4a07c4b36eeE"(ptr align 8 %_1) unnamed_addr #3 {
 start:
   tail call fastcc void @"_ZN4core3ptr40drop_in_place$LT$std..thread..Thread$GT$17hfe663bec07996c9bE"(ptr align 8 %_1)
   ret void
 }
 
 ; Function Attrs: nounwind nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr53drop_in_place$LT$alloc..raw_vec..RawVec$LT$u8$GT$$GT$17hcd73054ee8a7c839E"(ptr nocapture readonly align 8 %_1) unnamed_addr #8 {
+define internal fastcc void @"_ZN4core3ptr53drop_in_place$LT$alloc..raw_vec..RawVec$LT$u8$GT$$GT$17hcd73054ee8a7c839E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
 start:
   tail call fastcc void @"_ZN77_$LT$alloc..raw_vec..RawVec$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17hcf56acc0e9adfdf3E"(ptr align 8 %_1)
   ret void
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr56drop_in_place$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$17h52f8764e96c5cc5aE"(ptr align 8 %_1) unnamed_addr #0 personality ptr @rust_eh_personality {
+define internal fastcc void @"_ZN4core3ptr56drop_in_place$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$17h52f8764e96c5cc5aE"(ptr align 8 %_1) unnamed_addr #3 personality ptr @rust_eh_personality {
 start:
   invoke fastcc void @"_ZN70_$LT$std..thread..Packet$LT$T$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h0545363ab4f56b6bE"(ptr align 8 %_1)
           to label %bb6 unwind label %bb4
@@ -2871,7 +2830,7 @@ start:
 bb4:                                              ; preds = %start
   %0 = landingpad { ptr, i32 }
           cleanup
-  invoke fastcc void @"_ZN4core3ptr103drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..thread..scoped..ScopeData$GT$$GT$$GT$17h34ae5684014898a2E"(ptr align 8 %_1) #29
+  invoke fastcc void @"_ZN4core3ptr103drop_in_place$LT$core..option..Option$LT$alloc..sync..Arc$LT$std..thread..scoped..ScopeData$GT$$GT$$GT$17h34ae5684014898a2E"(ptr align 8 %_1) #32
           to label %bb3 unwind label %terminate
 
 bb6:                                              ; preds = %start
@@ -2881,7 +2840,7 @@ bb6:                                              ; preds = %start
 bb3:                                              ; preds = %cleanup1, %bb4
   %.pn = phi { ptr, i32 } [ %2, %cleanup1 ], [ %0, %bb4 ]
   %1 = getelementptr inbounds %"std::thread::Packet<'_, ()>", ptr %_1, i64 0, i32 1
-  invoke fastcc void @"_ZN4core3ptr188drop_in_place$LT$core..cell..UnsafeCell$LT$core..option..Option$LT$core..result..Result$LT$$LP$$RP$$C$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$$GT$$GT$$GT$17hed197b31cfad7610E"(ptr nonnull align 8 %1) #29
+  invoke fastcc void @"_ZN4core3ptr188drop_in_place$LT$core..cell..UnsafeCell$LT$core..option..Option$LT$core..result..Result$LT$$LP$$RP$$C$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$$GT$$GT$$GT$17hed197b31cfad7610E"(ptr nonnull align 8 %1) #32
           to label %bb1 unwind label %terminate
 
 cleanup1:                                         ; preds = %bb6
@@ -2897,7 +2856,7 @@ bb5:                                              ; preds = %bb6
 terminate:                                        ; preds = %bb3, %bb4
   %4 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  tail call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  tail call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 
 bb1:                                              ; preds = %bb3
@@ -2905,27 +2864,27 @@ bb1:                                              ; preds = %bb3
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr57drop_in_place$LT$std..io..error..repr_bitpacked..Repr$GT$17h773f12d2ed4c78f8E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr57drop_in_place$LT$std..io..error..repr_bitpacked..Repr$GT$17h773f12d2ed4c78f8E"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 {
 start:
   tail call fastcc void @"_ZN78_$LT$std..io..error..repr_bitpacked..Repr$u20$as$u20$core..ops..drop..Drop$GT$4drop17h8c79df5a06fe4d53E"(ptr align 8 %_1)
   ret void
 }
 
 ; Function Attrs: nounwind nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr58drop_in_place$LT$alloc..boxed..Box$LT$$u5b$u8$u5d$$GT$$GT$17hfb263dde9c25ad57E"(ptr nocapture readonly align 8 %_1) unnamed_addr #8 personality ptr @rust_eh_personality {
+define internal fastcc void @"_ZN4core3ptr58drop_in_place$LT$alloc..boxed..Box$LT$$u5b$u8$u5d$$GT$$GT$17hfb263dde9c25ad57E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 personality ptr @rust_eh_personality {
 bb3:
-  tail call fastcc void @"_ZN72_$LT$alloc..boxed..Box$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h240b2e9c5227bac4E"(ptr align 8 %_1)
+  tail call fastcc void @"_ZN72_$LT$alloc..boxed..Box$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h240b2e9c5227bac4E"(ptr nonnull align 8 %_1)
   ret void
 }
 
-; Function Attrs: nonlazybind uwtable
+; Function Attrs: nounwind nonlazybind uwtable
 define internal fastcc void @"_ZN4core3ptr62drop_in_place$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$17h1022437b15102989E"(ptr align 8 %_1) unnamed_addr #0 {
 start:
   tail call fastcc void @"_ZN4core3ptr48drop_in_place$LT$alloc..sync..Arc$LT$i32$GT$$GT$17h1f25d607f7e62a6aE"(ptr align 8 %_1)
   ret void
 }
 
-; Function Attrs: nonlazybind uwtable
+; Function Attrs: nounwind nonlazybind uwtable
 define internal fastcc void @"_ZN4core3ptr62drop_in_place$LT$std_rs..main..$u7b$$u7b$closure$u7d$$u7d$$GT$17h1e2d20d11bf7e77cE"(ptr align 8 %_1) unnamed_addr #0 {
 start:
   tail call fastcc void @"_ZN4core3ptr48drop_in_place$LT$alloc..sync..Arc$LT$i32$GT$$GT$17h1f25d607f7e62a6aE"(ptr align 8 %_1)
@@ -2933,14 +2892,14 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr63drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Inner$GT$$GT$17h0910c7b11e772e39E"(ptr align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr63drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Inner$GT$$GT$17h0910c7b11e772e39E"(ptr align 8 %_1) unnamed_addr #3 {
 start:
   tail call fastcc void @"_ZN71_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17hb59dce9416a274b7E"(ptr align 8 %_1)
   ret void
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr68drop_in_place$LT$alloc..boxed..Box$LT$std..io..error..Custom$GT$$GT$17hb5dc6e76ce0923dbE"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 personality ptr @rust_eh_personality {
+define internal fastcc void @"_ZN4core3ptr68drop_in_place$LT$alloc..boxed..Box$LT$std..io..error..Custom$GT$$GT$17hb5dc6e76ce0923dbE"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 personality ptr @rust_eh_personality {
 start:
   %_6 = load ptr, ptr %_1, align 8, !noundef !6
   invoke fastcc void @"_ZN4core3ptr43drop_in_place$LT$std..io..error..Custom$GT$17h41e640860dfa8d1cE"(ptr align 8 %_6)
@@ -2949,7 +2908,7 @@ start:
 bb4:                                              ; preds = %start
   %0 = landingpad { ptr, i32 }
           cleanup
-  call fastcc void @"_ZN72_$LT$alloc..boxed..Box$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h5fc5d18f1043749bE"(ptr nonnull align 8 %_1) #29
+  call fastcc void @"_ZN72_$LT$alloc..boxed..Box$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h5fc5d18f1043749bE"(ptr nonnull align 8 %_1) #32
   br label %bb1
 
 bb3:                                              ; preds = %start
@@ -2961,7 +2920,7 @@ bb1:                                              ; preds = %bb4
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr70drop_in_place$LT$core..option..Option$LT$alloc..string..String$GT$$GT$17he9731f028b4d5240E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr70drop_in_place$LT$core..option..Option$LT$alloc..string..String$GT$$GT$17he9731f028b4d5240E"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 {
 start:
   %0 = load i64, ptr %_1, align 8, !range !12, !noundef !6
   %1 = icmp eq i64 %0, -9223372036854775808
@@ -2976,14 +2935,14 @@ bb2:                                              ; preds = %start
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr75drop_in_place$LT$alloc..sync..Arc$LT$std..thread..scoped..ScopeData$GT$$GT$17h1051556b691f08bdE"(ptr align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr75drop_in_place$LT$alloc..sync..Arc$LT$std..thread..scoped..ScopeData$GT$$GT$17h1051556b691f08bdE"(ptr align 8 %_1) unnamed_addr #3 {
 start:
   tail call fastcc void @"_ZN71_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h264139602938d12aE"(ptr align 8 %_1)
   ret void
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr75drop_in_place$LT$core..option..Option$LT$alloc..ffi..c_str..CString$GT$$GT$17h3aa54ca79e952464E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr75drop_in_place$LT$core..option..Option$LT$alloc..ffi..c_str..CString$GT$$GT$17h3aa54ca79e952464E"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 {
 start:
   %0 = load ptr, ptr %_1, align 8, !noundef !6
   %1 = icmp eq ptr %0, null
@@ -2997,7 +2956,7 @@ bb2:                                              ; preds = %start
   br label %bb1
 }
 
-; Function Attrs: nonlazybind uwtable
+; Function Attrs: nounwind nonlazybind uwtable
 define internal fastcc void @"_ZN4core3ptr76drop_in_place$LT$alloc..sync..Weak$LT$i32$C$$RF$alloc..alloc..Global$GT$$GT$17h658e1b749d031549E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
 start:
   tail call fastcc void @"_ZN72_$LT$alloc..sync..Weak$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17hfa4b1f6f07816d15E"(ptr align 8 %_1)
@@ -3005,14 +2964,14 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr76drop_in_place$LT$core..cell..UnsafeCell$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$17h3518a23b2de82dc8E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr76drop_in_place$LT$core..cell..UnsafeCell$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$17h3518a23b2de82dc8E"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 {
 start:
   tail call fastcc void @"_ZN4core3ptr46drop_in_place$LT$alloc..vec..Vec$LT$u8$GT$$GT$17h5abab8083f94f39aE"(ptr align 8 %_1)
   ret void
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr77drop_in_place$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$17h13613f48335f66ecE"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr77drop_in_place$LT$std..sync..mutex..Mutex$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$17h13613f48335f66ecE"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 {
 start:
   %0 = getelementptr inbounds %"std::sync::mutex::Mutex<alloc::vec::Vec<u8>>", ptr %_1, i64 0, i32 3
   tail call fastcc void @"_ZN4core3ptr76drop_in_place$LT$core..cell..UnsafeCell$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$17h3518a23b2de82dc8E"(ptr nonnull align 8 %0)
@@ -3020,14 +2979,14 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr80drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17hdd1e9cb9f54fbb86E"(ptr align 8 %_1) unnamed_addr #3 {
 start:
   tail call fastcc void @"_ZN71_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17hea83621e3685ce0dE"(ptr align 8 %_1)
   ret void
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr81drop_in_place$LT$core..result..Result$LT$$LP$$RP$$C$std..io..error..Error$GT$$GT$17h9aa1d68d5586ba81E"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr81drop_in_place$LT$core..result..Result$LT$$LP$$RP$$C$std..io..error..Error$GT$$GT$17h9aa1d68d5586ba81E"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 {
 start:
   %0 = load ptr, ptr %_1, align 8, !noundef !6
   %1 = icmp eq ptr %0, null
@@ -3042,7 +3001,7 @@ bb2:                                              ; preds = %start
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr85drop_in_place$LT$alloc..sync..ArcInner$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17h4a7a9fc5db3d1201E"(ptr align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr85drop_in_place$LT$alloc..sync..ArcInner$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$$GT$17h4a7a9fc5db3d1201E"(ptr align 8 %_1) unnamed_addr #3 {
 start:
   %0 = getelementptr inbounds %"alloc::sync::ArcInner<std::thread::Packet<'_, ()>>", ptr %_1, i64 0, i32 2
   tail call fastcc void @"_ZN4core3ptr56drop_in_place$LT$std..thread..Packet$LT$$LP$$RP$$GT$$GT$17h52f8764e96c5cc5aE"(ptr nonnull align 8 %0)
@@ -3050,20 +3009,20 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN4core3ptr85drop_in_place$LT$core..pin..Pin$LT$alloc..sync..Arc$LT$std..thread..Inner$GT$$GT$$GT$17h8b60135d25248713E"(ptr align 8 %_1) unnamed_addr #0 {
+define internal fastcc void @"_ZN4core3ptr85drop_in_place$LT$core..pin..Pin$LT$alloc..sync..Arc$LT$std..thread..Inner$GT$$GT$$GT$17h8b60135d25248713E"(ptr align 8 %_1) unnamed_addr #3 {
 start:
   tail call fastcc void @"_ZN4core3ptr63drop_in_place$LT$alloc..sync..Arc$LT$std..thread..Inner$GT$$GT$17h0910c7b11e772e39E"(ptr align 8 %_1)
   ret void
 }
 
 ; Function Attrs: inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(none) uwtable
-define internal void @"_ZN4core3ptr85drop_in_place$LT$std..rt..lang_start$LT$$LP$$RP$$GT$..$u7b$$u7b$closure$u7d$$u7d$$GT$17he64ae37f094d2577E"(ptr nocapture readnone align 8 %_1) unnamed_addr #4 {
+define internal void @"_ZN4core3ptr85drop_in_place$LT$std..rt..lang_start$LT$$LP$$RP$$GT$..$u7b$$u7b$closure$u7d$$u7d$$GT$17he64ae37f094d2577E"(ptr nocapture readnone align 8 %_1) unnamed_addr #5 {
 start:
   ret void
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal void @"_ZN4core3ptr91drop_in_place$LT$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$17hbd95e1deb97397bdE"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 personality ptr @rust_eh_personality {
+define internal void @"_ZN4core3ptr91drop_in_place$LT$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$17hbd95e1deb97397bdE"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 personality ptr @rust_eh_personality {
 start:
   %_6.0 = load ptr, ptr %_1, align 8, !noundef !6
   %0 = getelementptr inbounds i8, ptr %_1, i64 8
@@ -3075,7 +3034,7 @@ start:
 bb4:                                              ; preds = %start
   %2 = landingpad { ptr, i32 }
           cleanup
-  call fastcc void @"_ZN72_$LT$alloc..boxed..Box$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17hbde74da799a67ac8E"(ptr nonnull align 8 %_1) #29
+  call fastcc void @"_ZN72_$LT$alloc..boxed..Box$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17hbde74da799a67ac8E"(ptr nonnull align 8 %_1) #32
   br label %bb1
 
 bb3:                                              ; preds = %start
@@ -3086,7 +3045,7 @@ bb1:                                              ; preds = %bb4
   resume { ptr, i32 } %2
 }
 
-; Function Attrs: nonlazybind uwtable
+; Function Attrs: nounwind nonlazybind uwtable
 define internal fastcc void @"_ZN4core3ptr91drop_in_place$LT$alloc..sync..Weak$LT$std..thread..Inner$C$$RF$alloc..alloc..Global$GT$$GT$17hfda44d03b7d1baadE"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
 start:
   tail call fastcc void @"_ZN72_$LT$alloc..sync..Weak$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h9301fd578ebcdf1eE"(ptr align 8 %_1)
@@ -3094,7 +3053,7 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal void @"_ZN4core3ptr97drop_in_place$LT$std..io..Write..write_fmt..Adapter$LT$std..sys..pal..unix..stdio..Stderr$GT$$GT$17he284c5d95baded8aE"(ptr nocapture readonly align 8 %_1) unnamed_addr #0 {
+define internal void @"_ZN4core3ptr97drop_in_place$LT$std..io..Write..write_fmt..Adapter$LT$std..sys..pal..unix..stdio..Stderr$GT$$GT$17he284c5d95baded8aE"(ptr nocapture readonly align 8 %_1) unnamed_addr #3 {
 start:
   %0 = getelementptr inbounds i8, ptr %_1, i64 8
   tail call fastcc void @"_ZN4core3ptr81drop_in_place$LT$core..result..Result$LT$$LP$$RP$$C$std..io..error..Error$GT$$GT$17h9aa1d68d5586ba81E"(ptr nonnull align 8 %0)
@@ -3104,451 +3063,124 @@ start:
 ; Function Attrs: inlinehint nonlazybind uwtable
 define internal fastcc { ptr, i64 } @_ZN4core4char7methods15encode_utf8_raw17hf4cecd0930e5c83aE(i32 %0, ptr align 1 %dst.0, i64 %dst.1) unnamed_addr #1 {
 start:
-  %_70 = alloca i64, align 8
-  %_63 = alloca [3 x %"core::fmt::rt::Argument<'_>"], align 8
-  %_59 = alloca %"core::fmt::Arguments<'_>", align 8
-  %len = alloca i64, align 8
-  %code = alloca i32, align 4
-  store i32 %0, ptr %code, align 4
   %_72 = icmp ult i32 %0, 128
-  br i1 %_72, label %bb1, label %bb13
+  br i1 %_72, label %bb6, label %bb13
 
 bb13:                                             ; preds = %start
   %_73 = icmp ult i32 %0, 2048
-  br i1 %_73, label %bb3, label %bb15
+  br i1 %_73, label %bb7, label %bb15
 
 bb15:                                             ; preds = %bb13
   %_74 = icmp ult i32 %0, 65536
-  br i1 %_74, label %bb4, label %bb5
+  br i1 %_74, label %bb8, label %bb9
 
-bb2:                                              ; preds = %bb5, %bb4, %bb3, %bb1
-  store i64 %dst.1, ptr %_70, align 8
-  store ptr %len, ptr %_63, align 8
-  %1 = getelementptr inbounds i8, ptr %_63, i64 8
-  store ptr @"_ZN4core3fmt3num3imp54_$LT$impl$u20$core..fmt..Display$u20$for$u20$usize$GT$3fmt17h16e2d8a35fcc5a92E", ptr %1, align 8
-  %2 = getelementptr inbounds [3 x %"core::fmt::rt::Argument<'_>"], ptr %_63, i64 0, i64 1
-  store ptr %code, ptr %2, align 8
-  %3 = getelementptr inbounds [3 x %"core::fmt::rt::Argument<'_>"], ptr %_63, i64 0, i64 1, i32 1
-  store ptr @"_ZN4core3fmt3num53_$LT$impl$u20$core..fmt..UpperHex$u20$for$u20$u32$GT$3fmt17h338e515addfde2e8E", ptr %3, align 8
-  %4 = getelementptr inbounds [3 x %"core::fmt::rt::Argument<'_>"], ptr %_63, i64 0, i64 2
-  store ptr %_70, ptr %4, align 8
-  %5 = getelementptr inbounds [3 x %"core::fmt::rt::Argument<'_>"], ptr %_63, i64 0, i64 2, i32 1
-  store ptr @"_ZN4core3fmt3num3imp54_$LT$impl$u20$core..fmt..Display$u20$for$u20$usize$GT$3fmt17h16e2d8a35fcc5a92E", ptr %5, align 8
-  call fastcc void @_ZN4core3fmt9Arguments6new_v117h6d95806376f8cb89E(ptr nonnull sret(%"core::fmt::Arguments<'_>") align 8 %_59, ptr nonnull align 8 @alloc_d51214f097f67314513b76e97e13aa6b, i64 3, ptr nonnull align 8 %_63, i64 3)
-  call void @_ZN4core9panicking9panic_fmt17ha3d303d496008cd4E(ptr nonnull align 8 %_59, ptr nonnull align 8 @alloc_269dcc21cdcd001c5a23eaa9fef31ea5) #27
-  unreachable
-
-bb1:                                              ; preds = %start
-  store i64 1, ptr %len, align 8
-  %_7.not = icmp eq i64 %dst.1, 0
-  br i1 %_7.not, label %bb2, label %bb6
-
-bb3:                                              ; preds = %bb13
-  store i64 2, ptr %len, align 8
-  %_9 = icmp ugt i64 %dst.1, 1
-  br i1 %_9, label %bb7, label %bb2
-
-bb4:                                              ; preds = %bb15
-  store i64 3, ptr %len, align 8
-  %_11 = icmp ugt i64 %dst.1, 2
-  br i1 %_11, label %bb8, label %bb2
-
-bb5:                                              ; preds = %bb15
-  store i64 4, ptr %len, align 8
-  %_13 = icmp ugt i64 %dst.1, 3
-  br i1 %_13, label %bb9, label %bb2
-
-bb6:                                              ; preds = %bb1
-  %6 = trunc i32 %0 to i8
-  store i8 %6, ptr %dst.0, align 1
+bb6:                                              ; preds = %start
+  %1 = trunc i32 %0 to i8
+  store i8 %1, ptr %dst.0, align 1
   br label %bb11
 
 bb11:                                             ; preds = %bb9, %bb8, %bb7, %bb6
   %index = phi i64 [ 4, %bb9 ], [ 3, %bb8 ], [ 2, %bb7 ], [ 1, %bb6 ]
-  %7 = tail call fastcc { ptr, i64 } @"_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$9index_mut17h8483439eb291afceE"(i64 0, i64 %index, ptr nonnull align 1 %dst.0, i64 %dst.1, ptr nonnull align 8 @alloc_41a0379ed06a3b1c22d2313ff030dc3d)
-  ret { ptr, i64 } %7
+  %2 = tail call fastcc { ptr, i64 } @"_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$9index_mut17h8483439eb291afceE"(i64 0, i64 %index, ptr nonnull align 1 %dst.0, i64 4, ptr nonnull align 8 @alloc_41a0379ed06a3b1c22d2313ff030dc3d)
+  ret { ptr, i64 } %2
 
-bb7:                                              ; preds = %bb3
+bb7:                                              ; preds = %bb13
   %_20 = lshr i32 %0, 6
-  %8 = trunc i32 %_20 to i8
-  %_18 = and i8 %8, 31
-  %9 = or i8 %_18, -64
-  store i8 %9, ptr %dst.0, align 1
-  %10 = trunc i32 %0 to i8
-  %_22 = and i8 %10, 63
-  %11 = getelementptr inbounds [0 x i8], ptr %dst.0, i64 0, i64 1
-  %12 = or i8 %_22, -128
-  store i8 %12, ptr %11, align 1
+  %3 = trunc i32 %_20 to i8
+  %_18 = and i8 %3, 31
+  %4 = or i8 %_18, -64
+  store i8 %4, ptr %dst.0, align 1
+  %5 = trunc i32 %0 to i8
+  %_22 = and i8 %5, 63
+  %6 = getelementptr inbounds [0 x i8], ptr %dst.0, i64 0, i64 1
+  %7 = or i8 %_22, -128
+  store i8 %7, ptr %6, align 1
   br label %bb11
 
-bb8:                                              ; preds = %bb4
+bb8:                                              ; preds = %bb15
   %_30 = lshr i32 %0, 12
-  %13 = trunc i32 %_30 to i8
-  %_28 = and i8 %13, 15
-  %14 = or i8 %_28, -32
-  store i8 %14, ptr %dst.0, align 1
+  %8 = trunc i32 %_30 to i8
+  %_28 = and i8 %8, 15
+  %9 = or i8 %_28, -32
+  store i8 %9, ptr %dst.0, align 1
   %_34 = lshr i32 %0, 6
-  %15 = trunc i32 %_34 to i8
-  %_32 = and i8 %15, 63
-  %16 = getelementptr inbounds [0 x i8], ptr %dst.0, i64 0, i64 1
-  %17 = or i8 %_32, -128
-  store i8 %17, ptr %16, align 1
-  %18 = trunc i32 %0 to i8
-  %_36 = and i8 %18, 63
-  %19 = getelementptr inbounds [0 x i8], ptr %dst.0, i64 0, i64 2
-  %20 = or i8 %_36, -128
-  store i8 %20, ptr %19, align 1
+  %10 = trunc i32 %_34 to i8
+  %_32 = and i8 %10, 63
+  %11 = getelementptr inbounds [0 x i8], ptr %dst.0, i64 0, i64 1
+  %12 = or i8 %_32, -128
+  store i8 %12, ptr %11, align 1
+  %13 = trunc i32 %0 to i8
+  %_36 = and i8 %13, 63
+  %14 = getelementptr inbounds [0 x i8], ptr %dst.0, i64 0, i64 2
+  %15 = or i8 %_36, -128
+  store i8 %15, ptr %14, align 1
   br label %bb11
 
-bb9:                                              ; preds = %bb5
+bb9:                                              ; preds = %bb15
   %_45 = lshr i32 %0, 18
-  %21 = trunc i32 %_45 to i8
-  %_43 = and i8 %21, 7
-  %22 = or i8 %_43, -16
-  store i8 %22, ptr %dst.0, align 1
+  %16 = trunc i32 %_45 to i8
+  %_43 = and i8 %16, 7
+  %17 = or i8 %_43, -16
+  store i8 %17, ptr %dst.0, align 1
   %_49 = lshr i32 %0, 12
-  %23 = trunc i32 %_49 to i8
-  %_47 = and i8 %23, 63
-  %24 = getelementptr inbounds [0 x i8], ptr %dst.0, i64 0, i64 1
-  %25 = or i8 %_47, -128
-  store i8 %25, ptr %24, align 1
+  %18 = trunc i32 %_49 to i8
+  %_47 = and i8 %18, 63
+  %19 = getelementptr inbounds [0 x i8], ptr %dst.0, i64 0, i64 1
+  %20 = or i8 %_47, -128
+  store i8 %20, ptr %19, align 1
   %_53 = lshr i32 %0, 6
-  %26 = trunc i32 %_53 to i8
-  %_51 = and i8 %26, 63
-  %27 = getelementptr inbounds [0 x i8], ptr %dst.0, i64 0, i64 2
-  %28 = or i8 %_51, -128
-  store i8 %28, ptr %27, align 1
-  %29 = trunc i32 %0 to i8
-  %_55 = and i8 %29, 63
-  %30 = getelementptr inbounds [0 x i8], ptr %dst.0, i64 0, i64 3
-  %31 = or i8 %_55, -128
-  store i8 %31, ptr %30, align 1
+  %21 = trunc i32 %_53 to i8
+  %_51 = and i8 %21, 63
+  %22 = getelementptr inbounds [0 x i8], ptr %dst.0, i64 0, i64 2
+  %23 = or i8 %_51, -128
+  store i8 %23, ptr %22, align 1
+  %24 = trunc i32 %0 to i8
+  %_55 = and i8 %24, 63
+  %25 = getelementptr inbounds [0 x i8], ptr %dst.0, i64 0, i64 3
+  %26 = or i8 %_55, -128
+  store i8 %26, ptr %25, align 1
   br label %bb11
 }
 
-; Function Attrs: inlinehint nonlazybind uwtable
-define internal fastcc i64 @_ZN4core4sync6atomic11atomic_load17ha5501a2b7c0523d0E(ptr nocapture readonly %dst, i8 %0) unnamed_addr #1 {
-start:
-  %_8 = alloca %"core::fmt::Arguments<'_>", align 8
-  %_5 = alloca %"core::fmt::Arguments<'_>", align 8
-  switch i8 %0, label %bb13 [
-    i8 0, label %bb2
-    i8 1, label %bb12
-    i8 2, label %bb3
-    i8 3, label %bb9
-    i8 4, label %bb4
-  ]
-
-bb13:                                             ; preds = %start
-  unreachable
-
-bb2:                                              ; preds = %start
-  %1 = load atomic i64, ptr %dst monotonic, align 8
-  br label %bb6
-
-bb3:                                              ; preds = %start
-  %2 = load atomic i64, ptr %dst acquire, align 8
-  br label %bb6
-
-bb4:                                              ; preds = %start
-  %3 = load atomic i64, ptr %dst seq_cst, align 8
-  br label %bb6
-
-bb6:                                              ; preds = %bb4, %bb3, %bb2
-  %_0.0 = phi i64 [ %3, %bb4 ], [ %2, %bb3 ], [ %1, %bb2 ]
-  ret i64 %_0.0
-
-bb12:                                             ; preds = %start
-  store ptr @alloc_cf8f91dd8bc9347b20052f6ccc905cd7, ptr %_5, align 8
-  %4 = getelementptr inbounds i8, ptr %_5, i64 8
-  store i64 1, ptr %4, align 8
-  %5 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_5, i64 0, i32 2
-  store ptr null, ptr %5, align 8
-  %6 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_5, i64 0, i32 1
-  store ptr @alloc_513570631223a12912d85da2bec3b15a, ptr %6, align 8
-  %7 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_5, i64 0, i32 1, i32 1
-  store i64 0, ptr %7, align 8
-  call void @_ZN4core9panicking9panic_fmt17ha3d303d496008cd4E(ptr nonnull align 8 %_5, ptr nonnull align 8 @alloc_48d392bf0e2643281b82a9991a80ce3e) #27
-  unreachable
-
-bb9:                                              ; preds = %start
-  store ptr @alloc_7e8e9a1d4bc7d0bbec692f0a50681e22, ptr %_8, align 8
-  %8 = getelementptr inbounds i8, ptr %_8, i64 8
-  store i64 1, ptr %8, align 8
-  %9 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_8, i64 0, i32 2
-  store ptr null, ptr %9, align 8
-  %10 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_8, i64 0, i32 1
-  store ptr @alloc_513570631223a12912d85da2bec3b15a, ptr %10, align 8
-  %11 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_8, i64 0, i32 1, i32 1
-  store i64 0, ptr %11, align 8
-  call void @_ZN4core9panicking9panic_fmt17ha3d303d496008cd4E(ptr nonnull align 8 %_8, ptr nonnull align 8 @alloc_dfe44fb7fb031d2db16abc42497398bf) #27
-  unreachable
+; Function Attrs: inlinehint mustprogress nofree norecurse nounwind nonlazybind willreturn memory(argmem: readwrite) uwtable
+define internal fastcc i64 @_ZN4core4sync6atomic11atomic_load17ha5501a2b7c0523d0E(ptr nocapture readonly %dst, i8 %0) unnamed_addr #9 {
+bb3:
+  %1 = load atomic i64, ptr %dst acquire, align 8
+  ret i64 %1
 }
 
-; Function Attrs: inlinehint nonlazybind uwtable
-define internal fastcc void @_ZN4core4sync6atomic12atomic_store17h560824ef49a803dbE(ptr nocapture writeonly %dst, i64 %val, i8 %0) unnamed_addr #1 {
-start:
-  %_9 = alloca %"core::fmt::Arguments<'_>", align 8
-  %_6 = alloca %"core::fmt::Arguments<'_>", align 8
-  switch i8 %0, label %bb13 [
-    i8 0, label %bb2
-    i8 1, label %bb3
-    i8 2, label %bb12
-    i8 3, label %bb9
-    i8 4, label %bb4
-  ]
-
-bb13:                                             ; preds = %start
-  unreachable
-
-bb2:                                              ; preds = %start
-  store atomic i64 %val, ptr %dst monotonic, align 8
-  br label %bb6
-
-bb3:                                              ; preds = %start
-  store atomic i64 %val, ptr %dst release, align 8
-  br label %bb6
-
-bb4:                                              ; preds = %start
-  store atomic i64 %val, ptr %dst seq_cst, align 8
-  br label %bb6
-
-bb6:                                              ; preds = %bb4, %bb3, %bb2
+; Function Attrs: inlinehint mustprogress nofree norecurse nounwind nonlazybind willreturn memory(argmem: readwrite) uwtable
+define internal fastcc void @_ZN4core4sync6atomic12atomic_store17h560824ef49a803dbE(ptr nocapture writeonly %dst, i64 %val, i8 %0) unnamed_addr #9 {
+bb3:
+  store atomic i64 1, ptr %dst release, align 8
   ret void
-
-bb12:                                             ; preds = %start
-  store ptr @alloc_47c752ba42fbab56d43a37cfd56e4899, ptr %_6, align 8
-  %1 = getelementptr inbounds i8, ptr %_6, i64 8
-  store i64 1, ptr %1, align 8
-  %2 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_6, i64 0, i32 2
-  store ptr null, ptr %2, align 8
-  %3 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_6, i64 0, i32 1
-  store ptr @alloc_513570631223a12912d85da2bec3b15a, ptr %3, align 8
-  %4 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_6, i64 0, i32 1, i32 1
-  store i64 0, ptr %4, align 8
-  call void @_ZN4core9panicking9panic_fmt17ha3d303d496008cd4E(ptr nonnull align 8 %_6, ptr nonnull align 8 @alloc_ae843a8c84d655d10428a15ea18409eb) #27
-  unreachable
-
-bb9:                                              ; preds = %start
-  store ptr @alloc_f8dbac861f87e25e445761cc4af66745, ptr %_9, align 8
-  %5 = getelementptr inbounds i8, ptr %_9, i64 8
-  store i64 1, ptr %5, align 8
-  %6 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_9, i64 0, i32 2
-  store ptr null, ptr %6, align 8
-  %7 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_9, i64 0, i32 1
-  store ptr @alloc_513570631223a12912d85da2bec3b15a, ptr %7, align 8
-  %8 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_9, i64 0, i32 1, i32 1
-  store i64 0, ptr %8, align 8
-  call void @_ZN4core9panicking9panic_fmt17ha3d303d496008cd4E(ptr nonnull align 8 %_9, ptr nonnull align 8 @alloc_175c4e9c9b5a5695d7238272ea88fed9) #27
-  unreachable
 }
 
-; Function Attrs: inlinehint nonlazybind uwtable
-define internal fastcc { i64, i64 } @_ZN4core4sync6atomic23atomic_compare_exchange17h42cbeb16fa4167feE(ptr nocapture %dst, i64 %old, i64 %new, i8 %0, i8 %1) unnamed_addr #1 {
-start:
-  %_20 = alloca %"core::fmt::Arguments<'_>", align 8
-  %_17 = alloca %"core::fmt::Arguments<'_>", align 8
-  switch i8 %0, label %bb7 [
-    i8 0, label %bb1
-    i8 1, label %bb3
-    i8 2, label %bb4
-    i8 3, label %bb5
-    i8 4, label %bb6
-  ]
+; Function Attrs: inlinehint mustprogress nofree norecurse nounwind nonlazybind willreturn memory(argmem: readwrite) uwtable
+define internal fastcc { i64, i64 } @_ZN4core4sync6atomic23atomic_compare_exchange17h42cbeb16fa4167feE(ptr nocapture %dst, i64 %old, i64 %new, i8 %0, i8 %1) unnamed_addr #9 {
+bb12:
+  %2 = cmpxchg ptr %dst, i64 1, i64 -1 acquire monotonic, align 8
+  %3 = extractvalue { i64, i1 } %2, 1
+  br i1 %3, label %bb26, label %bb27
 
-bb7:                                              ; preds = %start
-  unreachable
-
-bb1:                                              ; preds = %start
-  switch i8 %1, label %bb34 [
-    i8 0, label %bb9
-    i8 2, label %bb10
-    i8 4, label %bb11
-    i8 1, label %bb31
-  ]
-
-bb3:                                              ; preds = %start
-  switch i8 %1, label %bb34 [
-    i8 0, label %bb15
-    i8 2, label %bb16
-    i8 4, label %bb17
-    i8 1, label %bb31
-  ]
-
-bb4:                                              ; preds = %start
-  switch i8 %1, label %bb34 [
-    i8 0, label %bb12
-    i8 2, label %bb13
-    i8 4, label %bb14
-    i8 1, label %bb31
-  ]
-
-bb5:                                              ; preds = %start
-  switch i8 %1, label %bb34 [
-    i8 0, label %bb18
-    i8 2, label %bb19
-    i8 4, label %bb20
-    i8 1, label %bb31
-  ]
-
-bb6:                                              ; preds = %start
-  switch i8 %1, label %bb34 [
-    i8 0, label %bb21
-    i8 2, label %bb22
-    i8 4, label %bb23
-    i8 1, label %bb31
-  ]
-
-bb9:                                              ; preds = %bb1
-  %2 = cmpxchg ptr %dst, i64 %old, i64 %new monotonic monotonic, align 8
-  br label %bb25
-
-bb10:                                             ; preds = %bb1
-  %3 = cmpxchg ptr %dst, i64 %old, i64 %new monotonic acquire, align 8
-  br label %bb25
-
-bb11:                                             ; preds = %bb1
-  %4 = cmpxchg ptr %dst, i64 %old, i64 %new monotonic seq_cst, align 8
-  br label %bb25
-
-bb25:                                             ; preds = %bb23, %bb22, %bb21, %bb20, %bb19, %bb18, %bb14, %bb13, %bb12, %bb17, %bb16, %bb15, %bb11, %bb10, %bb9
-  %.pn = phi { i64, i1 } [ %16, %bb23 ], [ %15, %bb22 ], [ %14, %bb21 ], [ %13, %bb20 ], [ %12, %bb19 ], [ %11, %bb18 ], [ %10, %bb14 ], [ %9, %bb13 ], [ %8, %bb12 ], [ %7, %bb17 ], [ %6, %bb16 ], [ %5, %bb15 ], [ %4, %bb11 ], [ %3, %bb10 ], [ %2, %bb9 ]
-  %.in = extractvalue { i64, i1 } %.pn, 1
-  br i1 %.in, label %bb26, label %bb27
-
-bb15:                                             ; preds = %bb3
-  %5 = cmpxchg ptr %dst, i64 %old, i64 %new release monotonic, align 8
-  br label %bb25
-
-bb16:                                             ; preds = %bb3
-  %6 = cmpxchg ptr %dst, i64 %old, i64 %new release acquire, align 8
-  br label %bb25
-
-bb17:                                             ; preds = %bb3
-  %7 = cmpxchg ptr %dst, i64 %old, i64 %new release seq_cst, align 8
-  br label %bb25
-
-bb12:                                             ; preds = %bb4
-  %8 = cmpxchg ptr %dst, i64 %old, i64 %new acquire monotonic, align 8
-  br label %bb25
-
-bb13:                                             ; preds = %bb4
-  %9 = cmpxchg ptr %dst, i64 %old, i64 %new acquire acquire, align 8
-  br label %bb25
-
-bb14:                                             ; preds = %bb4
-  %10 = cmpxchg ptr %dst, i64 %old, i64 %new acquire seq_cst, align 8
-  br label %bb25
-
-bb18:                                             ; preds = %bb5
-  %11 = cmpxchg ptr %dst, i64 %old, i64 %new acq_rel monotonic, align 8
-  br label %bb25
-
-bb19:                                             ; preds = %bb5
-  %12 = cmpxchg ptr %dst, i64 %old, i64 %new acq_rel acquire, align 8
-  br label %bb25
-
-bb20:                                             ; preds = %bb5
-  %13 = cmpxchg ptr %dst, i64 %old, i64 %new acq_rel seq_cst, align 8
-  br label %bb25
-
-bb21:                                             ; preds = %bb6
-  %14 = cmpxchg ptr %dst, i64 %old, i64 %new seq_cst monotonic, align 8
-  br label %bb25
-
-bb22:                                             ; preds = %bb6
-  %15 = cmpxchg ptr %dst, i64 %old, i64 %new seq_cst acquire, align 8
-  br label %bb25
-
-bb23:                                             ; preds = %bb6
-  %16 = cmpxchg ptr %dst, i64 %old, i64 %new seq_cst seq_cst, align 8
-  br label %bb25
-
-bb27:                                             ; preds = %bb25
+bb27:                                             ; preds = %bb12
   br label %bb28
 
-bb26:                                             ; preds = %bb25
+bb26:                                             ; preds = %bb12
   br label %bb28
 
 bb28:                                             ; preds = %bb26, %bb27
   %storemerge = phi i64 [ 1, %bb27 ], [ 0, %bb26 ]
-  %17 = extractvalue { i64, i1 } %.pn, 0
-  %18 = insertvalue { i64, i64 } poison, i64 %storemerge, 0
-  %19 = insertvalue { i64, i64 } %18, i64 %17, 1
-  ret { i64, i64 } %19
-
-bb31:                                             ; preds = %bb6, %bb5, %bb4, %bb3, %bb1
-  store ptr @alloc_04ab601c54c6e0a22ff11d72dc7f4511, ptr %_20, align 8
-  %20 = getelementptr inbounds i8, ptr %_20, i64 8
-  store i64 1, ptr %20, align 8
-  %21 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_20, i64 0, i32 2
-  store ptr null, ptr %21, align 8
-  %22 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_20, i64 0, i32 1
-  store ptr @alloc_513570631223a12912d85da2bec3b15a, ptr %22, align 8
-  %23 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_20, i64 0, i32 1, i32 1
-  store i64 0, ptr %23, align 8
-  call void @_ZN4core9panicking9panic_fmt17ha3d303d496008cd4E(ptr nonnull align 8 %_20, ptr nonnull align 8 @alloc_e136ecadd4afd23d3c318b2f9131f147) #27
-  unreachable
-
-bb34:                                             ; preds = %bb6, %bb5, %bb4, %bb3, %bb1
-  store ptr @alloc_dd7d8f77c173bf31726eae321f955bec, ptr %_17, align 8
-  %24 = getelementptr inbounds i8, ptr %_17, i64 8
-  store i64 1, ptr %24, align 8
-  %25 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_17, i64 0, i32 2
-  store ptr null, ptr %25, align 8
-  %26 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_17, i64 0, i32 1
-  store ptr @alloc_513570631223a12912d85da2bec3b15a, ptr %26, align 8
-  %27 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_17, i64 0, i32 1, i32 1
-  store i64 0, ptr %27, align 8
-  call void @_ZN4core9panicking9panic_fmt17ha3d303d496008cd4E(ptr nonnull align 8 %_17, ptr nonnull align 8 @alloc_5b8026f8d09c21930e514945f405087f) #27
-  unreachable
+  %4 = extractvalue { i64, i1 } %2, 0
+  %5 = insertvalue { i64, i64 } poison, i64 %storemerge, 0
+  %6 = insertvalue { i64, i64 } %5, i64 %4, 1
+  ret { i64, i64 } %6
 }
 
-; Function Attrs: inlinehint nonlazybind uwtable
-define internal fastcc void @_ZN4core4sync6atomic5fence17h08d320ea5a0611d9E(i8 %0) unnamed_addr #1 {
-start:
-  %_4 = alloca %"core::fmt::Arguments<'_>", align 8
-  switch i8 %0, label %bb10 [
-    i8 0, label %bb9
-    i8 1, label %bb3
-    i8 2, label %bb2
-    i8 3, label %bb4
-    i8 4, label %bb5
-  ]
-
-bb10:                                             ; preds = %start
-  unreachable
-
-bb3:                                              ; preds = %start
-  fence release
-  br label %bb6
-
-bb2:                                              ; preds = %start
+; Function Attrs: inlinehint mustprogress nofree norecurse nounwind nonlazybind willreturn uwtable
+define internal fastcc void @_ZN4core4sync6atomic5fence17h08d320ea5a0611d9E(i8 %0) unnamed_addr #10 {
+bb2:
   fence acquire
-  br label %bb6
-
-bb4:                                              ; preds = %start
-  fence acq_rel
-  br label %bb6
-
-bb5:                                              ; preds = %start
-  fence seq_cst
-  br label %bb6
-
-bb9:                                              ; preds = %start
-  store ptr @alloc_39071d8363362e29009d9bb27c1e4df5, ptr %_4, align 8
-  %1 = getelementptr inbounds i8, ptr %_4, i64 8
-  store i64 1, ptr %1, align 8
-  %2 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_4, i64 0, i32 2
-  store ptr null, ptr %2, align 8
-  %3 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_4, i64 0, i32 1
-  store ptr @alloc_513570631223a12912d85da2bec3b15a, ptr %3, align 8
-  %4 = getelementptr inbounds %"core::fmt::Arguments<'_>", ptr %_4, i64 0, i32 1, i32 1
-  store i64 0, ptr %4, align 8
-  call void @_ZN4core9panicking9panic_fmt17ha3d303d496008cd4E(ptr nonnull align 8 %_4, ptr nonnull align 8 @alloc_e41ef13ada11c98de2875566174169a7) #27
-  unreachable
-
-bb6:                                              ; preds = %bb5, %bb4, %bb2, %bb3
   ret void
 }
 
@@ -3573,11 +3205,11 @@ bb7:                                              ; preds = %start, %bb5, %bb4
 bb3:                                              ; preds = %bb2
   %scevgep = getelementptr i8, ptr %text.0, i64 %i.04
   %_8 = load i8, ptr %scevgep, align 1, !noundef !6
-  %_7 = icmp eq i8 %_8, %x
+  %_7 = icmp eq i8 %_8, 0
   br i1 %_7, label %bb4, label %bb5
 
 panic:                                            ; preds = %bb2
-  tail call void @_ZN4core9panicking18panic_bounds_check17hcaba71f5f538ebe0E(i64 %i.04, i64 %text.1, ptr nonnull align 8 @alloc_65452916cca6d97cc375fac7cb56cd3a) #27
+  tail call void @_ZN4core9panicking18panic_bounds_check17hcaba71f5f538ebe0E(i64 %i.04, i64 %text.1, ptr nonnull align 8 @alloc_65452916cca6d97cc375fac7cb56cd3a) #30
   unreachable
 
 bb5:                                              ; preds = %bb3
@@ -3590,7 +3222,7 @@ bb4:                                              ; preds = %bb3
 }
 
 ; Function Attrs: inlinehint nonlazybind uwtable
-define internal fastcc { ptr, i64 } @"_ZN4core6result19Result$LT$T$C$E$GT$6expect17h1e9ac7a125448c28E"(ptr nocapture readonly align 8 %self, ptr align 1 %msg.0, i64 %msg.1, ptr align 8 %0) unnamed_addr #1 personality ptr @rust_eh_personality {
+define internal fastcc { ptr, i64 } @"_ZN4core6result19Result$LT$T$C$E$GT$6expect17h1e9ac7a125448c28E"(ptr nocapture readonly align 8 %self, ptr nocapture readnone align 1 %msg.0, i64 %msg.1, ptr nocapture readnone align 8 %0) unnamed_addr #1 personality ptr @rust_eh_personality {
 start:
   %e = alloca %"alloc::ffi::c_str::NulError", align 8
   %1 = load i64, ptr %self, align 8, !range !12, !noundef !6
@@ -3608,13 +3240,13 @@ bb3:                                              ; preds = %start
 
 bb1:                                              ; preds = %start
   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(32) %e, ptr noundef nonnull align 8 dereferenceable(32) %self, i64 32, i1 false)
-  invoke void @_ZN4core6result13unwrap_failed17h566b4fa76abf40a2E(ptr align 1 %msg.0, i64 %msg.1, ptr nonnull align 1 %e, ptr nonnull align 8 @vtable.5, ptr align 8 %0) #27
+  invoke void @_ZN4core6result13unwrap_failed17h566b4fa76abf40a2E(ptr nonnull align 1 @alloc_498705839b3ae85466bce6e7ebfe4996, i64 47, ptr nonnull align 1 %e, ptr nonnull align 8 @vtable.5, ptr nonnull align 8 @alloc_3c7ed5a01079e282fcc9eb5544b30333) #30
           to label %unreachable unwind label %bb4
 
 bb4:                                              ; preds = %bb1
   %7 = landingpad { ptr, i32 }
           cleanup
-  invoke void @"_ZN4core3ptr48drop_in_place$LT$alloc..ffi..c_str..NulError$GT$17h9e8886b3dfeaaf35E"(ptr nonnull align 8 %e) #29
+  invoke void @"_ZN4core3ptr48drop_in_place$LT$alloc..ffi..c_str..NulError$GT$17h9e8886b3dfeaaf35E"(ptr nonnull align 8 %e) #32
           to label %bb5 unwind label %terminate
 
 unreachable:                                      ; preds = %bb1
@@ -3623,7 +3255,7 @@ unreachable:                                      ; preds = %bb1
 terminate:                                        ; preds = %bb4
   %8 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 
 bb5:                                              ; preds = %bb4
@@ -3631,7 +3263,7 @@ bb5:                                              ; preds = %bb4
 }
 
 ; Function Attrs: inlinehint nonlazybind uwtable
-define internal fastcc void @"_ZN4core6result19Result$LT$T$C$E$GT$6expect17h8db424f7ac276905E"(ptr nocapture writeonly sret(%"std::thread::JoinHandle<()>") align 8 %t, ptr nocapture readonly align 8 %self, ptr align 1 %msg.0, i64 %msg.1, ptr align 8 %0) unnamed_addr #1 personality ptr @rust_eh_personality {
+define internal fastcc void @"_ZN4core6result19Result$LT$T$C$E$GT$6expect17h8db424f7ac276905E"(ptr nocapture writeonly sret(%"std::thread::JoinHandle<()>") align 8 %t, ptr nocapture readonly align 8 %self, ptr nocapture readnone align 1 %msg.0, i64 %msg.1, ptr nocapture readnone align 8 %0) unnamed_addr #1 personality ptr @rust_eh_personality {
 start:
   %e = alloca ptr, align 8
   %1 = load ptr, ptr %self, align 8, !noundef !6
@@ -3646,13 +3278,13 @@ bb1:                                              ; preds = %start
   %2 = getelementptr inbounds %"core::result::Result<std::thread::JoinHandle<()>, std::io::error::Error>::Err", ptr %self, i64 0, i32 1
   %3 = load ptr, ptr %2, align 8, !nonnull !6, !noundef !6
   store ptr %3, ptr %e, align 8
-  invoke void @_ZN4core6result13unwrap_failed17h566b4fa76abf40a2E(ptr align 1 %msg.0, i64 %msg.1, ptr nonnull align 1 %e, ptr nonnull align 8 @vtable.6, ptr align 8 %0) #27
+  invoke void @_ZN4core6result13unwrap_failed17h566b4fa76abf40a2E(ptr nonnull align 1 @alloc_e3605bf48dd8479a638909176cc37fce, i64 22, ptr nonnull align 1 %e, ptr nonnull align 8 @vtable.6, ptr nonnull align 8 @alloc_cfbb55ba8bd892c2ed60a2c3f28c3541) #30
           to label %unreachable unwind label %bb4
 
 bb4:                                              ; preds = %bb1
   %4 = landingpad { ptr, i32 }
           cleanup
-  invoke void @"_ZN4core3ptr42drop_in_place$LT$std..io..error..Error$GT$17h7d1d75c373ff4d89E"(ptr nonnull align 8 %e) #29
+  invoke void @"_ZN4core3ptr42drop_in_place$LT$std..io..error..Error$GT$17h7d1d75c373ff4d89E"(ptr nonnull align 8 %e) #32
           to label %bb5 unwind label %terminate
 
 unreachable:                                      ; preds = %bb1
@@ -3661,7 +3293,7 @@ unreachable:                                      ; preds = %bb1
 terminate:                                        ; preds = %bb4
   %5 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 
 bb5:                                              ; preds = %bb4
@@ -3669,16 +3301,10 @@ bb5:                                              ; preds = %bb4
 }
 
 ; Function Attrs: inlinehint mustprogress nofree nosync nounwind nonlazybind willreturn memory(argmem: readwrite) uwtable
-define internal fastcc void @"_ZN50_$LT$T$u20$as$u20$core..convert..Into$LT$U$GT$$GT$4into17h80faadc8214103a8E"(ptr nocapture writeonly sret(%"alloc::vec::Vec<u8>") align 8 %_0, ptr nocapture readonly align 8 %self, ptr nocapture readnone align 8 %0) unnamed_addr #9 {
+define internal fastcc void @"_ZN50_$LT$T$u20$as$u20$core..convert..Into$LT$U$GT$$GT$4into17h80faadc8214103a8E"(ptr nocapture writeonly sret(%"alloc::vec::Vec<u8>") align 8 %_0, ptr nocapture readonly align 8 %self, ptr nocapture readnone align 8 %0) unnamed_addr #11 {
 start:
   tail call fastcc void @"_ZN5alloc6string104_$LT$impl$u20$core..convert..From$LT$alloc..string..String$GT$$u20$for$u20$alloc..vec..Vec$LT$u8$GT$$GT$4from17h5ec94280c1173debE"(ptr sret(%"alloc::vec::Vec<u8>") align 8 %_0, ptr align 8 %self)
   ret void
-}
-
-; Function Attrs: inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(none) uwtable
-define internal fastcc i8 @"_ZN54_$LT$$LP$$RP$$u20$as$u20$std..process..Termination$GT$6report17h3112a672afa1f854E"() unnamed_addr #4 {
-start:
-  ret i8 0
 }
 
 ; Function Attrs: inlinehint nonlazybind uwtable
@@ -3689,7 +3315,7 @@ start:
   %0 = getelementptr inbounds %"alloc::sync::ArcInner<i32>", ptr %_3, i64 0, i32 1
   store i64 1, ptr %0, align 8
   %1 = getelementptr inbounds %"alloc::sync::ArcInner<i32>", ptr %_3, i64 0, i32 2
-  store i32 %data, ptr %1, align 8
+  store i32 5, ptr %1, align 8
   %_4.i = tail call fastcc ptr @_ZN5alloc5alloc15exchange_malloc17haa910fab8791b365E(i64 24, i64 8)
   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(24) %_4.i, ptr noundef nonnull align 8 dereferenceable(24) %_3, i64 24, i1 false)
   %2 = icmp ne ptr %_4.i, null
@@ -3697,8 +3323,8 @@ start:
   ret ptr %_4.i
 }
 
-; Function Attrs: noinline nonlazybind uwtable
-define internal fastcc void @"_ZN5alloc4sync16Arc$LT$T$C$A$GT$9drop_slow17h26a4abe707d1e497E"(ptr align 8 %self) unnamed_addr #2 {
+; Function Attrs: noinline nounwind nonlazybind uwtable
+define internal fastcc void @"_ZN5alloc4sync16Arc$LT$T$C$A$GT$9drop_slow17h26a4abe707d1e497E"(ptr align 8 %self) unnamed_addr #12 {
 start:
   %_x = alloca %"alloc::sync::Weak<i32, &alloc::alloc::Global>", align 8
   %self1 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
@@ -3774,8 +3400,8 @@ start:
   ret void
 }
 
-; Function Attrs: nonlazybind uwtable
-define internal fastcc zeroext i1 @"_ZN5alloc4sync16Arc$LT$T$C$A$GT$9is_unique17h3fab591f54f57a44E"(ptr nocapture readonly align 8 %self) unnamed_addr #0 {
+; Function Attrs: mustprogress nofree norecurse nounwind nonlazybind willreturn memory(readwrite, inaccessiblemem: none) uwtable
+define internal fastcc zeroext i1 @"_ZN5alloc4sync16Arc$LT$T$C$A$GT$9is_unique17h3fab591f54f57a44E"(ptr nocapture readonly align 8 %self) unnamed_addr #13 {
 start:
   %self1 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
   %_17 = getelementptr inbounds %"alloc::sync::ArcInner<std::thread::Packet<'_, ()>>", ptr %self1, i64 0, i32 1
@@ -3788,8 +3414,7 @@ bb1:                                              ; preds = %start
   %self4 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
   %_6 = tail call fastcc i64 @_ZN4core4sync6atomic11atomic_load17ha5501a2b7c0523d0E(ptr nonnull %self4, i8 2)
   %unique = icmp eq i64 %_6, 1
-  %self5 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
-  %_38 = getelementptr inbounds %"alloc::sync::ArcInner<std::thread::Packet<'_, ()>>", ptr %self5, i64 0, i32 1
+  %_38 = getelementptr inbounds %"alloc::sync::ArcInner<std::thread::Packet<'_, ()>>", ptr %self4, i64 0, i32 1
   tail call fastcc void @_ZN4core4sync6atomic12atomic_store17h560824ef49a803dbE(ptr nonnull %_38, i64 1, i8 1)
   br label %bb3
 
@@ -3801,7 +3426,7 @@ bb3:                                              ; preds = %start, %bb1
 ; Function Attrs: inlinehint nonlazybind uwtable
 define internal fastcc ptr @_ZN5alloc5alloc15exchange_malloc17haa910fab8791b365E(i64 %size, i64 %align) unnamed_addr #1 {
 start:
-  %0 = tail call fastcc { ptr, i64 } @_ZN5alloc5alloc6Global10alloc_impl17h5421ee6b4d5622f3E(ptr nonnull align 1 @alloc_513570631223a12912d85da2bec3b15a, i64 %align, i64 %size, i1 zeroext false)
+  %0 = tail call fastcc { ptr, i64 } @_ZN5alloc5alloc6Global10alloc_impl17h5421ee6b4d5622f3E(ptr nonnull align 1 @alloc_513570631223a12912d85da2bec3b15a, i64 8, i64 %size, i1 zeroext false)
   %1 = extractvalue { ptr, i64 } %0, 0
   %.not = icmp eq ptr %1, null
   br i1 %.not, label %bb1, label %bb2
@@ -3810,43 +3435,32 @@ bb2:                                              ; preds = %start
   ret ptr %1
 
 bb1:                                              ; preds = %start
-  tail call void @_ZN5alloc5alloc18handle_alloc_error17h085c72f91e671903E(i64 %align, i64 %size) #27
+  tail call void @_ZN5alloc5alloc18handle_alloc_error17h085c72f91e671903E(i64 8, i64 %size) #30
   unreachable
 }
 
 ; Function Attrs: inlinehint nounwind nonlazybind uwtable
-define internal fastcc { ptr, i64 } @_ZN5alloc5alloc6Global10alloc_impl17h5421ee6b4d5622f3E(ptr nocapture readnone align 1 %self, i64 %0, i64 %1, i1 zeroext %zeroed) unnamed_addr #6 {
+define internal fastcc { ptr, i64 } @_ZN5alloc5alloc6Global10alloc_impl17h5421ee6b4d5622f3E(ptr nocapture readnone align 1 %self, i64 %0, i64 %1, i1 zeroext %zeroed) unnamed_addr #7 {
 start:
   %2 = icmp eq i64 %1, 0
-  br i1 %2, label %bb2, label %bb1
+  br i1 %2, label %bb2, label %bb5
 
 bb2:                                              ; preds = %start
   %ptr = inttoptr i64 %0 to ptr
   br label %bb8
 
-bb1:                                              ; preds = %start
-  br i1 %zeroed, label %bb3, label %bb4
-
 bb8:                                              ; preds = %bb7, %bb6, %bb2
   %3 = phi i64 [ undef, %bb7 ], [ %1, %bb6 ], [ 0, %bb2 ]
-  %4 = phi ptr [ null, %bb7 ], [ %raw_ptr.0, %bb6 ], [ %ptr, %bb2 ]
+  %4 = phi ptr [ null, %bb7 ], [ %8, %bb6 ], [ %ptr, %bb2 ]
   %5 = insertvalue { ptr, i64 } poison, ptr %4, 0
   %6 = insertvalue { ptr, i64 } %5, i64 %3, 1
   ret { ptr, i64 } %6
 
-bb4:                                              ; preds = %bb1
+bb5:                                              ; preds = %start
   %7 = load volatile i8, ptr @__rust_no_alloc_shim_is_unstable, align 1
-  %8 = tail call ptr @__rust_alloc(i64 %1, i64 %0) #28
-  br label %bb5
-
-bb3:                                              ; preds = %bb1
-  %9 = tail call ptr @__rust_alloc_zeroed(i64 %1, i64 %0) #28
-  br label %bb5
-
-bb5:                                              ; preds = %bb3, %bb4
-  %raw_ptr.0 = phi ptr [ %9, %bb3 ], [ %8, %bb4 ]
-  %10 = icmp eq ptr %raw_ptr.0, null
-  br i1 %10, label %bb7, label %bb6
+  %8 = tail call ptr @__rust_alloc(i64 %1, i64 %0) #31
+  %9 = icmp eq ptr %8, null
+  br i1 %9, label %bb7, label %bb6
 
 bb6:                                              ; preds = %bb5
   br label %bb8
@@ -3856,14 +3470,14 @@ bb7:                                              ; preds = %bb5
 }
 
 ; Function Attrs: mustprogress nofree nosync nounwind nonlazybind willreturn memory(argmem: readwrite) uwtable
-define internal fastcc void @"_ZN5alloc6string104_$LT$impl$u20$core..convert..From$LT$alloc..string..String$GT$$u20$for$u20$alloc..vec..Vec$LT$u8$GT$$GT$4from17h5ec94280c1173debE"(ptr nocapture writeonly sret(%"alloc::vec::Vec<u8>") align 8 %_0, ptr nocapture readonly align 8 %string) unnamed_addr #10 {
+define internal fastcc void @"_ZN5alloc6string104_$LT$impl$u20$core..convert..From$LT$alloc..string..String$GT$$u20$for$u20$alloc..vec..Vec$LT$u8$GT$$GT$4from17h5ec94280c1173debE"(ptr nocapture writeonly sret(%"alloc::vec::Vec<u8>") align 8 %_0, ptr nocapture readonly align 8 %string) unnamed_addr #14 {
 start:
   tail call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(24) %_0, ptr noundef nonnull align 8 dereferenceable(24) %string, i64 24, i1 false)
   ret void
 }
 
 ; Function Attrs: mustprogress nofree nosync nounwind nonlazybind willreturn memory(argmem: readwrite) uwtable
-define internal fastcc void @"_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$14current_memory17h13a5242172c983a4E"(ptr nocapture writeonly sret(%"core::option::Option<(core::ptr::non_null::NonNull<u8>, core::alloc::layout::Layout)>") align 8 %_0, ptr nocapture readonly align 8 %self) unnamed_addr #10 {
+define internal fastcc void @"_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$14current_memory17h13a5242172c983a4E"(ptr nocapture writeonly sret(%"core::option::Option<(core::ptr::non_null::NonNull<u8>, core::alloc::layout::Layout)>") align 8 %_0, ptr nocapture readonly align 8 %self) unnamed_addr #14 {
 bb1:
   %_9 = alloca { ptr, %"core::alloc::layout::Layout" }, align 8
   %_3 = load i64, ptr %self, align 8, !noundef !6
@@ -3891,7 +3505,7 @@ bb4:                                              ; preds = %bb3, %bb2
 }
 
 ; Function Attrs: inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(none) uwtable
-define internal fastcc { ptr, ptr } @"_ZN63_$LT$I$u20$as$u20$core..iter..traits..collect..IntoIterator$GT$9into_iter17h29de9e60b804b94fE"(ptr %self.0, ptr %self.1) unnamed_addr #4 {
+define internal fastcc { ptr, ptr } @"_ZN63_$LT$I$u20$as$u20$core..iter..traits..collect..IntoIterator$GT$9into_iter17h29de9e60b804b94fE"(ptr %self.0, ptr %self.1) unnamed_addr #5 {
 start:
   %0 = insertvalue { ptr, ptr } poison, ptr %self.0, 0
   %1 = insertvalue { ptr, ptr } %0, ptr %self.1, 1
@@ -3899,13 +3513,13 @@ start:
 }
 
 ; Function Attrs: inlinehint nounwind nonlazybind uwtable
-define internal fastcc void @"_ZN63_$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$10deallocate17h7c478c2d7e6163acE"(ptr nocapture readnone align 1 %self, ptr %ptr, i64 %0, i64 %1) unnamed_addr #6 {
+define internal fastcc void @"_ZN63_$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$10deallocate17h7c478c2d7e6163acE"(ptr nocapture readnone align 1 %self, ptr %ptr, i64 %0, i64 %1) unnamed_addr #7 {
 start:
   %2 = icmp eq i64 %1, 0
   br i1 %2, label %bb3, label %bb1
 
 bb1:                                              ; preds = %start
-  tail call void @__rust_dealloc(ptr %ptr, i64 %1, i64 %0) #28
+  tail call void @__rust_dealloc(ptr %ptr, i64 %1, i64 %0) #31
   br label %bb3
 
 bb3:                                              ; preds = %start, %bb1
@@ -3923,7 +3537,7 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc zeroext i1 @"_ZN65_$LT$alloc..vec..Vec$LT$T$C$A$GT$$u20$as$u20$core..fmt..Debug$GT$3fmt17h4f2cee7706fd2bf2E"(ptr nocapture readonly align 8 %self, ptr align 8 %f) unnamed_addr #0 {
+define internal fastcc zeroext i1 @"_ZN65_$LT$alloc..vec..Vec$LT$T$C$A$GT$$u20$as$u20$core..fmt..Debug$GT$3fmt17h4f2cee7706fd2bf2E"(ptr nocapture readonly align 8 %self, ptr align 8 %f) unnamed_addr #3 {
 start:
   %0 = getelementptr inbounds i8, ptr %self, i64 8
   %self1 = load ptr, ptr %0, align 8, !nonnull !6, !noundef !6
@@ -3934,7 +3548,7 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN66_$LT$T$u20$as$u20$alloc..ffi..c_str..CString..new..SpecNewImpl$GT$13spec_new_impl17hb3276aa492b9c3d0E"(ptr nocapture writeonly sret(%"core::result::Result<alloc::ffi::c_str::CString, alloc::ffi::c_str::NulError>") align 8 %_0, ptr nocapture readonly align 8 %self) unnamed_addr #0 personality ptr @rust_eh_personality {
+define internal fastcc void @"_ZN66_$LT$T$u20$as$u20$alloc..ffi..c_str..CString..new..SpecNewImpl$GT$13spec_new_impl17hb3276aa492b9c3d0E"(ptr nocapture writeonly sret(%"core::result::Result<alloc::ffi::c_str::CString, alloc::ffi::c_str::NulError>") align 8 %_0, ptr nocapture readonly align 8 %self) unnamed_addr #3 personality ptr @rust_eh_personality {
 start:
   %_11 = alloca %"alloc::vec::Vec<u8>", align 8
   %_9 = alloca %"alloc::vec::Vec<u8>", align 8
@@ -4007,18 +3621,18 @@ bb6:                                              ; preds = %bb8, %bb7
 bb7:                                              ; preds = %bb10, %bb12
   %lpad.thr_comm = landingpad { ptr, i32 }
           cleanup
-  invoke fastcc void @"_ZN4core3ptr46drop_in_place$LT$alloc..vec..Vec$LT$u8$GT$$GT$17h5abab8083f94f39aE"(ptr nonnull align 8 %bytes) #29
+  invoke fastcc void @"_ZN4core3ptr46drop_in_place$LT$alloc..vec..Vec$LT$u8$GT$$GT$17h5abab8083f94f39aE"(ptr nonnull align 8 %bytes) #32
           to label %bb6 unwind label %terminate
 
 terminate:                                        ; preds = %bb7
   %9 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc zeroext i1 @"_ZN66_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..fmt..Debug$GT$3fmt17h55a3f328046c2aa2E"(ptr nocapture readonly align 8 %self, ptr align 8 %f) unnamed_addr #0 {
+define internal fastcc zeroext i1 @"_ZN66_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..fmt..Debug$GT$3fmt17h55a3f328046c2aa2E"(ptr nocapture readonly align 8 %self, ptr align 8 %f) unnamed_addr #3 {
 start:
   %self1 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
   %_3 = getelementptr inbounds %"alloc::sync::ArcInner<i32>", ptr %self1, i64 0, i32 2
@@ -4027,7 +3641,7 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal zeroext i1 @"_ZN67_$LT$alloc..boxed..Box$LT$T$C$A$GT$$u20$as$u20$core..fmt..Debug$GT$3fmt17h6f9a4f8ab6087cc8E"(ptr nocapture readonly align 8 %self, ptr align 8 %f) unnamed_addr #0 {
+define internal zeroext i1 @"_ZN67_$LT$alloc..boxed..Box$LT$T$C$A$GT$$u20$as$u20$core..fmt..Debug$GT$3fmt17h6f9a4f8ab6087cc8E"(ptr nocapture readonly align 8 %self, ptr align 8 %f) unnamed_addr #3 {
 start:
   %_4.0 = load ptr, ptr %self, align 8, !nonnull !6, !align !11, !noundef !6
   %0 = getelementptr inbounds i8, ptr %self, i64 8
@@ -4037,7 +3651,7 @@ start:
 }
 
 ; Function Attrs: inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(write, argmem: readwrite, inaccessiblemem: none) uwtable
-define internal fastcc void @"_ZN68_$LT$alloc..ffi..c_str..CString$u20$as$u20$core..ops..drop..Drop$GT$4drop17h0b9bc1f84a3eb08aE"(ptr nocapture readonly align 8 %self) unnamed_addr #11 {
+define internal fastcc void @"_ZN68_$LT$alloc..ffi..c_str..CString$u20$as$u20$core..ops..drop..Drop$GT$4drop17h0b9bc1f84a3eb08aE"(ptr nocapture readonly align 8 %self) unnamed_addr #15 {
 start:
   %_2.0 = load ptr, ptr %self, align 8, !nonnull !6, !align !11, !noundef !6
   store i8 0, ptr %_2.0, align 1
@@ -4045,7 +3659,7 @@ start:
 }
 
 ; Function Attrs: inlinehint nounwind nonlazybind uwtable
-define internal fastcc nonnull ptr @"_ZN68_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..clone..Clone$GT$5clone17h0f6839b186f32485E"(ptr nocapture readonly align 8 %self) unnamed_addr #6 {
+define internal fastcc nonnull ptr @"_ZN68_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..clone..Clone$GT$5clone17h0f6839b186f32485E"(ptr nocapture readonly align 8 %self) unnamed_addr #7 {
 start:
   %self1 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
   %0 = atomicrmw add ptr %self1, i64 1 monotonic, align 8
@@ -4062,7 +3676,7 @@ bb1:                                              ; preds = %start
 }
 
 ; Function Attrs: inlinehint nounwind nonlazybind uwtable
-define internal fastcc nonnull ptr @"_ZN68_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..clone..Clone$GT$5clone17h342d283d0f450142E"(ptr nocapture readonly align 8 %self) unnamed_addr #6 {
+define internal fastcc nonnull ptr @"_ZN68_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..clone..Clone$GT$5clone17h342d283d0f450142E"(ptr nocapture readonly align 8 %self) unnamed_addr #7 {
 start:
   %self1 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
   %0 = atomicrmw add ptr %self1, i64 1 monotonic, align 8
@@ -4079,7 +3693,7 @@ bb1:                                              ; preds = %start
 }
 
 ; Function Attrs: inlinehint nounwind nonlazybind uwtable
-define internal fastcc nonnull ptr @"_ZN68_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..clone..Clone$GT$5clone17hafd08192e2c1c1f0E"(ptr nocapture readonly align 8 %self) unnamed_addr #6 {
+define internal fastcc nonnull ptr @"_ZN68_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..clone..Clone$GT$5clone17hafd08192e2c1c1f0E"(ptr nocapture readonly align 8 %self) unnamed_addr #7 {
 start:
   %self1 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
   %0 = atomicrmw add ptr %self1, i64 1 monotonic, align 8
@@ -4096,7 +3710,7 @@ bb1:                                              ; preds = %start
 }
 
 ; Function Attrs: inlinehint nounwind nonlazybind uwtable
-define internal fastcc nonnull ptr @"_ZN68_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..clone..Clone$GT$5clone17hd39f3d09b838959eE"(ptr nocapture readonly align 8 %self) unnamed_addr #6 {
+define internal fastcc nonnull ptr @"_ZN68_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..clone..Clone$GT$5clone17hd39f3d09b838959eE"(ptr nocapture readonly align 8 %self) unnamed_addr #7 {
 start:
   %self1 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
   %0 = atomicrmw add ptr %self1, i64 1 monotonic, align 8
@@ -4113,7 +3727,7 @@ bb1:                                              ; preds = %start
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal fastcc void @"_ZN70_$LT$std..thread..Packet$LT$T$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h0545363ab4f56b6bE"(ptr align 8 %self) unnamed_addr #0 personality ptr @rust_eh_personality {
+define internal fastcc void @"_ZN70_$LT$std..thread..Packet$LT$T$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h0545363ab4f56b6bE"(ptr align 8 %self) unnamed_addr #3 personality ptr @rust_eh_personality {
 start:
   %_18 = alloca [0 x %"core::fmt::rt::Argument<'_>"], align 8
   %_14 = alloca %"core::fmt::Arguments<'_>", align 8
@@ -4154,7 +3768,7 @@ bb8:                                              ; preds = %bb3
 bb13:                                             ; preds = %bb4, %bb5, %bb6, %bb7
   %9 = landingpad { ptr, i32 }
           cleanup
-  invoke fastcc void @"_ZN4core3ptr130drop_in_place$LT$core..result..Result$LT$$LP$$RP$$C$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$$GT$17h65e6886abc00f331E"(ptr nonnull align 8 %_6) #29
+  invoke fastcc void @"_ZN4core3ptr130drop_in_place$LT$core..result..Result$LT$$LP$$RP$$C$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$$GT$17h65e6886abc00f331E"(ptr nonnull align 8 %_6) #32
           to label %bb14 unwind label %terminate
 
 bb5:                                              ; preds = %bb4
@@ -4167,7 +3781,7 @@ bb6:                                              ; preds = %bb5
           to label %bb7 unwind label %bb13
 
 bb7:                                              ; preds = %bb6
-  invoke void @_ZN3std3sys3pal4unix14abort_internal17h7fd6e40882d9056eE() #27
+  invoke void @_ZN3std3sys3pal4unix14abort_internal17h7fd6e40882d9056eE() #30
           to label %unreachable unwind label %bb13
 
 unreachable:                                      ; preds = %bb7
@@ -4176,7 +3790,7 @@ unreachable:                                      ; preds = %bb7
 terminate:                                        ; preds = %bb13
   %11 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 
 bb14:                                             ; preds = %bb13
@@ -4262,8 +3876,8 @@ bb4:                                              ; preds = %start, %bb2
   ret void
 }
 
-; Function Attrs: inlinehint nonlazybind uwtable
-define internal fastcc void @"_ZN71_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17hc4ebf5a3e7bee33dE"(ptr align 8 %self) unnamed_addr #1 {
+; Function Attrs: inlinehint nounwind nonlazybind uwtable
+define internal fastcc void @"_ZN71_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17hc4ebf5a3e7bee33dE"(ptr align 8 %self) unnamed_addr #7 {
 start:
   %self1 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
   %0 = atomicrmw sub ptr %self1, i64 1 release, align 8
@@ -4297,7 +3911,7 @@ bb4:                                              ; preds = %start, %bb2
 }
 
 ; Function Attrs: inlinehint nounwind nonlazybind uwtable
-define internal fastcc void @"_ZN72_$LT$alloc..boxed..Box$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h240b2e9c5227bac4E"(ptr nocapture readonly align 8 %self) unnamed_addr #6 {
+define internal fastcc void @"_ZN72_$LT$alloc..boxed..Box$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h240b2e9c5227bac4E"(ptr nocapture readonly align 8 %self) unnamed_addr #7 {
 start:
   %0 = getelementptr inbounds i8, ptr %self, i64 8
   %ptr.1 = load i64, ptr %0, align 8, !noundef !6
@@ -4315,7 +3929,7 @@ bb4:                                              ; preds = %start, %bb1
 }
 
 ; Function Attrs: inlinehint nounwind nonlazybind uwtable
-define internal fastcc void @"_ZN72_$LT$alloc..boxed..Box$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h5fc5d18f1043749bE"(ptr nocapture readonly align 8 %self) unnamed_addr #6 {
+define internal fastcc void @"_ZN72_$LT$alloc..boxed..Box$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h5fc5d18f1043749bE"(ptr nocapture readonly align 8 %self) unnamed_addr #7 {
 bb4:
   %ptr = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
   %_8 = getelementptr i8, ptr %self, i64 8
@@ -4324,18 +3938,18 @@ bb4:
 }
 
 ; Function Attrs: inlinehint nounwind nonlazybind uwtable
-define internal fastcc void @"_ZN72_$LT$alloc..boxed..Box$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17hbde74da799a67ac8E"(ptr nocapture readonly align 8 %self) unnamed_addr #6 {
+define internal fastcc void @"_ZN72_$LT$alloc..boxed..Box$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17hbde74da799a67ac8E"(ptr nocapture readonly align 8 %self) unnamed_addr #7 {
 start:
   %0 = getelementptr inbounds i8, ptr %self, i64 8
   %ptr.1 = load ptr, ptr %0, align 8, !nonnull !6, !align !10, !noundef !6
   %1 = getelementptr inbounds i64, ptr %ptr.1, i64 1
-  %2 = load i64, ptr %1, align 8, !range !13, !invariant.load !6
+  %2 = load i64, ptr %1, align 8, !range !15, !invariant.load !6
   %3 = icmp eq i64 %2, 0
   br i1 %3, label %bb4, label %bb1
 
 bb1:                                              ; preds = %start
   %4 = getelementptr inbounds i64, ptr %ptr.1, i64 2
-  %5 = load i64, ptr %4, align 8, !range !14, !invariant.load !6
+  %5 = load i64, ptr %4, align 8, !range !16, !invariant.load !6
   %ptr.0 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
   %_8 = getelementptr inbounds i8, ptr %self, i64 16
   tail call fastcc void @"_ZN63_$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$10deallocate17h7c478c2d7e6163acE"(ptr nonnull align 1 %_8, ptr nonnull %ptr.0, i64 %5, i64 %2)
@@ -4346,18 +3960,18 @@ bb4:                                              ; preds = %start, %bb1
 }
 
 ; Function Attrs: inlinehint nounwind nonlazybind uwtable
-define internal fastcc void @"_ZN72_$LT$alloc..boxed..Box$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17he35e4951fc4d56c2E"(ptr nocapture readonly align 8 %self) unnamed_addr #6 {
+define internal fastcc void @"_ZN72_$LT$alloc..boxed..Box$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17he35e4951fc4d56c2E"(ptr nocapture readonly align 8 %self) unnamed_addr #7 {
 start:
   %0 = getelementptr inbounds i8, ptr %self, i64 8
   %ptr.1 = load ptr, ptr %0, align 8, !nonnull !6, !align !10, !noundef !6
   %1 = getelementptr inbounds i64, ptr %ptr.1, i64 1
-  %2 = load i64, ptr %1, align 8, !range !13, !invariant.load !6
+  %2 = load i64, ptr %1, align 8, !range !15, !invariant.load !6
   %3 = icmp eq i64 %2, 0
   br i1 %3, label %bb4, label %bb1
 
 bb1:                                              ; preds = %start
   %4 = getelementptr inbounds i64, ptr %ptr.1, i64 2
-  %5 = load i64, ptr %4, align 8, !range !14, !invariant.load !6
+  %5 = load i64, ptr %4, align 8, !range !16, !invariant.load !6
   %ptr.0 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
   %_8 = getelementptr inbounds i8, ptr %self, i64 16
   tail call fastcc void @"_ZN63_$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$10deallocate17h7c478c2d7e6163acE"(ptr nonnull align 1 %_8, ptr nonnull %ptr.0, i64 %5, i64 %2)
@@ -4367,7 +3981,7 @@ bb4:                                              ; preds = %start, %bb1
   ret void
 }
 
-; Function Attrs: nonlazybind uwtable
+; Function Attrs: nounwind nonlazybind uwtable
 define internal fastcc void @"_ZN72_$LT$alloc..sync..Weak$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17h9301fd578ebcdf1eE"(ptr nocapture readonly align 8 %self) unnamed_addr #0 {
 start:
   %self1 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
@@ -4394,7 +4008,7 @@ bb8:                                              ; preds = %bb3, %bb1, %bb2
   ret void
 }
 
-; Function Attrs: nonlazybind uwtable
+; Function Attrs: nounwind nonlazybind uwtable
 define internal fastcc void @"_ZN72_$LT$alloc..sync..Weak$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17ha07c092f71fc2ebeE"(ptr nocapture readonly align 8 %self) unnamed_addr #0 {
 start:
   %self1 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
@@ -4421,7 +4035,7 @@ bb8:                                              ; preds = %bb3, %bb1, %bb2
   ret void
 }
 
-; Function Attrs: nonlazybind uwtable
+; Function Attrs: nounwind nonlazybind uwtable
 define internal fastcc void @"_ZN72_$LT$alloc..sync..Weak$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17ha1201885555766bcE"(ptr nocapture readonly align 8 %self) unnamed_addr #0 {
 start:
   %self1 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
@@ -4448,7 +4062,7 @@ bb8:                                              ; preds = %bb3, %bb1, %bb2
   ret void
 }
 
-; Function Attrs: nonlazybind uwtable
+; Function Attrs: nounwind nonlazybind uwtable
 define internal fastcc void @"_ZN72_$LT$alloc..sync..Weak$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17ha481c71cf98ea80dE"(ptr nocapture readonly align 8 %self) unnamed_addr #0 {
 start:
   %self1 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
@@ -4475,7 +4089,7 @@ bb8:                                              ; preds = %bb3, %bb1, %bb2
   ret void
 }
 
-; Function Attrs: nonlazybind uwtable
+; Function Attrs: nounwind nonlazybind uwtable
 define internal fastcc void @"_ZN72_$LT$alloc..sync..Weak$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17hfa4b1f6f07816d15E"(ptr nocapture readonly align 8 %self) unnamed_addr #0 {
 start:
   %self1 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
@@ -4510,7 +4124,7 @@ start:
 }
 
 ; Function Attrs: nounwind nonlazybind uwtable
-define internal fastcc void @"_ZN77_$LT$alloc..raw_vec..RawVec$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17hcf56acc0e9adfdf3E"(ptr nocapture readonly align 8 %self) unnamed_addr #8 {
+define internal fastcc void @"_ZN77_$LT$alloc..raw_vec..RawVec$LT$T$C$A$GT$$u20$as$u20$core..ops..drop..Drop$GT$4drop17hcf56acc0e9adfdf3E"(ptr nocapture readonly align 8 %self) unnamed_addr #0 {
 start:
   %_2 = alloca %"core::option::Option<(core::ptr::non_null::NonNull<u8>, core::alloc::layout::Layout)>", align 8
   call fastcc void @"_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$14current_memory17h13a5242172c983a4E"(ptr nonnull sret(%"core::option::Option<(core::ptr::non_null::NonNull<u8>, core::alloc::layout::Layout)>") align 8 %_2, ptr align 8 %self)
@@ -4542,7 +4156,7 @@ start:
 }
 
 ; Function Attrs: inlinehint mustprogress nofree nosync nounwind nonlazybind willreturn memory(inaccessiblemem: readwrite) uwtable
-define internal fastcc align 8 ptr @"_ZN78_$LT$std..io..error..repr_bitpacked..Repr$u20$as$u20$core..ops..drop..Drop$GT$4drop28_$u7b$$u7b$closure$u7d$$u7d$17hadea45dc41d1697cE"(ptr readnone returned %p) unnamed_addr #12 {
+define internal fastcc align 8 ptr @"_ZN78_$LT$std..io..error..repr_bitpacked..Repr$u20$as$u20$core..ops..drop..Drop$GT$4drop28_$u7b$$u7b$closure$u7d$$u7d$17hadea45dc41d1697cE"(ptr readnone returned %p) unnamed_addr #16 {
 start:
   %0 = icmp ne ptr %p, null
   tail call void @llvm.assume(i1 %0)
@@ -4550,7 +4164,7 @@ start:
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal zeroext i1 @"_ZN80_$LT$std..io..Write..write_fmt..Adapter$LT$T$GT$$u20$as$u20$core..fmt..Write$GT$9write_str17h616885267e0406efE"(ptr nocapture align 8 %self, ptr align 1 %s.0, i64 %s.1) unnamed_addr #0 personality ptr @rust_eh_personality {
+define internal zeroext i1 @"_ZN80_$LT$std..io..Write..write_fmt..Adapter$LT$T$GT$$u20$as$u20$core..fmt..Write$GT$9write_str17h616885267e0406efE"(ptr nocapture align 8 %self, ptr align 1 %s.0, i64 %s.1) unnamed_addr #3 personality ptr @rust_eh_personality {
 start:
   %_8 = load ptr, ptr %self, align 8, !nonnull !6, !align !11, !noundef !6
   %0 = tail call fastcc ptr @_ZN3std2io5Write9write_all17hc8981c373f82d5b3E(ptr nonnull align 1 %_8, ptr align 1 %s.0, i64 %s.1)
@@ -4577,11 +4191,11 @@ bb4:                                              ; preds = %bb2
 }
 
 ; Function Attrs: inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(argmem: readwrite) uwtable
-define internal fastcc align 1 ptr @"_ZN91_$LT$core..slice..iter..Iter$LT$T$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4next17h56ca6c3c8e673456E"(ptr nocapture align 8 %self) unnamed_addr #13 {
+define internal fastcc align 1 ptr @"_ZN91_$LT$core..slice..iter..Iter$LT$T$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4next17h56ca6c3c8e673456E"(ptr nocapture align 8 %self) unnamed_addr #17 {
 bb3:
+  %self2 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
   %self1 = getelementptr inbounds i8, ptr %self, i64 8
   %0 = load ptr, ptr %self1, align 8, !nonnull !6, !noundef !6
-  %self2 = load ptr, ptr %self, align 8, !nonnull !6, !noundef !6
   %1 = icmp eq ptr %self2, %0
   br i1 %1, label %bb6, label %bb9
 
@@ -4596,7 +4210,7 @@ bb6:                                              ; preds = %bb3, %bb9
 }
 
 ; Function Attrs: nonlazybind uwtable
-define internal void @_ZN6std_rs4main17h724a8668b1a5c779E() unnamed_addr #0 personality ptr @rust_eh_personality {
+define internal void @_ZN6std_rs4main17h724a8668b1a5c779E() unnamed_addr #3 personality ptr @rust_eh_personality {
 start:
   %e.i3 = alloca %"alloc::boxed::Box<dyn core::any::Any + core::marker::Send>", align 8
   %e.i = alloca %"alloc::boxed::Box<dyn core::any::Any + core::marker::Send>", align 8
@@ -4610,10 +4224,10 @@ start:
   %1 = call fastcc ptr @"_ZN68_$LT$alloc..sync..Arc$LT$T$C$A$GT$$u20$as$u20$core..clone..Clone$GT$5clone17hd39f3d09b838959eE"(ptr nonnull align 8 %x)
   br label %bb2
 
-bb11:                                             ; preds = %bb14, %bb14.thread, %bb13
+bb11:                                             ; preds = %bb13, %bb14, %bb14.thread
   %lpad.thr_comm.split-lp.pn = phi { ptr, i32 } [ %lpad.thr_comm.split-lp, %bb14 ], [ %11, %bb14.thread ], [ %lpad.thr_comm.pn, %bb13 ]
-  invoke fastcc void @"_ZN4core3ptr48drop_in_place$LT$alloc..sync..Arc$LT$i32$GT$$GT$17h1f25d607f7e62a6aE"(ptr nonnull align 8 %x) #29
-          to label %bb12 unwind label %terminate
+  call fastcc void @"_ZN4core3ptr48drop_in_place$LT$alloc..sync..Arc$LT$i32$GT$$GT$17h1f25d607f7e62a6aE"(ptr nonnull align 8 %x) #32
+  br label %bb12
 
 bb2:                                              ; preds = %start
   store ptr %1, ptr %y, align 8
@@ -4649,13 +4263,13 @@ bb1.i6:                                           ; preds = %bb5
   store ptr %_9.0, ptr %e.i3, align 8
   %5 = getelementptr inbounds i8, ptr %e.i3, i64 8
   store ptr %_9.1, ptr %5, align 8
-  invoke void @_ZN4core6result13unwrap_failed17h566b4fa76abf40a2E(ptr nonnull align 1 @alloc_00ae4b301f7fab8ac9617c03fcbd7274, i64 43, ptr nonnull align 1 %e.i3, ptr nonnull align 8 @vtable.7, ptr nonnull align 8 @alloc_dbc2010e2d83a7828e5295f2cd5ed949) #27
+  invoke void @_ZN4core6result13unwrap_failed17h566b4fa76abf40a2E(ptr nonnull align 1 @alloc_00ae4b301f7fab8ac9617c03fcbd7274, i64 43, ptr nonnull align 1 %e.i3, ptr nonnull align 8 @vtable.7, ptr nonnull align 8 @alloc_dbc2010e2d83a7828e5295f2cd5ed949) #30
           to label %unreachable.i10 unwind label %cleanup.i7
 
 cleanup.i7:                                       ; preds = %bb1.i6
   %6 = landingpad { ptr, i32 }
           cleanup
-  invoke void @"_ZN4core3ptr91drop_in_place$LT$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$17hbd95e1deb97397bdE"(ptr nonnull align 8 %e.i3) #29
+  invoke void @"_ZN4core3ptr91drop_in_place$LT$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$17hbd95e1deb97397bdE"(ptr nonnull align 8 %e.i3) #32
           to label %bb14.thread4 unwind label %terminate.i8
 
 unreachable.i10:                                  ; preds = %bb1.i6
@@ -4664,7 +4278,7 @@ unreachable.i10:                                  ; preds = %bb1.i6
 terminate.i8:                                     ; preds = %cleanup.i7
   %7 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 
 bb14.thread4:                                     ; preds = %cleanup.i7
@@ -4688,13 +4302,13 @@ bb1.i:                                            ; preds = %bb8
   store ptr %_13.0, ptr %e.i, align 8
   %10 = getelementptr inbounds i8, ptr %e.i, i64 8
   store ptr %_13.1, ptr %10, align 8
-  invoke void @_ZN4core6result13unwrap_failed17h566b4fa76abf40a2E(ptr nonnull align 1 @alloc_00ae4b301f7fab8ac9617c03fcbd7274, i64 43, ptr nonnull align 1 %e.i, ptr nonnull align 8 @vtable.7, ptr nonnull align 8 @alloc_ace8c3ae07bb6efc4b6899f999420c54) #27
+  invoke void @_ZN4core6result13unwrap_failed17h566b4fa76abf40a2E(ptr nonnull align 1 @alloc_00ae4b301f7fab8ac9617c03fcbd7274, i64 43, ptr nonnull align 1 %e.i, ptr nonnull align 8 @vtable.7, ptr nonnull align 8 @alloc_ace8c3ae07bb6efc4b6899f999420c54) #30
           to label %unreachable.i unwind label %cleanup.i
 
 cleanup.i:                                        ; preds = %bb1.i
   %11 = landingpad { ptr, i32 }
           cleanup
-  invoke void @"_ZN4core3ptr91drop_in_place$LT$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$17hbd95e1deb97397bdE"(ptr nonnull align 8 %e.i) #29
+  invoke void @"_ZN4core3ptr91drop_in_place$LT$alloc..boxed..Box$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$GT$$GT$17hbd95e1deb97397bdE"(ptr nonnull align 8 %e.i) #32
           to label %bb14.thread unwind label %terminate.i
 
 unreachable.i:                                    ; preds = %bb1.i
@@ -4703,7 +4317,7 @@ unreachable.i:                                    ; preds = %bb1.i
 terminate.i:                                      ; preds = %cleanup.i
   %12 = landingpad { ptr, i32 }
           filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
+  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #28
   unreachable
 
 bb14.thread:                                      ; preds = %cleanup.i
@@ -4715,14 +4329,8 @@ bb9:                                              ; preds = %bb8
 
 bb13:                                             ; preds = %bb14.thread7, %bb14.thread4
   %lpad.thr_comm.pn = phi { ptr, i32 } [ %lpad.thr_comm, %bb14.thread7 ], [ %6, %bb14.thread4 ]
-  invoke fastcc void @"_ZN4core3ptr48drop_in_place$LT$alloc..sync..Arc$LT$i32$GT$$GT$17h1f25d607f7e62a6aE"(ptr nonnull align 8 %z) #29
-          to label %bb11 unwind label %terminate
-
-terminate:                                        ; preds = %bb13, %bb11
-  %13 = landingpad { ptr, i32 }
-          filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
-  unreachable
+  call fastcc void @"_ZN4core3ptr48drop_in_place$LT$alloc..sync..Arc$LT$i32$GT$$GT$17h1f25d607f7e62a6aE"(ptr nonnull align 8 %z) #32
+  br label %bb11
 
 bb12:                                             ; preds = %bb11
   resume { ptr, i32 } %lpad.thr_comm.split-lp.pn
@@ -4761,8 +4369,8 @@ bb3:
 bb7:                                              ; preds = %bb4
   %6 = landingpad { ptr, i32 }
           cleanup
-  invoke fastcc void @"_ZN4core3ptr48drop_in_place$LT$alloc..sync..Arc$LT$i32$GT$$GT$17h1f25d607f7e62a6aE"(ptr nonnull align 8 %tmp) #29
-          to label %bb8 unwind label %terminate
+  call fastcc void @"_ZN4core3ptr48drop_in_place$LT$alloc..sync..Arc$LT$i32$GT$$GT$17h1f25d607f7e62a6aE"(ptr nonnull align 8 %tmp) #32
+  br label %bb8
 
 bb4:                                              ; preds = %bb3
   invoke void @_ZN3std2io5stdio7_eprint17h3355abb6aa65e8e1E(ptr nonnull align 8 %_5)
@@ -4773,12 +4381,6 @@ bb5:                                              ; preds = %bb4
   store ptr %7, ptr %_2, align 8
   call fastcc void @"_ZN4core3ptr48drop_in_place$LT$alloc..sync..Arc$LT$i32$GT$$GT$17h1f25d607f7e62a6aE"(ptr nonnull align 8 %_2)
   ret void
-
-terminate:                                        ; preds = %bb7
-  %8 = landingpad { ptr, i32 }
-          filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
-  unreachable
 
 bb8:                                              ; preds = %bb7
   resume { ptr, i32 } %6
@@ -4817,8 +4419,8 @@ bb3:
 bb7:                                              ; preds = %bb4
   %6 = landingpad { ptr, i32 }
           cleanup
-  invoke fastcc void @"_ZN4core3ptr48drop_in_place$LT$alloc..sync..Arc$LT$i32$GT$$GT$17h1f25d607f7e62a6aE"(ptr nonnull align 8 %tmp) #29
-          to label %bb8 unwind label %terminate
+  call fastcc void @"_ZN4core3ptr48drop_in_place$LT$alloc..sync..Arc$LT$i32$GT$$GT$17h1f25d607f7e62a6aE"(ptr nonnull align 8 %tmp) #32
+  br label %bb8
 
 bb4:                                              ; preds = %bb3
   invoke void @_ZN3std2io5stdio7_eprint17h3355abb6aa65e8e1E(ptr nonnull align 8 %_5)
@@ -4830,81 +4432,75 @@ bb5:                                              ; preds = %bb4
   call fastcc void @"_ZN4core3ptr48drop_in_place$LT$alloc..sync..Arc$LT$i32$GT$$GT$17h1f25d607f7e62a6aE"(ptr nonnull align 8 %_2)
   ret void
 
-terminate:                                        ; preds = %bb7
-  %8 = landingpad { ptr, i32 }
-          filter [0 x ptr] zeroinitializer
-  call void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() #25
-  unreachable
-
 bb8:                                              ; preds = %bb7
   resume { ptr, i32 } %6
 }
 
 ; Function Attrs: cold noinline noreturn nonlazybind uwtable
-declare void @_ZN4core5slice5index24slice_end_index_len_fail17h23a8c1ae2d2af720E(i64, i64, ptr align 8) unnamed_addr #14
+declare void @_ZN4core5slice5index24slice_end_index_len_fail17h23a8c1ae2d2af720E(i64, i64, ptr align 8) unnamed_addr #18
 
 ; Function Attrs: cold noinline noreturn nonlazybind uwtable
-declare void @_ZN4core5slice5index22slice_index_order_fail17h1fd59e78f9534eb8E(i64, i64, ptr align 8) unnamed_addr #14
+declare void @_ZN4core5slice5index22slice_index_order_fail17h1fd59e78f9534eb8E(i64, i64, ptr align 8) unnamed_addr #18
 
 ; Function Attrs: nonlazybind uwtable
-declare i32 @rust_eh_personality(i32, i32, i64, ptr, ptr) unnamed_addr #0
+declare i32 @rust_eh_personality(i32, i32, i64, ptr, ptr) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare void @"_ZN69_$LT$std..sys..pal..unix..stdio..Stderr$u20$as$u20$std..io..Write$GT$5write17h2f522eae24bf9405E"(ptr sret(%"core::result::Result<usize, std::io::error::Error>") align 8, ptr align 1, ptr align 1, i64) unnamed_addr #0
+declare void @"_ZN69_$LT$std..sys..pal..unix..stdio..Stderr$u20$as$u20$std..io..Write$GT$5write17h2f522eae24bf9405E"(ptr sret(%"core::result::Result<usize, std::io::error::Error>") align 8, ptr align 1, ptr align 1, i64) unnamed_addr #3
 
 ; Function Attrs: cold noinline noreturn nonlazybind uwtable
-declare void @_ZN4core5slice5index26slice_start_index_len_fail17hb6e6adbe9bcaa20aE(i64, i64, ptr align 8) unnamed_addr #14
+declare void @_ZN4core5slice5index26slice_start_index_len_fail17hb6e6adbe9bcaa20aE(i64, i64, ptr align 8) unnamed_addr #18
 
 ; Function Attrs: cold noinline noreturn nounwind nonlazybind uwtable
-declare void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() unnamed_addr #15
+declare void @_ZN4core9panicking16panic_in_cleanup17h268144b6f1132d80E() unnamed_addr #19
 
 ; Function Attrs: nonlazybind uwtable
-declare zeroext i1 @_ZN4core3fmt5write17ha63b5e044fedf034E(ptr align 1, ptr align 8, ptr align 8) unnamed_addr #0
+declare zeroext i1 @_ZN4core3fmt5write17ha63b5e044fedf034E(ptr align 1, ptr align 8, ptr align 8) unnamed_addr #3
 
 ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(inaccessiblemem: readwrite)
-declare void @llvm.assume(i1 noundef) #16
+declare void @llvm.assume(i1 noundef) #20
 
 ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
-declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #17
+declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #21
 
 ; Function Attrs: nonlazybind uwtable
-declare i64 @_ZN3std2rt19lang_start_internal17hd1132dfff4140512E(ptr align 1, ptr align 8, i64, ptr, i8) unnamed_addr #0
+declare i64 @_ZN3std2rt19lang_start_internal17hd1132dfff4140512E(ptr align 1, ptr align 8, i64, ptr, i8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare void @_ZN3std3sys3pal4unix6thread6Thread4join17h895d97bd495144ffE(i64) unnamed_addr #0
+declare void @_ZN3std3sys3pal4unix6thread6Thread4join17h895d97bd495144ffE(i64) unnamed_addr #3
 
 ; Function Attrs: cold noinline noreturn nonlazybind uwtable
-declare void @_ZN4core6option13unwrap_failed17h8a484d2e9090c178E(ptr align 8) unnamed_addr #14
+declare void @_ZN4core6option13unwrap_failed17h8a484d2e9090c178E(ptr align 8) unnamed_addr #18
 
 ; Function Attrs: nonlazybind uwtable
-declare ptr @_ZN3std6thread6Thread3new17h9286f061390b10b6E(ptr align 1, i64) unnamed_addr #0
+declare ptr @_ZN3std6thread6Thread3new17h9286f061390b10b6E(ptr align 1, i64) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare ptr @_ZN3std2io5stdio18set_output_capture17h47fa7577e7da3004E(ptr) unnamed_addr #0
+declare ptr @_ZN3std2io5stdio18set_output_capture17h47fa7577e7da3004E(ptr) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare void @_ZN3std6thread6scoped9ScopeData29increment_num_running_threads17hb8778178a2b2dcd2E(ptr align 8) unnamed_addr #0
+declare void @_ZN3std6thread6scoped9ScopeData29increment_num_running_threads17hb8778178a2b2dcd2E(ptr align 8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare void @_ZN3std3sys3pal4unix6thread6Thread3new17h25822420d6359794E(ptr sret(%"core::result::Result<std::sys::pal::unix::thread::Thread, std::io::error::Error>") align 8, i64, ptr align 1, ptr align 8) unnamed_addr #0
+declare void @_ZN3std3sys3pal4unix6thread6Thread3new17h25822420d6359794E(ptr sret(%"core::result::Result<std::sys::pal::unix::thread::Thread, std::io::error::Error>") align 8, i64, ptr align 1, ptr align 8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare { ptr, i64 } @_ZN3std6thread6Thread5cname17he8eff7cc14160c1eE(ptr align 8) unnamed_addr #0
+declare { ptr, i64 } @_ZN3std6thread6Thread5cname17he8eff7cc14160c1eE(ptr align 8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare void @_ZN3std3sys3pal4unix6thread6Thread8set_name17h76dc80adfde750b1E(ptr align 1, i64) unnamed_addr #0
+declare void @_ZN3std3sys3pal4unix6thread6Thread8set_name17h76dc80adfde750b1E(ptr align 1, i64) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare void @_ZN3std3sys3pal4unix6thread5guard7current17ha2bb65882033f000E(ptr sret(%"core::option::Option<core::ops::range::Range<usize>>") align 8) unnamed_addr #0
+declare void @_ZN3std3sys3pal4unix6thread5guard7current17ha2bb65882033f000E(ptr sret(%"core::option::Option<core::ops::range::Range<usize>>") align 8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare void @_ZN3std10sys_common11thread_info3set17h2c664b76c70cf208E(ptr align 8, ptr) unnamed_addr #0
+declare void @_ZN3std10sys_common11thread_info3set17h2c664b76c70cf208E(ptr align 8, ptr) unnamed_addr #3
 
 ; Function Attrs: nonlazybind
-define internal fastcc i32 @__rust_try(ptr nocapture readonly %0, ptr %1, ptr nocapture readonly %2) unnamed_addr #18 personality ptr @rust_eh_personality {
+define internal fastcc i32 @__rust_try(ptr nocapture readonly %0, ptr %1, ptr nocapture readonly %2) unnamed_addr #22 personality ptr @rust_eh_personality {
 entry-block:
   invoke void %0(ptr %1)
-          to label %common.ret unwind label %catch, !callees !15
+          to label %common.ret unwind label %catch, !callees !17
 
 common.ret:                                       ; preds = %entry-block, %catch
   %common.ret.op = phi i32 [ 1, %catch ], [ 0, %entry-block ]
@@ -4914,111 +4510,105 @@ catch:                                            ; preds = %entry-block
   %3 = landingpad { ptr, i32 }
           catch ptr null
   %4 = extractvalue { ptr, i32 } %3, 0
-  tail call void %2(ptr %1, ptr %4), !callees !16
+  tail call void %2(ptr %1, ptr %4), !callees !18
   br label %common.ret
 }
 
 ; Function Attrs: cold nonlazybind uwtable
-declare { ptr, ptr } @_ZN3std9panicking3try7cleanup17h6d4e570bbe25440aE(ptr) unnamed_addr #19
+declare { ptr, ptr } @_ZN3std9panicking3try7cleanup17h6d4e570bbe25440aE(ptr) unnamed_addr #23
 
 ; Function Attrs: cold noinline noreturn nounwind nonlazybind uwtable
-declare void @_ZN4core9panicking19panic_cannot_unwind17hfa9f734a74de1f5aE() unnamed_addr #15
+declare void @_ZN4core9panicking19panic_cannot_unwind17hfa9f734a74de1f5aE() unnamed_addr #19
 
 ; Function Attrs: nonlazybind uwtable
-declare void @_ZN4core3fmt9Formatter10debug_list17h149015fd7be1ba26E(ptr sret(%"core::fmt::builders::DebugList<'_, '_>") align 8, ptr align 8) unnamed_addr #0
+declare void @_ZN4core3fmt9Formatter10debug_list17h149015fd7be1ba26E(ptr sret(%"core::fmt::builders::DebugList<'_, '_>") align 8, ptr align 8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare zeroext i1 @_ZN4core3fmt8builders9DebugList6finish17h607b22500ce6076aE(ptr align 8) unnamed_addr #0
+declare zeroext i1 @_ZN4core3fmt8builders9DebugList6finish17h607b22500ce6076aE(ptr align 8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare zeroext i1 @"_ZN4core3fmt3num3imp51_$LT$impl$u20$core..fmt..Display$u20$for$u20$u8$GT$3fmt17h99ee99222d3e115aE"(ptr align 1, ptr align 8) unnamed_addr #0
+declare zeroext i1 @"_ZN4core3fmt3num3imp51_$LT$impl$u20$core..fmt..Display$u20$for$u20$u8$GT$3fmt17h99ee99222d3e115aE"(ptr align 1, ptr align 8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare zeroext i1 @"_ZN4core3fmt3num52_$LT$impl$u20$core..fmt..UpperHex$u20$for$u20$u8$GT$3fmt17h685b2bbffb06450aE"(ptr align 1, ptr align 8) unnamed_addr #0
+declare zeroext i1 @"_ZN4core3fmt3num52_$LT$impl$u20$core..fmt..UpperHex$u20$for$u20$u8$GT$3fmt17h685b2bbffb06450aE"(ptr align 1, ptr align 8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare zeroext i1 @"_ZN4core3fmt3num52_$LT$impl$u20$core..fmt..LowerHex$u20$for$u20$u8$GT$3fmt17h5491a99e5df195d5E"(ptr align 1, ptr align 8) unnamed_addr #0
+declare zeroext i1 @"_ZN4core3fmt3num52_$LT$impl$u20$core..fmt..LowerHex$u20$for$u20$u8$GT$3fmt17h5491a99e5df195d5E"(ptr align 1, ptr align 8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare zeroext i1 @"_ZN4core3fmt3num3imp52_$LT$impl$u20$core..fmt..Display$u20$for$u20$i32$GT$3fmt17h20d84ce7745c9c25E"(ptr align 4, ptr align 8) unnamed_addr #0
+declare zeroext i1 @"_ZN4core3fmt3num3imp52_$LT$impl$u20$core..fmt..Display$u20$for$u20$i32$GT$3fmt17h20d84ce7745c9c25E"(ptr align 4, ptr align 8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare zeroext i1 @"_ZN4core3fmt3num53_$LT$impl$u20$core..fmt..UpperHex$u20$for$u20$i32$GT$3fmt17hba5fa73134c1d9d5E"(ptr align 4, ptr align 8) unnamed_addr #0
+declare zeroext i1 @"_ZN4core3fmt3num53_$LT$impl$u20$core..fmt..UpperHex$u20$for$u20$i32$GT$3fmt17hba5fa73134c1d9d5E"(ptr align 4, ptr align 8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare zeroext i1 @"_ZN4core3fmt3num53_$LT$impl$u20$core..fmt..LowerHex$u20$for$u20$i32$GT$3fmt17hfca61b89a4190dddE"(ptr align 4, ptr align 8) unnamed_addr #0
+declare zeroext i1 @"_ZN4core3fmt3num53_$LT$impl$u20$core..fmt..LowerHex$u20$for$u20$i32$GT$3fmt17hfca61b89a4190dddE"(ptr align 4, ptr align 8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare zeroext i1 @"_ZN4core3fmt3num3imp54_$LT$impl$u20$core..fmt..Display$u20$for$u20$usize$GT$3fmt17h16e2d8a35fcc5a92E"(ptr align 8, ptr align 8) unnamed_addr #0
+declare zeroext i1 @"_ZN4core3fmt3num3imp54_$LT$impl$u20$core..fmt..Display$u20$for$u20$usize$GT$3fmt17h16e2d8a35fcc5a92E"(ptr align 8, ptr align 8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare zeroext i1 @"_ZN4core3fmt3num55_$LT$impl$u20$core..fmt..UpperHex$u20$for$u20$usize$GT$3fmt17hf2e8a08e617b8e39E"(ptr align 8, ptr align 8) unnamed_addr #0
+declare zeroext i1 @"_ZN4core3fmt3num55_$LT$impl$u20$core..fmt..UpperHex$u20$for$u20$usize$GT$3fmt17hf2e8a08e617b8e39E"(ptr align 8, ptr align 8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare zeroext i1 @"_ZN4core3fmt3num55_$LT$impl$u20$core..fmt..LowerHex$u20$for$u20$usize$GT$3fmt17h644fa137a4214e55E"(ptr align 8, ptr align 8) unnamed_addr #0
+declare zeroext i1 @"_ZN4core3fmt3num55_$LT$impl$u20$core..fmt..LowerHex$u20$for$u20$usize$GT$3fmt17h644fa137a4214e55E"(ptr align 8, ptr align 8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare align 8 ptr @_ZN4core3fmt8builders9DebugList5entry17h5d20dd743daa8c38E(ptr align 8, ptr align 1, ptr align 8) unnamed_addr #0
+declare align 8 ptr @_ZN4core3fmt8builders9DebugList5entry17h5d20dd743daa8c38E(ptr align 8, ptr align 1, ptr align 8) unnamed_addr #3
 
 ; Function Attrs: cold noinline noreturn nonlazybind uwtable
-declare void @_ZN4core9panicking9panic_fmt17ha3d303d496008cd4E(ptr align 8, ptr align 8) unnamed_addr #14
+declare void @_ZN4core9panicking9panic_fmt17ha3d303d496008cd4E(ptr align 8, ptr align 8) unnamed_addr #18
 
 ; Function Attrs: nonlazybind uwtable
-declare i64 @_ZN3std10sys_common6thread9min_stack17h4877004752fad623E() unnamed_addr #0
-
-; Function Attrs: nonlazybind uwtable
-declare zeroext i1 @"_ZN4core3fmt3num53_$LT$impl$u20$core..fmt..UpperHex$u20$for$u20$u32$GT$3fmt17h338e515addfde2e8E"(ptr align 4, ptr align 8) unnamed_addr #0
+declare i64 @_ZN3std10sys_common6thread9min_stack17h4877004752fad623E() unnamed_addr #3
 
 ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(none)
-declare i1 @llvm.expect.i1(i1, i1) #20
+declare i1 @llvm.expect.i1(i1, i1) #24
 
 ; Function Attrs: cold noinline noreturn nonlazybind uwtable
-declare void @_ZN4core9panicking18panic_bounds_check17hcaba71f5f538ebe0E(i64, i64, ptr align 8) unnamed_addr #14
+declare void @_ZN4core9panicking18panic_bounds_check17hcaba71f5f538ebe0E(i64, i64, ptr align 8) unnamed_addr #18
 
 ; Function Attrs: cold noinline noreturn nonlazybind uwtable
-declare void @_ZN4core6result13unwrap_failed17h566b4fa76abf40a2E(ptr align 1, i64, ptr align 1, ptr align 8, ptr align 8) unnamed_addr #14
+declare void @_ZN4core6result13unwrap_failed17h566b4fa76abf40a2E(ptr align 1, i64, ptr align 1, ptr align 8, ptr align 8) unnamed_addr #18
 
 ; Function Attrs: nonlazybind uwtable
-declare zeroext i1 @"_ZN58_$LT$std..io..error..Error$u20$as$u20$core..fmt..Debug$GT$3fmt17hb0183faaec54836bE"(ptr align 8, ptr align 8) unnamed_addr #0
+declare zeroext i1 @"_ZN58_$LT$std..io..error..Error$u20$as$u20$core..fmt..Debug$GT$3fmt17hb0183faaec54836bE"(ptr align 8, ptr align 8) unnamed_addr #3
 
 ; Function Attrs: cold noreturn nonlazybind uwtable
-declare void @_ZN5alloc5alloc18handle_alloc_error17h085c72f91e671903E(i64, i64) unnamed_addr #21
+declare void @_ZN5alloc5alloc18handle_alloc_error17h085c72f91e671903E(i64, i64) unnamed_addr #25
 
 ; Function Attrs: nounwind nonlazybind allockind("alloc,uninitialized,aligned") allocsize(0) uwtable
-declare noalias ptr @__rust_alloc(i64, i64 allocalign) unnamed_addr #22
-
-; Function Attrs: nounwind nonlazybind allockind("alloc,zeroed,aligned") allocsize(0) uwtable
-declare noalias ptr @__rust_alloc_zeroed(i64, i64 allocalign) unnamed_addr #23
+declare noalias ptr @__rust_alloc(i64, i64 allocalign) unnamed_addr #26
 
 ; Function Attrs: nounwind nonlazybind allockind("free") uwtable
-declare void @__rust_dealloc(ptr allocptr, i64, i64) unnamed_addr #24
+declare void @__rust_dealloc(ptr allocptr, i64, i64) unnamed_addr #27
 
 ; Function Attrs: nonlazybind uwtable
-declare zeroext i1 @_ZN4core3fmt9Formatter25debug_tuple_field2_finish17hb946ec1de769060bE(ptr align 8, ptr align 1, i64, ptr align 1, ptr align 8, ptr align 1, ptr align 8) unnamed_addr #0
+declare zeroext i1 @_ZN4core3fmt9Formatter25debug_tuple_field2_finish17hb946ec1de769060bE(ptr align 8, ptr align 1, i64, ptr align 1, ptr align 8, ptr align 1, ptr align 8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare { i64, i64 } @_ZN4core5slice6memchr14memchr_aligned17h8f0bf65eb3f4aa75E(i8, ptr align 1, i64) unnamed_addr #0
+declare { i64, i64 } @_ZN4core5slice6memchr14memchr_aligned17h8f0bf65eb3f4aa75E(i8, ptr align 1, i64) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare { ptr, i64 } @_ZN5alloc3ffi5c_str7CString19_from_vec_unchecked17haed2596d76a1241bE(ptr align 8) unnamed_addr #0
+declare { ptr, i64 } @_ZN5alloc3ffi5c_str7CString19_from_vec_unchecked17haed2596d76a1241bE(ptr align 8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare zeroext i1 @"_ZN82_$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$u20$as$u20$core..fmt..Debug$GT$3fmt17h18d947fb575c25c8E"(ptr align 1, ptr align 8, ptr align 8) unnamed_addr #0
+declare zeroext i1 @"_ZN82_$LT$dyn$u20$core..any..Any$u2b$core..marker..Send$u20$as$u20$core..fmt..Debug$GT$3fmt17h18d947fb575c25c8E"(ptr align 1, ptr align 8, ptr align 8) unnamed_addr #3
 
 ; Function Attrs: cold noreturn nounwind
-declare void @llvm.trap() #25
+declare void @llvm.trap() #28
 
 ; Function Attrs: noreturn nonlazybind uwtable
-declare void @_ZN3std3sys3pal4unix14abort_internal17h7fd6e40882d9056eE() unnamed_addr #26
+declare void @_ZN3std3sys3pal4unix14abort_internal17h7fd6e40882d9056eE() unnamed_addr #29
 
 ; Function Attrs: nonlazybind uwtable
-declare void @_ZN3std6thread6scoped9ScopeData29decrement_num_running_threads17h407e400d408a22bfE(ptr align 8, i1 zeroext) unnamed_addr #0
+declare void @_ZN3std6thread6scoped9ScopeData29decrement_num_running_threads17h407e400d408a22bfE(ptr align 8, i1 zeroext) unnamed_addr #3
 
 ; Function Attrs: nonlazybind uwtable
-declare void @_ZN3std2io5stdio7_eprint17h3355abb6aa65e8e1E(ptr align 8) unnamed_addr #0
+declare void @_ZN3std2io5stdio7_eprint17h3355abb6aa65e8e1E(ptr align 8) unnamed_addr #3
 
 ; Function Attrs: nonlazybind
-define i32 @main(i32 %0, ptr %1) unnamed_addr #18 {
+define i32 @main(i32 %0, ptr %1) unnamed_addr #22 {
 top:
   %2 = sext i32 %0 to i64
   %3 = tail call i64 @_ZN3std2rt10lang_start17hf0e5005b6eeaa845E(ptr nonnull @_ZN6std_rs4main17h724a8668b1a5c779E, i64 %2, ptr %1, i8 0)
@@ -5026,36 +4616,39 @@ top:
   ret i32 %4
 }
 
-attributes #0 = { nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #0 = { nounwind nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
 attributes #1 = { inlinehint nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
 attributes #2 = { noinline nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #3 = { inlinehint mustprogress nofree nosync nonlazybind willreturn memory(argmem: write, inaccessiblemem: readwrite) uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #4 = { inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(none) uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #5 = { inlinehint mustprogress nofree nosync nonlazybind willreturn uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #6 = { inlinehint nounwind nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #7 = { inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(argmem: write) uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #8 = { nounwind nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #9 = { inlinehint mustprogress nofree nosync nounwind nonlazybind willreturn memory(argmem: readwrite) uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #10 = { mustprogress nofree nosync nounwind nonlazybind willreturn memory(argmem: readwrite) uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #11 = { inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(write, argmem: readwrite, inaccessiblemem: none) uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #12 = { inlinehint mustprogress nofree nosync nounwind nonlazybind willreturn memory(inaccessiblemem: readwrite) uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #13 = { inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(argmem: readwrite) uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #14 = { cold noinline noreturn nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #15 = { cold noinline noreturn nounwind nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #16 = { nocallback nofree nosync nounwind willreturn memory(inaccessiblemem: readwrite) }
-attributes #17 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
-attributes #18 = { nonlazybind "target-cpu"="x86-64" }
-attributes #19 = { cold nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #20 = { nocallback nofree nosync nounwind willreturn memory(none) }
-attributes #21 = { cold noreturn nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #22 = { nounwind nonlazybind allockind("alloc,uninitialized,aligned") allocsize(0) uwtable "alloc-family"="__rust_alloc" "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #23 = { nounwind nonlazybind allockind("alloc,zeroed,aligned") allocsize(0) uwtable "alloc-family"="__rust_alloc" "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #24 = { nounwind nonlazybind allockind("free") uwtable "alloc-family"="__rust_alloc" "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #25 = { cold noreturn nounwind }
-attributes #26 = { noreturn nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
-attributes #27 = { noreturn }
-attributes #28 = { nounwind }
-attributes #29 = { cold }
+attributes #3 = { nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #4 = { inlinehint mustprogress nofree nosync nonlazybind willreturn memory(argmem: write, inaccessiblemem: readwrite) uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #5 = { inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(none) uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #6 = { inlinehint mustprogress nofree nosync nonlazybind willreturn uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #7 = { inlinehint nounwind nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #8 = { inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(argmem: write) uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #9 = { inlinehint mustprogress nofree norecurse nounwind nonlazybind willreturn memory(argmem: readwrite) uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #10 = { inlinehint mustprogress nofree norecurse nounwind nonlazybind willreturn uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #11 = { inlinehint mustprogress nofree nosync nounwind nonlazybind willreturn memory(argmem: readwrite) uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #12 = { noinline nounwind nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #13 = { mustprogress nofree norecurse nounwind nonlazybind willreturn memory(readwrite, inaccessiblemem: none) uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #14 = { mustprogress nofree nosync nounwind nonlazybind willreturn memory(argmem: readwrite) uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #15 = { inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(write, argmem: readwrite, inaccessiblemem: none) uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #16 = { inlinehint mustprogress nofree nosync nounwind nonlazybind willreturn memory(inaccessiblemem: readwrite) uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #17 = { inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(argmem: readwrite) uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #18 = { cold noinline noreturn nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #19 = { cold noinline noreturn nounwind nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #20 = { nocallback nofree nosync nounwind willreturn memory(inaccessiblemem: readwrite) }
+attributes #21 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
+attributes #22 = { nonlazybind "target-cpu"="x86-64" }
+attributes #23 = { cold nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #24 = { nocallback nofree nosync nounwind willreturn memory(none) }
+attributes #25 = { cold noreturn nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #26 = { nounwind nonlazybind allockind("alloc,uninitialized,aligned") allocsize(0) uwtable "alloc-family"="__rust_alloc" "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #27 = { nounwind nonlazybind allockind("free") uwtable "alloc-family"="__rust_alloc" "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #28 = { cold noreturn nounwind }
+attributes #29 = { noreturn nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x86-64" }
+attributes #30 = { noreturn }
+attributes #31 = { nounwind }
+attributes #32 = { cold }
 
 !llvm.module.flags = !{!0, !1, !2}
 !llvm.ident = !{!3}
@@ -5073,7 +4666,9 @@ attributes #29 = { cold }
 !10 = !{i64 8}
 !11 = !{i64 1}
 !12 = !{i64 0, i64 -9223372036854775807}
-!13 = !{i64 0, i64 -9223372036854775808}
-!14 = !{i64 1, i64 0}
-!15 = !{ptr @_ZN3std9panicking3try7do_call17h7f1e88548aac6577E, ptr @_ZN3std9panicking3try7do_call17h884d2486ad7a52f8E, ptr @_ZN3std9panicking3try7do_call17hc4d0324b6b2e9fecE}
-!16 = !{ptr @_ZN3std9panicking3try8do_catch17h3b6757f55ce8cd1aE, ptr @_ZN3std9panicking3try8do_catch17hc34136e473709636E, ptr @_ZN3std9panicking3try8do_catch17hd9cdc6439e142313E}
+!13 = !{i32 0, i32 2}
+!14 = !{i32 0, i32 256}
+!15 = !{i64 0, i64 -9223372036854775808}
+!16 = !{i64 1, i64 0}
+!17 = !{ptr @_ZN3std9panicking3try7do_call17h7f1e88548aac6577E, ptr @_ZN3std9panicking3try7do_call17h884d2486ad7a52f8E, ptr @_ZN3std9panicking3try7do_call17hc4d0324b6b2e9fecE}
+!18 = !{ptr @_ZN3std9panicking3try8do_catch17h3b6757f55ce8cd1aE, ptr @_ZN3std9panicking3try8do_catch17hc34136e473709636E, ptr @_ZN3std9panicking3try8do_catch17hd9cdc6439e142313E}
