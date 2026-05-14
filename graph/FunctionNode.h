@@ -90,10 +90,10 @@ public:
     }
 
     void addReturn(Node* node) {
-        // TODO: i dont think we can return multiple things?
+        assert(_returnNode != nullptr);
+
         _returnNode = node;
         addEdge("RETURNS", node);
-        _returns.push_back(node);
     }
 
     Node* getReturnNode() {
@@ -107,5 +107,4 @@ private:
 
     std::vector<BasicBlockNode*> _blocks;
     std::vector<ParamNode*> _params;
-    std::vector<Node*> _returns;
 };
