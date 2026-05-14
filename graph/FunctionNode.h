@@ -90,13 +90,20 @@ public:
     }
 
     void addReturn(Node* node) {
+        // TODO: i dont think we can return multiple things?
+        _returnNode = node;
         addEdge("RETURNS", node);
         _returns.push_back(node);
+    }
+
+    Node* getReturnNode() {
+        return _returnNode;
     }
 
 
 private:
     GroupNode *_blockGroup;
+    Node *_returnNode = nullptr;
 
     std::vector<BasicBlockNode*> _blocks;
     std::vector<ParamNode*> _params;
