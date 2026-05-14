@@ -207,7 +207,6 @@ void Andersen::addGlobalInitializerConstraints(NodeIndex objNode,
 }
 
 void Andersen::addGlobalAggregateConstraints(const llvm::Value *aggregate, const llvm::Constant *c, FieldType &fields) {
-  // TODO: does not yet handle inner aggregate types
   for (unsigned int i=0; i < c->getNumOperands(); i++) {
     Constant *element = cast<Constant>(c->getOperand(i));
     FieldType newFields;

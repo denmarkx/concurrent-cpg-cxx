@@ -59,8 +59,8 @@ void Andersen::printPointsToSet(const llvm::Value *value, unsigned int contextId
     }
 
     for (const llvm::Value *v : ptsSet) {
-        if (isa<Function>(value))
-            errs() << "        [F] " << value->getName() << "\n";
+        if (isa<Function>(v))
+            errs() << "        [F] " << v->getName() << "\n";
         else
             errs() << "        " << *v << "\n";
     }
