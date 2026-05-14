@@ -231,27 +231,6 @@ void Andersen::addGlobalAggregateConstraints(const llvm::Value *aggregate, const
   }
 }
 
-const AllocaInst* Andersen::findAlloc(const llvm::Value *v) const {
-  if (!v) return nullptr;
-
-  if (isa<AllocaInst>(v))
-      return dyn_cast<AllocaInst>(v);
-
-  // If we're a GEP, we can try the source?
-  if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(v)) {
-      const llvm::AllocaInst *alloca = findAlloc(gep->getOperand(0));
-      if (alloca) return alloca;
-  }
-
-  for (const llvm::User *user : v->users()) {
-      const llvm::AllocaInst *alloca = findAlloc(user);
-      if (alloca) return alloca;
-  }
-
-  return nullptr;
-}
-
-
 void Andersen::collectConstraintsForInstruction(const Context *context, const Instruction *inst, bool recursiveHack) {
   switch (inst->getOpcode()) {
   case Instruction::Alloca: {
@@ -320,24 +299,29 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
     auto fields = nodeFactory.getFields(context, inst);
     NodeIndex srcIndex = nodeFactory.getObjectNodeFor(context, src, fields);
 
-    // // If our source is a GEP, we need to resolve the alloc site.
-    // if (const GetElementPtrInst *sourceInst = dyn_cast<GetElementPtrInst>(inst->getOperand(0))) {
-    //   const AllocaInst *alloc = findAlloc(sourceInst);
+    // If our source is a GEP, we need to resolve the alloc site.
+    if (const GetElementPtrInst *sourceInst = dyn_cast<GetElementPtrInst>(src)) {
+      NodeIndex srcValIndex = nodeFactory.getValueNodeFor(context, sourceInst, nodeFactory.getFields(context, sourceInst));
+      assert(srcValIndex != AndersNodeFactory::InvalidIndex && "Could not find valid srcValIndex.");
 
-    //   // Our constraint then gets added there:
-    //   // TODO: technically, this should continuously propagate from the 1st gep..
-    //   // ...and the current approach we had before this should've worked in theory..
-    //   srcIndex = nodeFactory.getValueNodeFor(context, alloc, fields);
-    //   src = alloc;
-    // } else {
-    //   // If our source is a parameter, we take it as-is.
-    //   if (isa<Argument>(inst->getOperand(0)))
-    //     fields = {};
-    //   // We don't create every field for every aggregate during AllocaInst.
-    //   // ..so we need to check if this exists:
-    //   srcIndex = nodeFactory.getValueNodeFor(context, inst->getOperand(0), fields);
-    //   src = inst->getOperand(0);
-    // }
+      // We can assume that the source GEP has been resolved properly.
+      // ..meaning it already has a constraint to an object:
+      auto itr = std::find_if(constraints.begin(), constraints.end(), [&](const AndersConstraint& c) {
+        // Only considering ADDR_OF and if getSrc is an object.
+        return c.getType() == AndersConstraint::ADDR_OF &&\
+          nodeFactory.isObjectNode(c.getSrc()) &&\
+          c.getDest() == srcValIndex;
+      });
+
+      if (itr != constraints.end()) {
+        // However, we're more interested as the what the actual object is:
+        src = nodeFactory.getValueForNode(itr->getSrc());
+        assert(src != nullptr && "GEP Constraint failed: underlying src is null.");
+
+        // We can change our srcIndex, because it may exist already if we've been through this before.
+        srcIndex = nodeFactory.getObjectNodeFor(context, src, fields);
+      }
+    }
 
     if (srcIndex == AndersNodeFactory::InvalidIndex) {
       // We don't create objects for each field when we encounter an allocation

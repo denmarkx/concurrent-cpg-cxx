@@ -54,7 +54,7 @@ void Andersen::printPointsToSet(const llvm::Value *value, unsigned int contextId
 
     errs() << "    Set:\n";
     if (ptsSet.empty()) {
-        errs() << "        (empty)\n";
+        errs() << "        (empty)\n\n";
         return;
     }
 
