@@ -60,11 +60,11 @@ GraphManager* GraphManager::get() {
     return _graph;
 }
 
-void GraphManager::setAliasResult(AndersenAAResult &AA) {
+void GraphManager::setAliasResult(Andersen &AA) {
     _AA = &AA;
 }
 
-AndersenAAResult* GraphManager::getAliasResult() const {
+Andersen* GraphManager::getAliasResult() const {
     return _AA;
 }
 

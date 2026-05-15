@@ -5,26 +5,26 @@
 #include "graph/GraphManager.h"
 #include "graph/GraphParser.h"
 #include "GraphBuilderPass.h"
-#include "andersen/AndersenAA.h"
+#include "andersen/Andersen.h"
 
 bool GraphBuilderPass::runOnModule(Module &M) {
-    AndersenAAResult &AA = getAnalysis<AndersenAAWrapperPass>().getResult();
+    Andersen &AA = getAnalysis<AndersenAAWrapperPass>().getResult();
     GraphManager::get()->setAliasResult(AA);
 
     BidirectionalCallGraph *callGraph = new BidirectionalCallGraph(M);
     GraphManager::get()->setCallGraph(callGraph);
 
-    GraphManager::get()->setMemorySSACall(
-        [this](Function &F) -> MemorySSA& {
-            return this->getAnalysis<MemorySSAWrapperPass>(F).getMSSA();
-        });    
+    // GraphManager::get()->setMemorySSACall(
+        // [this](Function &F) -> MemorySSA& {
+            // return this->getAnalysis<MemorySSAWrapperPass>(F).getMSSA();
+        // });    
 
     GraphParser::handleGraph(M);
     return false;
 }
 
 void GraphBuilderPass::getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired<MemorySSAWrapperPass>();
+    // AU.addRequired<MemorySSAWrapperPass>();
     AU.addRequired<AndersenAAWrapperPass>();
     AU.setPreservesAll();
 }

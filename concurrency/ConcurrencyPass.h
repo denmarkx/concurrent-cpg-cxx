@@ -1,6 +1,6 @@
 #pragma once
 
-#include "andersen/AndersenAA.h"
+#include "andersen/Andersen.h"
 #include "andersen/Constraint.h"
 #include "concurrency/ConcurrencyManager.h"
 #include "concurrency/ThreadNode.h"
@@ -118,7 +118,7 @@ public:
      * We're interested in usages of globals from within threads. 
     */
     void handleGlobals(iterator_range<Module::global_iterator> it) {
-        AndersenAAResult *result = GraphManager::get()->getAliasResult();
+        Andersen *result = GraphManager::get()->getAliasResult();
         for (GlobalVariable &g : it) {
             // Just not really constant globals.
             // TODO: interested in what happens if we use const_cast on a global in cxx.
@@ -133,17 +133,17 @@ private:
     void handleThreadNode(ThreadNode *node) {
         std::vector<const llvm::Value *> ptsSet{};
         // errs() << "getting transitive pts set of: " << *node->getDataNode()->getValue() << "\n";
-        GraphManager::get()->getAliasResult()->getTransitivePointsToSet(
-            node->getDataNode()->getValue(), ptsSet);
+        GraphManager::get()->getAliasResult()->printPointsToSet(
+            node->getDataNode()->getValue());
         // GraphManager::get()->getAliasResult()->printTransitivePointsToSet(node->getDataNode()->getValue());
         // errs() << "routine = " << *node->getRoutine()->getValue() << "\n";
 
         GraphManager::get()->getAliasResult()->addConstraint(AndersConstraint::COPY, 
             dyn_cast<Function>(node->getRoutine()->getValue())->getArg(0),node->getDataNode()->getValue());
-        GraphManager::get()->getAliasResult()->solveConstraints();
+        GraphManager::get()->getAliasResult()->resolveConstraints();
         auto x = dyn_cast<Function>(node->getRoutine()->getValue())->getArg(0);
-        GraphManager::get()->getAliasResult()->printTransitivePointsToSet(x);
-
+        GraphManager::get()->getAliasResult()->printPointsToSet(x);
+        return;
         
 
         for (const Value *v : ptsSet) {
@@ -216,7 +216,7 @@ private:
                 // If we're down here, we couldn't resolve this indirect call.
                 // Our next attempt will be to see if this points to anything.
                 std::vector<const Value*> ptsSet;
-                GraphManager::get()->getAliasResult()->getPointsToSet(nullptr, currentCall->getCalledOperand(), ptsSet);
+                // GraphManager::get()->getAliasResult()->getPointsToSet(nullptr, currentCall->getCalledOperand(), ptsSet);
 
                 for (const Value* val : ptsSet) {
                     if (const Function *next = dyn_cast<Function>(val)) {
@@ -269,11 +269,11 @@ private:
         const Value *data = routine->getArg(0);
 
         std::vector<const Value *> ptsSet{};
-        GraphManager::get()->getAliasResult()->getPointsToSet(nullptr, data, ptsSet);
+        // GraphManager::get()->getAliasResult()->getPointsToSet(nullptr, data, ptsSet);
 
         for (const Value *v : ptsSet) {
             std::vector<const Value *> innerSet{};
-            GraphManager::get()->getAliasResult()->getPointsFromSet(nullptr, v, innerSet);
+            // GraphManager::get()->getAliasResult()->getPointsFromSet(nullptr, v, innerSet);
             for (const Value *w : innerSet) {
                 if (auto *instr = dyn_cast<Instruction>(w)) {
                     handleUsageInstruction(instr, summary);
