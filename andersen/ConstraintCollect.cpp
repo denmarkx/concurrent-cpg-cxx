@@ -585,11 +585,9 @@ void Andersen::addArgumentConstraintForCall(const Context *calleeCtx,
         assert(aIndex != AndersNodeFactory::InvalidIndex &&
                "Failed to find actual arg node!");
 
-        // TODO: similar to memcpy, we need to try to figure out if this is an aggregate type
-        const AllocaInst *alloca = dyn_cast<AllocaInst>(actual);
-        if (alloca && alloca->getAllocatedType()->isAggregateType()) {
+        const Type *sourceType = nodeFactory.typeInfo.resolveType(actual);
+        if (sourceType && sourceType->isAggregateType())
           propgateConstraintsToFields(AndersConstraint::COPY, fIndex, aIndex, calleeCtx, context);
-        }
         else
           constraints.emplace_back(AndersConstraint::COPY, fIndex, aIndex);
       } else
@@ -666,6 +664,9 @@ void Andersen::propgateConstraintsToFields(AndersConstraint::ConstraintType type
       constraints.emplace_back(type, dstIndex, fieldIdx);
     }
   }
+
+  // We'll also keep this, which is what was done before.
+  constraints.emplace_back(type, dstIndex, srcIndex);
 }
 
 Context* Andersen::getGlobalCtx() const {
