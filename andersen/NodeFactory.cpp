@@ -1,4 +1,5 @@
 #include "NodeFactory.h"
+#include "NodeMap.h"
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -168,8 +169,17 @@ NodeIndex AndersNodeFactory::getVarargNodeFor(const llvm::Function *f) const {
     : InvalidIndex;
 }
 
+/*
+ * [deprecated, use lookupFields]
+*/
 llvm::SmallVector<unsigned int, 4> AndersNodeFactory::getFields(const Context *ctx, const llvm::Value *v) const {
   return valueNodeMap.getFields(ctx, v);
+}
+
+std::vector<FieldType> AndersNodeFactory::lookupFields(AndersNode::AndersNodeType type, const Context *ctx, const llvm::Value *v) const {
+  return type == AndersNode::VALUE_NODE ?
+    valueNodeMap.lookupFields(ctx, v) :
+    objNodeMap.lookupFields(ctx, v);
 }
 
 void AndersNodeFactory::mergeNode(NodeIndex n0, NodeIndex n1) {
