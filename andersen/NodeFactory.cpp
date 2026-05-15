@@ -85,7 +85,7 @@ NodeIndex AndersNodeFactory::getValueNodeFor(const Context *context, const Value
     if (!isa<GlobalValue>(c))
       return getValueNodeForConstant(context, c, fields);
     else
-      context = _globalCtx; // TODO: may not be sound
+      context = _globalCtx;
   }
   return valueNodeMap.find(context, val, fields);
 }
