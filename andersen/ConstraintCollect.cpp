@@ -545,58 +545,24 @@ void Andersen::addConstraintForCall(const Context *context, const CallBase* cs) 
       // The argument constraints
       addArgumentConstraintForCall(calleeCtx, context, cs, f);
     }
-  } else // Indirect call
-  {
-    return; // TODO
-    // We do the simplest thing here: just assume the returned value can be
-    // anything :)
-    if (cs->getType()->isPointerTy()) {
+  } else {
+    // Indirect call are deferred until later.
+    deferredFuncPointers.emplace_back(context, cs);
+  }
+}
+
+void Andersen::addReturnConstraintForCall(const Context* calleeCtx,
+                                          const Context* context,
+                                          const CallBase *cs,
+                                          const Function *f) {
+  const Type *retTy = f->getReturnType();
+  if (retTy->isPointerTy() || typeContainsPointer(retTy)) {
       NodeIndex retIndex = nodeFactory.getValueNodeFor(context, cs);
-      assert(retIndex != AndersNodeFactory::InvalidIndex &&
-             "Failed to find ret node!");
-      NodeIndex fObj = nodeFactory.createObjectNode(context, cs);
-      constraints.emplace_back(AndersConstraint::ADDR_OF, retIndex, fObj);
-    }
-
-    // For argument constraints, first search through all addr-taken functions:
-    // any function that takes can take as many variables is a potential
-    // candidate
-    // 从调用点获取Module对象
-    const Module *M = cs->getModule();
-    for (auto const &f : *M) {
-      NodeIndex funPtrIndex = nodeFactory.getValueNodeFor(context, &f);
-      if (funPtrIndex == AndersNodeFactory::InvalidIndex)
-        // Not an addr-taken function
-        continue;
-
-      if (!f.getFunctionType()->isVarArg() && f.arg_size() != cs->arg_size())
-        // #arg mismatch
-        continue;
-
-      if (f.isDeclaration() || f.isIntrinsic()) // External library call
-      {
-        if (addConstraintForExternalLibrary(context, cs, &f))
-          continue;
-        else {
-          // Pollute everything
-          // for (CallBase::User::const_op_iterator itr = cs->arg_begin(),
-          //                                      ite = cs->arg_end();
-          //      itr != ite; ++itr) {
-          //   Value *argVal = *itr;
-
-          //   if (argVal->getType()->isPointerTy()) {
-          //     NodeIndex argIndex = nodeFactory.getValueNodeFor(argVal);
-          //     assert(argIndex != AndersNodeFactory::InvalidIndex &&
-          //            "Failed to find arg node!");
-          //     constraints.emplace_back(AndersConstraint::COPY, argIndex,
-          //                              nodeFactory.getUniversalPtrNode());
-          //   }
-          // }
-        }
-      } else {
-        // addArgumentConstraintForCall(context, cs, &f);
+      if (retIndex != AndersNodeFactory::InvalidIndex) {
+          NodeIndex fRetIndex = nodeFactory.getReturnNodeFor(calleeCtx, f);
+          if (fRetIndex != AndersNodeFactory::InvalidIndex)
+              constraints.emplace_back(AndersConstraint::COPY, retIndex, fRetIndex);
       }
-    }
   }
 }
 
