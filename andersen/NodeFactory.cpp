@@ -4,6 +4,8 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <limits>
@@ -19,33 +21,35 @@ AndersNodeFactory::AndersNodeFactory() {
 
   // Node #0 is always the universal ptr: the ptr that we don't know anything
   // about.
-  nodes.push_back(AndersNode(AndersNode::VALUE_NODE, 0));
+  nodes.push_back(std::make_unique<AndersNode>(AndersNode::VALUE_NODE, 0));
   // Node #0 is always the universal obj: the obj that we don't know anything
   // about.
-  nodes.push_back(AndersNode(AndersNode::OBJ_NODE, 1));
+  nodes.push_back(std::make_unique<AndersNode>(AndersNode::OBJ_NODE, 1));
   // Node #2 always represents the null pointer.
-  nodes.push_back(AndersNode(AndersNode::VALUE_NODE, 2));
+  nodes.push_back(std::make_unique<AndersNode>(AndersNode::VALUE_NODE, 2));
   // Node #3 is the object that null pointer points to
-  nodes.push_back(AndersNode(AndersNode::OBJ_NODE, 3));
+  nodes.push_back(std::make_unique<AndersNode>(AndersNode::OBJ_NODE, 3));
 
   assert(nodes.size() == 4);
 }
 
 NodeIndex AndersNodeFactory::createValueNode(const Context *context, const Value *val) {
   unsigned nextIdx = nodes.size();
-  nodes.push_back(AndersNode(AndersNode::VALUE_NODE, nextIdx, val));
+  nodes.push_back(std::make_unique<AndersNode>(AndersNode::VALUE_NODE, nextIdx, val));
   if (val != nullptr) {
     assert(!valueNodeMap.count({context, val}) &&
            "Trying to insert two mappings to revValueNodeMap!");
     valueNodeMap[{context, val}] = nextIdx;
+    errs() << "new value: " << *val << "\n";
   }
+  errs() << "\n";
 
   return nextIdx;
 }
 
 NodeIndex AndersNodeFactory::createObjectNode(const Context *context, const Value *val) {
   unsigned nextIdx = nodes.size();
-  nodes.push_back(AndersNode(AndersNode::OBJ_NODE, nextIdx, val));
+  nodes.push_back(std::make_unique<AndersNode>(AndersNode::OBJ_NODE, nextIdx, val));
   if (val != nullptr) {
     if (objNodeMap.contains({context, val})) return objNodeMap[{context, val}];
     assert(!objNodeMap.count({context, val}) &&
@@ -56,20 +60,29 @@ NodeIndex AndersNodeFactory::createObjectNode(const Context *context, const Valu
   return nextIdx;
 }
 
+NodeIndex AndersNodeFactory::createFieldNode(const Context *context, const llvm::Value *val, unsigned int fieldIdx) {
+  unsigned nextIdx = nodes.size();
+  nodes.push_back(std::make_unique<AndersFieldNode>(AndersNode::FIELD_NODE, nextIdx, fieldIdx, val));
+  if (val != nullptr)
+    fieldMap[new FieldNodeMap {context, val, fieldIdx}] = nextIdx;
+  return nextIdx;
+}
+
+
 // TODO: this is imprecise for functions that have >1 return stmt.
 NodeIndex AndersNodeFactory::createReturnNode(const Context *context, const llvm::Function *f) {
   auto existing = returnMap.find({context, f});
   if (existing != returnMap.end()) return existing->second;
 
   unsigned nextIdx = nodes.size();
-  nodes.push_back(AndersNode(AndersNode::VALUE_NODE, nextIdx, f));
+  nodes.push_back(std::make_unique<AndersNode>(AndersNode::VALUE_NODE, nextIdx, f));
   returnMap[{context, f}] = nextIdx;
   return nextIdx;
 }
 
 NodeIndex AndersNodeFactory::createVarargNode(const llvm::Function *f) {
   unsigned nextIdx = nodes.size();
-  nodes.push_back(AndersNode(AndersNode::OBJ_NODE, nextIdx, f));
+  nodes.push_back(std::make_unique<AndersNode>(AndersNode::OBJ_NODE, nextIdx, f));
 
   assert(!varargMap.count(f) && "Trying to insert two mappings to varargMap!");
   varargMap[f] = nextIdx;
@@ -83,6 +96,13 @@ NodeIndex AndersNodeFactory::getValueNodeFor(const Context *context, const Value
       return getValueNodeForConstant(context, c);
     else
       context = _globalCtx; // TODO: may not be sound
+  }
+
+  if (const AllocaInst *allocaInst = dyn_cast<AllocaInst>(val)) {
+    const Type* allocaType = allocaInst->getAllocatedType();
+    if (allocaType->isAggregateType()) {
+      return getFieldNodeFor(context, val, 0);
+    }
   }
 
   auto itr = valueNodeMap.find({context, val});
@@ -132,6 +152,16 @@ NodeIndex AndersNodeFactory::getObjectNodeFor(const Context *context, const Valu
     return itr->second;
 }
 
+NodeIndex AndersNodeFactory::getFieldNodeFor(const Context *context, const llvm::Value *val, unsigned int fieldIdx) const {
+  // auto itr = fieldMap (FieldNodeMap { context, val, fieldIdx });
+  auto itr = std::find_if(fieldMap.begin(), fieldMap.end(), [&](auto &field) {
+    return field.first->ctx == context && field.first->value == val && field.first->fieldId == fieldIdx;
+  });
+  if (itr == fieldMap.end()) return InvalidIndex;
+  return itr->second;
+}
+
+
 NodeIndex
 AndersNodeFactory::getObjectNodeForConstant(const Context *context, const llvm::Constant *c) const {
   assert(isa<PointerType>(c->getType()) && "Not a constant pointer!");
@@ -180,20 +210,20 @@ NodeIndex AndersNodeFactory::getVarargNodeFor(const llvm::Function *f) const {
 
 void AndersNodeFactory::mergeNode(NodeIndex n0, NodeIndex n1) {
   assert(n0 < nodes.size() && n1 < nodes.size());
-  nodes[n1].mergeTarget = n0;
+  nodes[n1]->mergeTarget = n0;
 }
 
 NodeIndex AndersNodeFactory::getMergeTarget(NodeIndex n) {
   assert(n < nodes.size());
-  NodeIndex ret = nodes[n].mergeTarget;
+  NodeIndex ret = nodes[n]->mergeTarget;
   if (ret != n) {
     std::vector<NodeIndex> path(1, n);
-    while (ret != nodes[ret].mergeTarget) {
+    while (ret != nodes[ret]->mergeTarget) {
       path.push_back(ret);
-      ret = nodes[ret].mergeTarget;
+      ret = nodes[ret]->mergeTarget;
     }
     for (auto idx : path)
-      nodes[idx].mergeTarget = ret;
+      nodes[idx]->mergeTarget = ret;
   }
   assert(ret < nodes.size());
   return ret;
@@ -201,9 +231,9 @@ NodeIndex AndersNodeFactory::getMergeTarget(NodeIndex n) {
 
 NodeIndex AndersNodeFactory::getMergeTarget(NodeIndex n) const {
   assert(n < nodes.size());
-  NodeIndex ret = nodes[n].mergeTarget;
-  while (ret != nodes[ret].mergeTarget)
-    ret = nodes[ret].mergeTarget;
+  NodeIndex ret = nodes[n]->mergeTarget;
+  while (ret != nodes[ret]->mergeTarget)
+    ret = nodes[ret]->mergeTarget;
   return ret;
 }
 
@@ -216,22 +246,29 @@ void AndersNodeFactory::getAllocSites(
 }
 
 void AndersNodeFactory::dumpNode(NodeIndex idx) const {
-  const AndersNode &n = nodes.at(idx);
-  if (n.type == AndersNode::VALUE_NODE)
+  const AndersNode *n = nodes.at(idx).get();
+  if (n->type == AndersNode::VALUE_NODE)
     errs() << "[V ";
-  else if (n.type == AndersNode::OBJ_NODE)
+  else if (n->type == AndersNode::OBJ_NODE)
     errs() << "[O ";
+  else if (n->type == AndersNode::FIELD_NODE)
+    errs() << "[F ";
   else
     assert(false && "Wrong type number!");
-  errs() << "#" << n.idx << "]";
+  errs() << "#" << n->idx;
+  if (n->type == AndersNode::FIELD_NODE) {
+    const AndersFieldNode *fieldNode = dynamic_cast<const AndersFieldNode*>(n);
+    errs() << ", field=" << fieldNode->getFieldId();
+  }
+  errs() << "]";
 }
 
 void AndersNodeFactory::dumpNodeInfo() const {
   errs() << "\n----- Print AndersNodeFactory Info -----\n";
   for (auto const &node : nodes) {
-    dumpNode(node.getIndex());
+    dumpNode(node->getIndex());
     errs() << ", val = ";
-    const Value *val = node.getValue();
+    const Value *val = node->getValue();
     if (val == nullptr)
       errs() << "nullptr";
     else if (isa<Function>(val))
@@ -248,6 +285,10 @@ void AndersNodeFactory::dumpNodeInfo() const {
   errs() << "\nVararg Map:\n";
   for (auto const &mapping : varargMap)
     errs() << mapping.first->getName() << "  -->>  [Node #" << mapping.second
+           << "]\n";
+  errs() << "\nField Map:\n";
+  for (auto const &mapping : fieldMap)
+    errs() << mapping.getFirst()->value->getName() << "  -->>  [Node #" << mapping.second
            << "]\n";
   errs() << "----- End of Print -----\n";
 }
