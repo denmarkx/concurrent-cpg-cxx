@@ -111,6 +111,9 @@ private:
   void scanFunction(Context*, const llvm::Function *f);
   void setupFunctionConstraints(const Context*, const llvm::Function *f);
 
+  void propgateConstraintsToFields(AndersConstraint::ConstraintType type,
+    NodeIndex dst, NodeIndex src, const Context* dstCtx, const Context* srcCtx=nullptr);
+
   // Helper functions for constraint optimization
   NodeIndex getRefNodeIndex(NodeIndex n) const;
   NodeIndex getAdrNodeIndex(NodeIndex n) const;
