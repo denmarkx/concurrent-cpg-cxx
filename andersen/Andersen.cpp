@@ -1,4 +1,5 @@
 #include "Andersen.h"
+#include "NodeFactory.h"
 
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/Module.h"
@@ -146,4 +147,54 @@ void Andersen::getPointsToSet(const llvm::Value *v, PtsSetType &ptsSet, unsigned
     for (const Context *ctx : nodeFactory.getAssociatedContexts(v)) {
       fillPointsToSet(v, ptsSet, ctx->id);
     }
+}
+
+/*
+ * Sets constraint for the two given values.
+ * This works for most instructions that do not require additional constraints.
+ * 
+ * However, as of right now, it is the responsibility of the caller to adhere to the
+ * constraint implementation from ConstraintCollect for more complex constraints,
+ * ie: adding constraints for parameters and arguments, etc.
+ *
+ *
+ * TODO: as of right now, this adds the constraint to ALL associated contexts of the LHS.
+ *       ..because we need to figure out how to be a little user-friendly with the contextId.
+ *
+ * What should be noted right now that it is IRRESPONSIBLE for LHS to be an alloca.
+ * TODO: this also makes no effort to differentiate between objects and values. All LHS and RHSes
+ *       are assumed to have a value OR a value needs to be created.
+ * 
+ * Return boolean indicating if the constraint was successfully added.
+*/
+bool Andersen::addConstraint(AndersConstraint::ConstraintType type, const llvm::Value *lhs, const llvm::Value *rhs) {
+    if (!lhs || !rhs) return false;
+    if (!lhs->getType()->isPointerTy() || !rhs->getType()->isPointerTy()) return false;
+
+    bool constraintAdded = false;
+    for (const Context *ctx : nodeFactory.getAssociatedContexts(lhs)) {
+        NodeIndex leftIdx = nodeFactory.getValueNodeFor(ctx, lhs);
+        if (leftIdx == AndersNodeFactory::InvalidIndex) continue;
+
+        // A rightIdx may not always exist for this context:
+        NodeIndex rightIdx = nodeFactory.getValueNodeFor(ctx, rhs);
+        if (rightIdx == AndersNodeFactory::InvalidIndex) {
+            // If that's the case, it's not necessarily an error.
+            rightIdx = nodeFactory.createValueNode(ctx, rhs);
+        }
+
+        constraints.emplace_back(type, leftIdx, rightIdx);
+        constraintAdded = true;
+    }
+    return constraintAdded;
+}
+
+/*
+ * Public API of Andersen::solveConstraints.
+ * This should only be used when Andersen::addConstraint has been used. Additionally,
+ * this will also call Andersen::optimizeConstraints.
+*/
+void Andersen::resolveConstraints() {
+  optimizeConstraints();
+  solveConstraints();
 }
