@@ -37,6 +37,7 @@ set (ANDERSEN_FILES
     andersen/ConstraintOptimize.cpp
     andersen/ConstraintSolving.cpp
     andersen/ExternalLibrary.cpp
+    andersen/FunctionPointerSolver.cxx
     andersen/NodeFactory.cpp
     andersen/NodeMap.cxx
 )
