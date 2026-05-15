@@ -152,12 +152,16 @@ NodeIndex AndersNodeFactory::getObjectNodeFor(const Context *context, const Valu
     return itr->second;
 }
 
-NodeIndex AndersNodeFactory::getFieldNodeFor(const Context *context, const llvm::Value *val, unsigned int fieldIdx) const {
+NodeIndex AndersNodeFactory::getFieldNodeFor(const Context *context, const llvm::Value *val, unsigned int fieldIdx) {
   // auto itr = fieldMap (FieldNodeMap { context, val, fieldIdx });
   auto itr = std::find_if(fieldMap.begin(), fieldMap.end(), [&](auto &field) {
     return field.first->ctx == context && field.first->value == val && field.first->fieldId == fieldIdx;
   });
-  if (itr == fieldMap.end()) return InvalidIndex;
+
+  // Other get funcs will return an InvalidIndex, but since we can have a large amount of fields, I opt for on-demand creation.
+  if (itr == fieldMap.end())
+    // TODO: if val is a nullptr, this will actually return an index that doesn't correspond to anything.
+    return createFieldNode(context, val, fieldIdx);
   return itr->second;
 }
 
