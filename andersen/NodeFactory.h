@@ -162,7 +162,7 @@ public:
   NodeIndex getObjectNodeForConstant(const Context *context, const llvm::Constant *c) const;
   NodeIndex getReturnNodeFor(const Context *context, const llvm::Function *f) const;
   NodeIndex getVarargNodeFor(const llvm::Function *f) const;
-  NodeIndex getFieldNodeFor(const Context *context, const llvm::Value *val, unsigned int fieldIdx);
+  NodeIndex getFieldNodeFor(const Context *context, const llvm::Value *val, unsigned int fieldIdx) const;
 
   // Node merge interfaces
   void mergeNode(NodeIndex n0, NodeIndex n1); // Merge n1 into n0
