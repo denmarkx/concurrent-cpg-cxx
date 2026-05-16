@@ -40,10 +40,7 @@ NodeIndex AndersNodeFactory::createValueNode(const Context *context, const Value
     assert(!valueNodeMap.count({context, val}) &&
            "Trying to insert two mappings to revValueNodeMap!");
     valueNodeMap[{context, val}] = nextIdx;
-    errs() << "new value: " << *val << "\n";
   }
-  errs() << "\n";
-
   return nextIdx;
 }
 
@@ -63,8 +60,10 @@ NodeIndex AndersNodeFactory::createObjectNode(const Context *context, const Valu
 NodeIndex AndersNodeFactory::createFieldNode(const Context *context, const llvm::Value *val, unsigned int fieldIdx) {
   unsigned nextIdx = nodes.size();
   nodes.push_back(std::make_unique<AndersFieldNode>(AndersNode::FIELD_NODE, nextIdx, fieldIdx, val));
-  if (val != nullptr)
-    fieldMap[new FieldNodeMap {context, val, fieldIdx}] = nextIdx;
+  if (val != nullptr) {
+    const FieldNodeMap* fieldNodeMap = new FieldNodeMap {context, val, fieldIdx};
+    fieldMap[fieldNodeMap] = nextIdx;
+  }
   return nextIdx;
 }
 
@@ -157,15 +156,17 @@ NodeIndex AndersNodeFactory::getObjectNodeFor(const Context *context, const Valu
     return itr->second;
 }
 
-NodeIndex AndersNodeFactory::getFieldNodeFor(const Context *context, const llvm::Value *val, unsigned int fieldIdx) const {
+NodeIndex AndersNodeFactory::getFieldNodeFor(const Context *context, const llvm::Value *val, unsigned int fieldIdx) {
   // auto itr = fieldMap (FieldNodeMap { context, val, fieldIdx });
   auto itr = std::find_if(fieldMap.begin(), fieldMap.end(), [&](auto &field) {
     return field.first->ctx == context && field.first->value == val && field.first->fieldId == fieldIdx;
   });
-  if (itr == fieldMap.end()) return InvalidIndex;
+  // Other get funcs will return an InvalidIndex, but since we can have a large amount of fields, I opt for on-demand creation.
+  if (itr == fieldMap.end())
+    // TODO: if val is a nullptr, this will actually return an index that doesn't correspond to anything.
+    return createFieldNode(context, val, fieldIdx);
   return itr->second;
 }
-
 
 NodeIndex
 AndersNodeFactory::getObjectNodeForConstant(const Context *context, const llvm::Constant *c) const {
@@ -211,6 +212,10 @@ NodeIndex AndersNodeFactory::getVarargNodeFor(const llvm::Function *f) const {
     return InvalidIndex;
   else
     return itr->second;
+}
+
+const llvm::DenseMap<const FieldNodeMap*, NodeIndex>& AndersNodeFactory::getFieldMap() const {
+  return fieldMap;
 }
 
 void AndersNodeFactory::mergeNode(NodeIndex n0, NodeIndex n1) {
