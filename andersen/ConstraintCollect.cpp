@@ -80,8 +80,11 @@ void Andersen::scanFunction(Context *context, const llvm::Function *f) {
         if (const AllocaInst *allocaInst = dyn_cast<AllocaInst>(inst)) {
           const Type* allocaType = allocaInst->getAllocatedType();
           if (allocaType->isAggregateType()) {
-            for (unsigned int i=0; i < allocaType->getStructNumElements(); ++i)
-              nodeFactory.createFieldNode(context, inst, i);
+            for (unsigned int i=0; i < allocaType->getStructNumElements(); ++i) {
+              NodeIndex fieldNodeIdx = nodeFactory.createFieldNode(context, inst, i);
+              NodeIndex fieldObjIdx = nodeFactory.createFieldNode(context, inst, i);
+              constraints.emplace_back(AndersConstraint::ADDR_OF, fieldNodeIdx, fieldObjIdx);
+            }
             createdNode = true;
           }
         }
@@ -123,6 +126,13 @@ Context* Andersen::collectConstraintsForGlobals(const Module &M) {
   nodeFactory._globalCtx = _globalCtx;
   // Create a pointer and an object for each global variable
   for (auto const &globalVal : M.globals()) {
+    if (globalVal.getValueType()->isAggregateType()) {
+      for (unsigned int i=0; i < globalVal.getValueType()->getStructNumElements(); ++i) {
+        NodeIndex fieldNodeIdx = nodeFactory.createFieldNode(_globalCtx, &globalVal, i);
+        NodeIndex fieldObjIdx = nodeFactory.createFieldObjNode(_globalCtx, &globalVal, i);
+        constraints.emplace_back(AndersConstraint::ADDR_OF, fieldNodeIdx, fieldObjIdx);
+      }
+    }
     NodeIndex gVal = nodeFactory.createValueNode(_globalCtx, &globalVal);
     NodeIndex gObj = nodeFactory.createObjectNode(_globalCtx, &globalVal);
     constraints.emplace_back(AndersConstraint::ADDR_OF, gVal, gObj);
