@@ -282,14 +282,16 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
 
     for (unsigned int i=2; i < inst->getNumOperands(); i++) {
       const ConstantInt *fieldIdxV = dyn_cast<ConstantInt>(inst->getOperand(i));
+      if (!fieldIdxV) continue;
 
-      // TODO: this still fucks up when not a const int
       assert(fieldIdxV != nullptr);
       fieldIdxs.push_back(fieldIdxV->getZExtValue());
     }
 
     // P1 = getelementptr P2, ... --> <Copy/P1/P2>
-    NodeIndex srcIndex = nodeFactory.getFieldNodeFor(context, inst->getOperand(0), std::move(fieldIdxs));
+    NodeIndex srcIndex = nodeFactory.getValueNodeFor(context, inst->getOperand(0));
+    if (!fieldIdxs.empty())
+      srcIndex = nodeFactory.getFieldNodeFor(context, inst->getOperand(0), std::move(fieldIdxs));
     assert(srcIndex != AndersNodeFactory::InvalidIndex &&
            "Failed to find gep src node");
     NodeIndex dstIndex = nodeFactory.getValueNodeFor(context, inst);
