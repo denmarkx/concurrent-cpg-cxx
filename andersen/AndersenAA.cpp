@@ -160,6 +160,10 @@ bool AndersenAAResult::getPointsFromSet(unsigned int ctxId, const Value *v, PtsS
   return anders.getPointsFromSet(ctxId, v, ptsSet);
 }
 
+bool AndersenAAResult::getTransitivePointsToSet(const Context* cs, const Value *v, PtsSetType &ptsSet) {
+  return anders.getTransitivePointsToSet(cs, v, ptsSet);
+}
+
 std::vector<unsigned int> AndersenAAResult::getContextIDs(const Value *v) {
   std::vector<unsigned int> contexts;
 
@@ -202,6 +206,40 @@ void AndersenAAResult::printPointsToSet(const Value *v) {
     printPointsToSet(ctx, v);
   }
   errs() << "===================== printPointsToSet =====================\n";
+}
+
+void AndersenAAResult::printTransitivePointsToSet(const Context* cs, const Value *v) {
+  PtsSetType ptsSet{};
+  getTransitivePointsToSet(cs, v, ptsSet);
+
+  errs() << "Value: " << *v << "\n";
+  if (ptsSet.size() == 0) {
+    errs() << "\tptsSet is empty.\n";
+    return;
+  }
+  for (const llvm::Value *v : ptsSet) {
+    if (dyn_cast<Function>(v)) {
+      errs() << "  ---> [F] " << v->getName() << "\n";
+    } else {
+      errs() << "  ---> " << *v << "\n";
+    }
+  }
+  errs() << "\n";
+}
+
+void AndersenAAResult::printTransitivePointsToSet(unsigned int ctxId, const Value *v) {
+  assert(ctxId < anders.nodeFactory.getNumContexts());
+  return printTransitivePointsToSet(anders.nodeFactory.getContext(ctxId), v);
+}
+
+void AndersenAAResult::printTransitivePointsToSet(const Value *v) {
+  std::vector<const Context*> contextPtrs = anders.nodeFactory.getAssociatedContexts(v);
+  errs() << "===================== printTransitivePointsToSet =====================\n";
+  for (const Context *ctx : contextPtrs) {
+    errs() << "Context: " << ctx->id << "\n";
+    printTransitivePointsToSet(ctx, v);
+  }
+  errs() << "===================== printTransitivePointsToSet =====================\n";
 }
 
 AndersenAAResult::AndersenAAResult(const Module &m) : anders(m) {}

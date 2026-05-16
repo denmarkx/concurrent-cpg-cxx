@@ -32,6 +32,8 @@ public:
   bool getPointsToSet(unsigned int, const llvm::Value *v, PtsSetType &ptsSet);
   bool getPointsToSet(const llvm::Value *v, PtsSetType &ptsSet);
 
+  bool getTransitivePointsToSet(const Context*, const llvm::Value *v, PtsSetType &ptsSet);
+
   bool getPointsFromSet(const Context*, const llvm::Value *v, PtsSetType&ptsSet);
   bool getPointsFromSet(unsigned int, const llvm::Value *v, PtsSetType &ptsSet);
   bool getPointsFromSet(const llvm::Value *v, PtsSetType &ptsSet);
@@ -39,6 +41,10 @@ public:
   void printPointsToSet(const Context*, const llvm::Value *v);
   void printPointsToSet(unsigned int, const llvm::Value *v);
   void printPointsToSet(const llvm::Value *v);
+
+  void printTransitivePointsToSet(const Context*, const llvm::Value *v);
+  void printTransitivePointsToSet(unsigned int, const llvm::Value *v);
+  void printTransitivePointsToSet(const llvm::Value *v);
 
   std::vector<unsigned int> getContextIDs(const llvm::Value* v);
 };
