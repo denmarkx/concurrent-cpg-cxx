@@ -90,7 +90,7 @@ public:
     }
 
     void addReturn(Node* node) {
-        assert(_returnNode != nullptr);
+        assert(_returnNode == nullptr);
 
         _returnNode = node;
         addEdge("RETURNS", node);

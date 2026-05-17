@@ -90,6 +90,8 @@ public:
             // to the end of the GEP instruction.
             node->registerGEPEdge(current->field);
             node->setAddressToNode(current->field);
+
+            GraphManager::get()->getAliasResult()->printTransitivePointsToSet(inst);
         }
         return node;
     }
