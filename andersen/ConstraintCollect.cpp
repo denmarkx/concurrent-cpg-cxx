@@ -1,4 +1,5 @@
 #include "Andersen.h"
+#include "NodeFactory.h"
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -307,16 +308,27 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
   case Instruction::GetElementPtr: {
     assert(inst->getType()->isPointerTy());
 
-    // TODO: this is bullshit but i cant think of what else to do atm
-    // std::vector<unsigned int> fieldIdxs = getFieldIds(inst);
-
     // P1 = getelementptr P2, ... --> <Copy/P1/P2>
-    NodeIndex srcIndex = nodeFactory.getValueNodeFor(context, inst->getOperand(0));
-    // if (!fieldIdxs.empty())
-      // srcIndex = nodeFactory.getFieldNodeFor(context, inst->getOperand(0), std::move(fieldIdxs));
+
+    auto fields = nodeFactory.getFields(inst);
+
+    // We don't create every field for every aggregate during AllocaInst.
+    // ..so we need to check if this exists:
+    NodeIndex srcIndex = nodeFactory.getValueNodeFor(context, inst->getOperand(0), fields);
+    if (srcIndex == AndersNodeFactory::InvalidIndex) {
+      // In this case, we're going to create:
+      srcIndex = nodeFactory.createValueNode(context, inst->getOperand(0), fields);
+
+      // This also gets an object:
+      NodeIndex objIndex = nodeFactory.createObjectNode(context, inst->getOperand(0), fields);
+
+      // And a constraint:
+      constraints.emplace_back(AndersConstraint::ADDR_OF, srcIndex, objIndex);
+    }
+
     assert(srcIndex != AndersNodeFactory::InvalidIndex &&
            "Failed to find gep src node");
-    NodeIndex dstIndex = nodeFactory.getValueNodeFor(context, inst);
+    NodeIndex dstIndex = nodeFactory.getValueNodeFor(context, inst, fields);
     assert(dstIndex != AndersNodeFactory::InvalidIndex &&
            "Failed to find gep dst node");
 
