@@ -1,6 +1,7 @@
 #ifndef ANDERSEN_NODE_FACTORY_H
 #define ANDERSEN_NODE_FACTORY_H
 
+#include "NodeMap.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/IR/Constants.h"
@@ -52,8 +53,7 @@ struct Context {
 typedef unsigned NodeIndex;
 class AndersNode {
 public:
-  enum AndersNodeType { VALUE_NODE, OBJ_NODE, FIELD_NODE };
-  virtual ~AndersNode() = default;
+  enum AndersNodeType { VALUE_NODE, OBJ_NODE };
 
 private:
   AndersNodeType type;
@@ -70,30 +70,6 @@ public:
   friend class AndersNodeFactory;
 };
 
-class AndersFieldNode : public AndersNode {
-public:
-  AndersFieldNode(AndersNodeType t, unsigned i, std::vector<unsigned int> fieldId, const llvm::Value *v = nullptr)
-      : AndersNode(t, i, v), _fieldId(fieldId) {};
-
-    const std::vector<unsigned int>& getFieldId() const {
-      return _fieldId;
-    }
-
-    std::string getFieldStr() const {
-      if (_fieldId.empty()) return "[]";
-
-      std::string s = "[";
-      for (unsigned int i = 0; i <= _fieldId.size() - 1; i++) {
-        s += std::to_string(_fieldId[i]) + ", ";
-      }
-      s += std::to_string(_fieldId[_fieldId.size() - 1]) + "]";
-      return s;
-    }
-
-private:
-  const std::vector<unsigned int> _fieldId;
-};
-
 // This is the factory class of AndersNode
 // It use a vectors to hold all Nodes in the program
 // Since vectors may invalidate all element pointers/iterators when resizing, it
@@ -103,17 +79,17 @@ private:
 // but it is efficient.
 typedef llvm::DenseMap<std::pair<const Context*, const llvm::Value*>, NodeIndex> NodeMapType;
 
-struct FieldNodeMap {
-  const Context *ctx;
-  const llvm::Value *value;
-  const std::vector<unsigned int> fieldIdxs;
+// struct FieldNodeMap {
+//   const Context *ctx;
+//   const llvm::Value *value;
+//   const std::vector<unsigned int> fieldIdxs;
 
-  friend bool operator==(const FieldNodeMap& lhs, const FieldNodeMap& rhs) {
-    return lhs.ctx == rhs.ctx &&\
-      lhs.value == rhs.value &&\
-      lhs.fieldIdxs == rhs.fieldIdxs;
-  }
-};
+//   friend bool operator==(const FieldNodeMap& lhs, const FieldNodeMap& rhs) {
+//     return lhs.ctx == rhs.ctx &&\
+//       lhs.value == rhs.value &&\
+//       lhs.fieldIdxs == rhs.fieldIdxs;
+//   }
+// };
 
 class AndersNodeFactory {
 public:
@@ -122,7 +98,7 @@ public:
 
 private:
   // The set of nodes
-  std::vector<std::unique_ptr<AndersNode>> nodes;
+  std::vector<AndersNode> nodes;
 
   // Some special indices
   static const NodeIndex UniversalPtrIndex = 0;
@@ -132,13 +108,13 @@ private:
 
   // valueNodeMap - This map indicates the AndersNode* that a particular Value*
   // corresponds to
-  NodeMapType valueNodeMap;
+  NodeMap valueNodeMap;
 
   // ObjectNodes - This map contains entries for each memory object in the
   // program: globals, alloca's and mallocs. We are able to represent them as
   // llvm::Value* because we're modeling the heap with the simplest
   // allocation-site approach
-  NodeMapType objNodeMap;
+  NodeMap objNodeMap;
 
   // returnMap - This map contains an entry for each function in the program
   // that returns a ptr.
@@ -149,8 +125,6 @@ private:
   // function.  An entry is not present in this map for functions that do not
   // take variable arguments.
   llvm::DenseMap<const llvm::Function *, NodeIndex> varargMap;
-
-  llvm::DenseMap<const FieldNodeMap*, NodeIndex> fieldMap;
 
   std::vector<const Context*> _contexts;
 
@@ -164,8 +138,8 @@ public:
   NodeIndex createObjectNode(const Context *context = nullptr, const llvm::Value *val = nullptr);
   NodeIndex createReturnNode(const Context *context, const llvm::Function *f);
   NodeIndex createVarargNode(const llvm::Function *f);
-  NodeIndex createFieldNode(const Context *context = nullptr, const llvm::Value *val = nullptr, std::vector<unsigned int> fieldIdxs = {});
-  NodeIndex createFieldObjNode(const Context *context, const llvm::Value *val, std::vector<unsigned int> fieldIdx);
+  // NodeIndex createFieldNode(const Context *context = nullptr, const llvm::Value *val = nullptr, std::vector<unsigned int> fieldIdxs = {});
+  // NodeIndex createFieldObjNode(const Context *context, const llvm::Value *val, std::vector<unsigned int> fieldIdx);
 
   // Map lookup interfaces (return InvalidIndex if value not found)
   NodeIndex getValueNodeFor(const Context *context, const llvm::Value *val);
@@ -174,11 +148,11 @@ public:
   NodeIndex getObjectNodeForConstant(const Context *context, const llvm::Constant *c) const;
   NodeIndex getReturnNodeFor(const Context *context, const llvm::Function *f) const;
   NodeIndex getVarargNodeFor(const llvm::Function *f) const;
-  NodeIndex getFieldNodeFor(const Context *context, const llvm::Value *val, std::vector<unsigned int> fieldIdxs);
+  // NodeIndex getFieldNodeFor(const Context *context, const llvm::Value *val, std::vector<unsigned int> fieldIdxs);
 
-  const llvm::DenseMap<const FieldNodeMap*, NodeIndex>& getFieldMap() const;
+  // const llvm::DenseMap<const FieldNodeMap*, NodeIndex>& getFieldMap() const;
 
-  const llvm::Value* getConstantGlobalFieldValue(const llvm::Value *aggregate, std::vector<unsigned int> fieldIdx) const;
+  // const llvm::Value* getConstantGlobalFieldValue(const llvm::Value *aggregate, std::vector<unsigned int> fieldIdx) const;
 
   // Node merge interfaces
   void mergeNode(NodeIndex n0, NodeIndex n1); // Merge n1 into n0
@@ -187,7 +161,7 @@ public:
 
   // Pointer arithmetic
   bool isObjectNode(NodeIndex i) const {
-    return (nodes.at(i)->type == AndersNode::OBJ_NODE);
+    return (nodes.at(i).type == AndersNode::OBJ_NODE);
   }
   NodeIndex getOffsetObjectNode(NodeIndex n, unsigned offset) const {
     assert(isObjectNode(n + offset));
@@ -202,13 +176,13 @@ public:
 
   // Value getters
   const llvm::Value *getValueForNode(NodeIndex i) const {
-    return nodes.at(i)->getValue();
+    return nodes.at(i).getValue();
   }
   void getAllocSites(std::vector<std::pair<const Context*, const llvm::Value *>> &) const;
 
   // Value remover
   void removeNodeForValue(const Context *context, const llvm::Value *val) { 
-    valueNodeMap.erase({context, val}); 
+    valueNodeMap.erase(context, val); 
   }
 
   // Size getters
