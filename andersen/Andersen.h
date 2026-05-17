@@ -92,6 +92,8 @@ private:
   NodeIndex getRefNodeIndex(NodeIndex n) const;
   NodeIndex getAdrNodeIndex(NodeIndex n) const;
 
+  const bool test(const Context *ctx, const llvm::Value *v);
+
   // For debugging
   void dumpConstraint(const AndersConstraint &) const;
   void dumpConstraints() const;

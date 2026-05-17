@@ -176,9 +176,35 @@ void Andersen::setupFunctionConstraints(const Context *context, const Function *
   // Add nodes for all formal arguments.
   for (Function::const_arg_iterator itr = f->arg_begin(), ite = f->arg_end();
        itr != ite; ++itr) {
-    if (isa<PointerType>(itr->getType()))
+    if (!test(context, itr) && isa<PointerType>(itr->getType()))
       nodeFactory.createValueNode(context, &*itr);
   }
+}
+
+/*
+ * Since pointer types are opaque, this is meant to try and identify the type.
+ * Currently, this is only used for parameters and checks just for direct uses.
+ * ..specifically, for GEP uses only. ideally, this can be handled by dbg info.
+*/
+const bool Andersen::test(const Context *ctx, const llvm::Value *v) {
+  if (!isa<PointerType>(v->getType())) return false;
+
+  for (const User *user : v->users()) {
+    if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(user)) {
+      std::vector<unsigned int> fieldIdxs;
+      fieldIdxs.reserve(gep->getNumOperands() - 2);
+      for (unsigned int i=2; i < gep->getNumOperands(); i++) {
+        const ConstantInt *fieldIdxV = dyn_cast<ConstantInt>(gep->getOperand(i));
+        if (!fieldIdxV) continue;
+
+        assert(fieldIdxV != nullptr);
+        fieldIdxs.push_back(fieldIdxV->getZExtValue());
+      }
+      nodeFactory.createFieldObjNode(ctx, v, fieldIdxs);
+      return true;
+    }
+  }
+  return false;
 }
 
 void Andersen::addGlobalInitializerConstraints(NodeIndex objNode,
@@ -586,6 +612,7 @@ void Andersen::addArgumentConstraintForCall(const Context *calleeCtx,
         NodeIndex aIndex = nodeFactory.getValueNodeFor(context, actual);
         assert(aIndex != AndersNodeFactory::InvalidIndex &&
                "Failed to find actual arg node!");
+        // errs() << "new constraint: " << fIndex << ", arg=" << aIndex << "\n";
         constraints.emplace_back(AndersConstraint::COPY, fIndex, aIndex);
       } else
         constraints.emplace_back(AndersConstraint::COPY, fIndex,
