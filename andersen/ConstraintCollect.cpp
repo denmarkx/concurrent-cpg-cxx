@@ -176,9 +176,25 @@ void Andersen::setupFunctionConstraints(const Context *context, const Function *
   // Add nodes for all formal arguments.
   for (Function::const_arg_iterator itr = f->arg_begin(), ite = f->arg_end();
        itr != ite; ++itr) {
-    if (!test(context, itr) && isa<PointerType>(itr->getType()))
+    if (!createParamField(context, itr) && isa<PointerType>(itr->getType()))
       nodeFactory.createValueNode(context, &*itr);
   }
+}
+
+const std::vector<unsigned int> Andersen::getFieldIds(const llvm::Value *v) const {
+  const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(v);
+  if (!gep) return {};
+    
+  std::vector<unsigned int> fieldIdxs;
+  fieldIdxs.reserve(gep->getNumOperands() - 2);
+  for (unsigned int i=2; i < gep->getNumOperands(); i++) {
+    const ConstantInt *fieldIdxV = dyn_cast<ConstantInt>(gep->getOperand(i));
+    if (!fieldIdxV) continue;
+
+    assert(fieldIdxV != nullptr);
+    fieldIdxs.push_back(fieldIdxV->getZExtValue());
+  }
+  return fieldIdxs;
 }
 
 /*
@@ -186,21 +202,12 @@ void Andersen::setupFunctionConstraints(const Context *context, const Function *
  * Currently, this is only used for parameters and checks just for direct uses.
  * ..specifically, for GEP uses only. ideally, this can be handled by dbg info.
 */
-const bool Andersen::test(const Context *ctx, const llvm::Value *v) {
+const bool Andersen::createParamField(const Context *ctx, const llvm::Value *v) {
   if (!isa<PointerType>(v->getType())) return false;
 
   for (const User *user : v->users()) {
     if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(user)) {
-      std::vector<unsigned int> fieldIdxs;
-      fieldIdxs.reserve(gep->getNumOperands() - 2);
-      for (unsigned int i=2; i < gep->getNumOperands(); i++) {
-        const ConstantInt *fieldIdxV = dyn_cast<ConstantInt>(gep->getOperand(i));
-        if (!fieldIdxV) continue;
-
-        assert(fieldIdxV != nullptr);
-        fieldIdxs.push_back(fieldIdxV->getZExtValue());
-      }
-      nodeFactory.createFieldObjNode(ctx, v, fieldIdxs);
+      nodeFactory.createFieldObjNode(ctx, v, getFieldIds(v));
       return true;
     }
   }
@@ -301,18 +308,7 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
     assert(inst->getType()->isPointerTy());
 
     // TODO: this is bullshit but i cant think of what else to do atm
-    std::vector<unsigned int> fieldIdxs;
-
-    // -2 unless there's actually a reason for the first operand after the pointer.
-    fieldIdxs.reserve(inst->getNumOperands() - 2);
-
-    for (unsigned int i=2; i < inst->getNumOperands(); i++) {
-      const ConstantInt *fieldIdxV = dyn_cast<ConstantInt>(inst->getOperand(i));
-      if (!fieldIdxV) continue;
-
-      assert(fieldIdxV != nullptr);
-      fieldIdxs.push_back(fieldIdxV->getZExtValue());
-    }
+    std::vector<unsigned int> fieldIdxs = getFieldIds(inst);
 
     // P1 = getelementptr P2, ... --> <Copy/P1/P2>
     NodeIndex srcIndex = nodeFactory.getValueNodeFor(context, inst->getOperand(0));

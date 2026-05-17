@@ -92,7 +92,9 @@ private:
   NodeIndex getRefNodeIndex(NodeIndex n) const;
   NodeIndex getAdrNodeIndex(NodeIndex n) const;
 
-  const bool test(const Context *ctx, const llvm::Value *v);
+  const bool createParamField(const Context *ctx, const llvm::Value *v);
+
+  const std::vector<unsigned int> getFieldIds(const llvm::Value *v) const;
 
   // For debugging
   void dumpConstraint(const AndersConstraint &) const;

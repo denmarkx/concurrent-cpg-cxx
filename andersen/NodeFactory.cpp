@@ -126,6 +126,8 @@ NodeIndex AndersNodeFactory::getValueNodeFor(const Context *context, const Value
     }
   }
 
+  // TODO: the concept of separate fieldnodes should probably be deprecated
+  // and the actual fields should just be assigned to a value/object
   auto fieldItr = std::find_if(fieldMap.begin(), fieldMap.end(), [&](auto &field) {
     return field.first->ctx == context && field.first->value == val;
   });
