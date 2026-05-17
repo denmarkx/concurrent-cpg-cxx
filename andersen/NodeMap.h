@@ -34,8 +34,13 @@ public:
     using NodeMapType = llvm::DenseMap<
         std::tuple<const Context*, const llvm::Value*, FieldType>, NodeIndex>;
 
-    void insert(const Context *ctx, const llvm::Value *val) {
-        getFields(val);
+    NodeIndex insert(const Context *ctx, const llvm::Value *val, FieldType fields) {
+        unsigned int nodeIndex = size();
+
+        fields = fields.empty() ? getFields(val) : fields;
+
+        _map[{ctx, val, fields}] = nodeIndex;
+        return nodeIndex;
     }
 
     NodeIndex get(const Context *ctx, const llvm::Value *val) const {
@@ -45,19 +50,30 @@ public:
     /*
      * Returns the associated nodeIdx or InvalidIndex.
     */
-    NodeIndex find(const Context *ctx, const llvm::Value *val) const {
-        auto itr = _map.find({ctx, val, getFields(val)});
+    NodeIndex find(const Context *ctx, const llvm::Value *val, FieldType fields) const {
+        fields = fields.empty() ? getFields(val) : fields;
+        auto itr = _map.find({ctx, val, fields});
         if (itr == _map.end())
             return InvalidIndex;
         return itr->getSecond();
     }
 
-    bool contains(const Context *ctx, const llvm::Value *val) const {
-        return _map.contains({ctx, val, getFields(val)});
+    bool contains(const Context *ctx, const llvm::Value *val, FieldType fields) const {
+        fields = fields.empty() ? getFields(val) : fields;
+        return _map.contains({ctx, val, fields});
     }
 
     NodeIndex& operator[](std::pair<const Context*, const llvm::Value *> value) {
         return _map[{value.first, value.second, getFields(value.second)}];
+    }
+
+    NodeIndex& operator[](std::tuple<const Context*, const llvm::Value *, FieldType> value) {
+        const Context *ctx = std::get<0>(value);
+        const llvm::Value *val = std::get<1>(value);
+        FieldType fields = std::get<2>(value);
+
+        fields = fields.empty() ? getFields(val) : fields;
+        return _map[{ctx, val, fields}];
     }
 
     void erase(const Context *ctx, const llvm::Value *val) {
@@ -87,7 +103,6 @@ public:
         return contexts;
     }
 
-private:
     /*
      * Attempts to resolve the indices that this value uses.
     */
@@ -125,6 +140,7 @@ private:
         return fields;
     }
 
+private:
     /*
      * Given a parameters, attempts to find an instruction within its users that
      * provides information regarding the pointer type and if it's an aggregate.
