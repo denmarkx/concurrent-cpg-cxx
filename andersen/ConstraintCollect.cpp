@@ -1,4 +1,5 @@
 #include "Andersen.h"
+#include "Constraint.h"
 #include "NodeFactory.h"
 
 #include "llvm/ADT/STLExtras.h"
@@ -182,39 +183,6 @@ void Andersen::setupFunctionConstraints(const Context *context, const Function *
   }
 }
 
-// const std::vector<unsigned int> Andersen::getFieldIds(const llvm::Value *v) const {
-//   const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(v);
-//   if (!gep) return {};
-    
-//   std::vector<unsigned int> fieldIdxs;
-//   fieldIdxs.reserve(gep->getNumOperands() - 2);
-//   for (unsigned int i=2; i < gep->getNumOperands(); i++) {
-//     const ConstantInt *fieldIdxV = dyn_cast<ConstantInt>(gep->getOperand(i));
-//     if (!fieldIdxV) continue;
-
-//     assert(fieldIdxV != nullptr);
-//     fieldIdxs.push_back(fieldIdxV->getZExtValue());
-//   }
-//   return fieldIdxs;
-// }
-
-/*
- * Since pointer types are opaque, this is meant to try and identify the type.
- * Currently, this is only used for parameters and checks just for direct uses.
- * ..specifically, for GEP uses only. ideally, this can be handled by dbg info.
-*/
-// const bool Andersen::createParamField(const Context *ctx, const llvm::Value *v) {
-//   if (!isa<PointerType>(v->getType())) return false;
-
-//   for (const User *user : v->users()) {
-//     if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(user)) {
-//       nodeFactory.createFieldObjNode(ctx, v, getFieldIds(v));
-//       return true;
-//     }
-//   }
-//   return false;
-// }
-
 void Andersen::addGlobalInitializerConstraints(NodeIndex objNode,
                                                const Constant *c) {
   // errs() << "Called with node# = " << objNode << ", initializer = " << *c <<
@@ -238,10 +206,34 @@ void Andersen::addGlobalInitializerConstraints(NodeIndex objNode,
     // array/struct are pointed-to by the 1st-field pointer
     assert(isa<ConstantArray>(c) || isa<ConstantDataSequential>(c) ||
            isa<ConstantStruct>(c));
+    // errs() << "GLOBAL INIT: " << *c << "\n\n";
 
-    for (unsigned i = 0, e = c->getNumOperands(); i != e; ++i)
-      addGlobalInitializerConstraints(objNode,
-                                      cast<Constant>(c->getOperand(i)));
+    FieldType fields;
+    addGlobalAggregateConstraints(nodeFactory.getValueForNode(objNode), c, fields);
+
+    // for (unsigned i = 0, e = c->getNumOperands(); i != e; ++i)
+      // addGlobalInitializerConstraints(objNode,
+                                      // cast<Constant>(c->getOperand(i)));
+  }
+}
+
+void Andersen::addGlobalAggregateConstraints(const llvm::Value *aggregate, const llvm::Constant *c, FieldType &fields) {
+  // TODO: does not yet handle inner aggregate types
+  for (unsigned int i=0; i < c->getNumOperands(); i++) {
+    Constant *element = cast<Constant>(c->getOperand(i));
+    FieldType newFields;
+    newFields.append(fields);
+    newFields.push_back(i);
+
+    NodeIndex valIdx = nodeFactory.getValueNodeFor(_globalCtx, aggregate, newFields);
+    NodeIndex objIdx = nodeFactory.getObjectNodeFor(_globalCtx, aggregate, newFields);
+    if (objIdx == AndersNodeFactory::InvalidIndex) {
+      valIdx = nodeFactory.createValueNode(_globalCtx, aggregate, newFields);
+      objIdx = nodeFactory.createObjectNode(_globalCtx, aggregate, newFields);
+      constraints.emplace_back(AndersConstraint::ADDR_OF, valIdx, objIdx);
+    }
+
+    addGlobalInitializerConstraints(objIdx, element);
   }
 }
 

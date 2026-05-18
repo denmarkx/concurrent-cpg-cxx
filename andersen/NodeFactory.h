@@ -141,9 +141,9 @@ public:
 
   // Map lookup interfaces (return InvalidIndex if value not found)
   NodeIndex getValueNodeFor(const Context *context, const llvm::Value *val, FieldType fields={});
-  NodeIndex getValueNodeForConstant(const Context *context, const llvm::Constant *c);
+  NodeIndex getValueNodeForConstant(const Context *context, const llvm::Constant *c, FieldType fields={});
   NodeIndex getObjectNodeFor(const Context *context, const llvm::Value *val, FieldType fields={}) const;
-  NodeIndex getObjectNodeForConstant(const Context *context, const llvm::Constant *c) const;
+  NodeIndex getObjectNodeForConstant(const Context *context, const llvm::Constant *c, FieldType fields={}) const;
   NodeIndex getReturnNodeFor(const Context *context, const llvm::Function *f) const;
   NodeIndex getVarargNodeFor(const llvm::Function *f) const;
 

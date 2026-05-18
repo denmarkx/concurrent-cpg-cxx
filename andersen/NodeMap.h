@@ -111,6 +111,10 @@ public:
 
         FieldType fields;
 
+        // Const Expression:
+        if (const ConstantExpr *cExpr = dyn_cast<ConstantExpr>(value))
+            return getFields(cExpr->getAsInstruction());
+
         // GEP: I should note that this doesn't support the first index (ptr offset).
         if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(value)) {
             fields.reserve(gep->getNumIndices());
@@ -159,6 +163,14 @@ private:
 
         if (itr == param->users().end()) return nullptr;
         return *itr;
+    }
+
+    void printFields(FieldType &fields) const {
+        errs() << "fields = [";
+        for (const auto &v : fields) {
+            errs() << v << ", ";
+        }
+        errs() << "]\n";
     }
 
 private:

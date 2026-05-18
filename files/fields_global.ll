@@ -16,7 +16,7 @@ define i32 @main() #0 {
   %4 = load i32, ptr %2, align 4
   store i32 %4, ptr getelementptr inbounds ([4 x i32], ptr @x, i64 0, i64 1), align 4
   store i32 100, ptr %3, align 4
-  %5 = getelementptr inbounds [2 x ptr], ptr @y, i64 0, i64 1
+  %5 = getelementptr inbounds [2 x ptr], ptr @x, i64 0, i64 0
   store ptr %3, ptr %5, align 8
   ret i32 0
 }
