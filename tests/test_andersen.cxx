@@ -787,17 +787,58 @@ TEST_CASE("Andersen[FieldSensitivity_GlobalFuncArray]") {
     CHECK(!ptsContains(fptr2Pts, f2));
 }
 
-// TODO: inline gep still not handled properly for store inst.
-
 TEST_CASE("Andersen[FieldSensitivity_InlineGEP]") {
     AndersPassTest pass;
     auto module = pass.ParseAssembly(R"(
         @g = internal global [2 x ptr] [ptr @f1, ptr @f2], align 8
 
         define i32 @main() {
-            %s1 = getelementptr inbounds [2 x ptr], ptr @g, i32 0, i32 0
-            ; store ptr @f3, ptr getelementptr inbounds ([2 x ptr], ptr @g, i32 0, i32 0), align 8
-            store ptr @f3, ptr %s1, align 8
+            store ptr @f3, ptr getelementptr inbounds ([2 x ptr], ptr @g, i32 0, i32 1), align 8
+
+            %x = getelementptr inbounds [2 x ptr], ptr @g, i32 0, i32 1
+            %y = load ptr, ptr %x, align 8
+            ret i32 0
+        }
+
+        define void @f1() { ret void }
+        define void @f2() { ret void }
+        define void @f3() { ret void }
+    )");
+
+    auto anders = std::make_unique<AndersenAAResult>(*module);
+    const Function *F = module->getFunction("main");
+    const Function *f1 = module->getFunction("f1");
+    const Function *f2 = module->getFunction("f2");
+    const Function *f3 = module->getFunction("f3");
+
+    const Value *x = findInstr(F, "x");
+    const Value *y = findInstr(F, "y");
+
+    PtsSetType s1Pts;
+    PtsSetType s2Pts;
+    anders->getTransitivePointsToSet(x, s1Pts);
+    anders->getTransitivePointsToSet(y, s2Pts);
+
+    CHECK(!ptsContains(s1Pts, f1));
+    CHECK(ptsContains(s1Pts, f2));
+    CHECK(ptsContains(s1Pts, f3));
+
+    CHECK(!ptsContains(s2Pts, f1));
+    CHECK(ptsContains(s2Pts, f2));
+    CHECK(ptsContains(s2Pts, f3));
+}
+
+TEST_CASE("Andersen[FieldSensitivity_InlineGEP_All_Offset_0]") {
+    AndersPassTest pass;
+
+    // LLVM will try to turn the store instruction into
+    //  store ptr @f3, @g, align 8
+    // since that still points to the first offset at i=0
+    auto module = pass.ParseAssembly(R"(
+        @g = internal global [2 x ptr] [ptr @f1, ptr @f2], align 8
+
+        define i32 @main() {
+            store ptr @f3, ptr getelementptr inbounds ([2 x ptr], ptr @g, i32 0, i32 0), align 8
 
             %x = getelementptr inbounds [2 x ptr], ptr @g, i32 0, i32 0
             %y = load ptr, ptr %x, align 8
@@ -811,12 +852,26 @@ TEST_CASE("Andersen[FieldSensitivity_InlineGEP]") {
 
     auto anders = std::make_unique<AndersenAAResult>(*module);
     const Function *F = module->getFunction("main");
+    const Function *f1 = module->getFunction("f1");
+    const Function *f2 = module->getFunction("f2");
+    const Function *f3 = module->getFunction("f3");
 
     const Value *x = findInstr(F, "x");
     const Value *y = findInstr(F, "y");
 
-    // PtsSetType s1Pts;
-    // anders->getTransitivePointsToSet(s1, s1Pts);
     anders->printTransitivePointsToSet(x);
     anders->printTransitivePointsToSet(y);
+
+    PtsSetType s1Pts;
+    PtsSetType s2Pts;
+    anders->getTransitivePointsToSet(x, s1Pts);
+    anders->getTransitivePointsToSet(y, s2Pts);
+
+    CHECK(!ptsContains(s1Pts, f2));
+    CHECK(ptsContains(s1Pts, f1));
+    CHECK(ptsContains(s1Pts, f3));
+
+    CHECK(!ptsContains(s2Pts, f2));
+    CHECK(ptsContains(s2Pts, f1));
+    CHECK(ptsContains(s2Pts, f3));
 }
