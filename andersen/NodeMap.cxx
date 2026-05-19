@@ -10,28 +10,20 @@ const llvm::Value* NodeMap::findAggregateFromParam(
     const Context* startCtx, const Context* ctx, const llvm::Value *param) const {
     if (!param->getType()->isPointerTy()) return nullptr;
 
-    errs() << "PARAM = " << *param << "\n";
-    errs() << "  startCtx = " << startCtx->id << "\n";
-    errs() << "  ctx      = " << ctx->id << "\n";
-
     // If this is a gep already, we return it.
     if (isa<GetElementPtrInst>(param)) return param;
 
     // Load instructions are particularly useful:
     if (isa<LoadInst>(param)) {
-        errs() << "LOAD INSTR: " << param << "\n";
         // This is only hit when previously itr = users().end.
         // ..so the user, in this case, is the 1st operand.
         const auto *a = findAggregateFromParam(startCtx, ctx, dyn_cast<LoadInst>(param)->getOperand(0));
-        errs() << "  a=" << *a << "\n";
         return a;
     }
 
     auto itr = std::find_if(param->users().begin(), param->users().end(), [&](const User *user) {
         // I don't think it's important to handle every such case,
         // but if it's a GEP instruction, then that's a smoking gun.
-        errs() << "  USER = " << *user << "\n";
-
         return
             isa<GetElementPtrInst>(user) ||
             (isa<LoadInst>(user) && ctx != startCtx);
