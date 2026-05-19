@@ -150,11 +150,6 @@ public:
 
             // The last actual thing I can think of to try is walking the users to find a GEP:
             const llvm::Value *candidate = findAggregateFromParam(ctx, ctx, param);
-            if (candidate) {
-                auto f = getFields(ctx, candidate);
-                printFields(f);
-
-            }
             return getFields(ctx, candidate);
         }
         return fields;

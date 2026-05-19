@@ -982,3 +982,85 @@ TEST_CASE("Andersen[FieldSensitivity_Nested_Global]") {
     CHECK(!ptsContains(s2Pts, f2));
     CHECK(!ptsContains(s2Pts, f4));
 }
+
+TEST_CASE("Andersen[FieldSensitivity_Nested_Depth]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        %"InnerHolder<'_>" = type { ptr, ptr }
+        %Holder = type { ptr, ptr, ptr, i64 }
+
+        define i32 @HolderExec(ptr align 8 %self, i32 %a) {
+        start:
+          %_3 = load ptr, ptr %self, align 8
+          %_0 = call i32 %_3(i32 %a)
+          ret i32 %_0
+        }
+
+        define internal i64 @F1(ptr align 8 %h) {
+        start:
+          %_3 = load ptr, ptr %h, align 8
+          %_2 = call i32 %_3(i32 100)
+          %_0 = sext i32 %_2 to i64
+          ret i64 %_0
+        }
+
+        define internal i64 @F2(ptr align 8 %h) {
+        start:
+          %_0 = call i64 @F1(ptr align 8 %h)
+          ret i64 %_0
+        }
+
+        define i32 @F0(i32 %a) { ret i32 %a }
+        define i32 @F3(i32 %a) { ret i32 %a }
+
+        define void @_start() {
+        start:
+          %ih = alloca %"InnerHolder<'_>", align 8
+          %f = alloca %Holder, align 8
+          store ptr @F0, ptr %f, align 8
+
+          %h2 = getelementptr inbounds %"Holder", ptr %f, i32 0, i32 2
+          %i1 = getelementptr inbounds %"InnerHolder<'_>", ptr %ih, i32 0, i32 1
+          store ptr @F3, ptr %h2, align 8
+          store ptr %h2, ptr %i1, align 8
+          %i1L = load ptr, ptr %i1, align 8
+          %r = call i64 @F2(ptr align 8 %i1L)
+
+          %0 = getelementptr inbounds %"InnerHolder<'_>", ptr %ih, i32 0, i32 0
+          store ptr %f, ptr %0, align 8
+
+          ; This previously caused a lot of trouble because the solver was doing this
+          ; and skipping @F2's _3.
+          %1 = getelementptr inbounds %"InnerHolder<'_>", ptr %ih, i32 0, i32 0
+          %_15 = load ptr, ptr %1, align 8
+          %_11 = call i32 @HolderExec(ptr align 8 %_15, i32 200)
+
+          %_6 = getelementptr inbounds %"InnerHolder<'_>", ptr %ih, i32 0, i32 0
+          %_7 = load ptr, ptr %_6, align 8
+          %_8 = call i64 @F2(ptr align 8 %_7)
+          ret void
+        }
+
+    )");
+
+    auto anders = std::make_unique<AndersenAAResult>(*module);
+    const Function *F = module->getFunction("_start");
+    const Function *HolderExec = module->getFunction("HolderExec");
+    const Function *F1 = module->getFunction("F1");
+    const Function *F0 = module->getFunction("F0");
+    const Function *F3 = module->getFunction("F3");
+
+    const Value *hExec3 = findInstr(HolderExec, "_3");
+    const Value *F1_3 = findInstr(F1, "_3");
+
+    PtsSetType s1Pts;
+    anders->getTransitivePointsToSet(hExec3, s1Pts);
+    CHECK(ptsContains(s1Pts, F0));
+    CHECK(!ptsContains(s1Pts, F3));
+
+    PtsSetType s2Pts;
+    anders->getTransitivePointsToSet(F1_3, s2Pts);
+    CHECK(ptsContains(s2Pts, F0));
+    CHECK(ptsContains(s2Pts, F3));
+
+}
