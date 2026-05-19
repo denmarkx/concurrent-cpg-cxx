@@ -38,21 +38,21 @@ public:
     NodeIndex insert(const Context *ctx, const llvm::Value *val, FieldType fields) {
         unsigned int nodeIndex = size();
 
-        fields = fields.empty() ? getFields(val) : fields;
+        fields = fields.empty() ? getFields(ctx, val) : fields;
 
         _map[{ctx, val, fields}] = nodeIndex;
         return nodeIndex;
     }
 
     NodeIndex get(const Context *ctx, const llvm::Value *val) const {
-        return _map.lookup({ctx, val, getFields(val)});
+        return _map.lookup({ctx, val, getFields(ctx, val)});
     }
 
     /*
      * Returns the associated nodeIdx or InvalidIndex.
     */
     NodeIndex find(const Context *ctx, const llvm::Value *val, FieldType fields) const {
-        fields = fields.empty() ? getFields(val) : fields;
+        fields = fields.empty() ? getFields(ctx, val) : fields;
         auto itr = _map.find({ctx, val, fields});
         if (itr == _map.end())
             return InvalidIndex;
@@ -60,12 +60,12 @@ public:
     }
 
     bool contains(const Context *ctx, const llvm::Value *val, FieldType fields) const {
-        fields = fields.empty() ? getFields(val) : fields;
+        fields = fields.empty() ? getFields(ctx, val) : fields;
         return _map.contains({ctx, val, fields});
     }
 
     NodeIndex& operator[](std::pair<const Context*, const llvm::Value *> value) {
-        return _map[{value.first, value.second, getFields(value.second)}];
+        return _map[{value.first, value.second, getFields(value.first, value.second)}];
     }
 
     NodeIndex& operator[](std::tuple<const Context*, const llvm::Value *, FieldType> value) {
@@ -73,12 +73,12 @@ public:
         const llvm::Value *val = std::get<1>(value);
         FieldType fields = std::get<2>(value);
 
-        fields = fields.empty() ? getFields(val) : fields;
+        fields = fields.empty() ? getFields(ctx, val) : fields;
         return _map[{ctx, val, fields}];
     }
 
     void erase(const Context *ctx, const llvm::Value *val) {
-        _map.erase({ctx, val, getFields(val)});
+        _map.erase({ctx, val, getFields(ctx, val)});
     }
 
     const unsigned int size() const { return _map.size(); }
@@ -107,7 +107,7 @@ public:
     /*
      * Attempts to resolve the indices that this value uses.
     */
-    FieldType getFields(const llvm::Value *value) const {
+    FieldType getFields(const Context *ctx, const llvm::Value *value) const {
         if (!value) return {};
 
         FieldType fields;
@@ -125,7 +125,7 @@ public:
 
         // Const Expression:
         else if (const ConstantExpr *cExpr = dyn_cast<ConstantExpr>(value))
-            return getFields(cExpr->getAsInstruction());
+            return getFields(ctx, cExpr->getAsInstruction());
 
         // GEP: I should note that this doesn't support the first index (ptr offset).
         else if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(value)) {
@@ -149,32 +149,22 @@ public:
             // TODO: DWARF metadata will send me in circles, but that is what should be checked next.
 
             // The last actual thing I can think of to try is walking the users to find a GEP:
-            const llvm::Value *candidate = findAggregateFromParam(param);
-            return getFields(candidate);
+            const llvm::Value *candidate = findAggregateFromParam(ctx, ctx, param);
+            if (candidate) {
+                errs() << "param = " << *param << "\n";
+                errs() << "candidate = " << *candidate << "\n";
+                auto f = getFields(ctx, candidate);
+                printFields(f);
+
+            }
+            return getFields(ctx, candidate);
         }
         return fields;
     }
 
 private:
-    /*
-     * Given a parameters, attempts to find an instruction within its users that
-     * provides information regarding the pointer type and if it's an aggregate.
-     * More specifically, it attempts to identify a GEP instruction.
-    */
-    const llvm::Value* findAggregateFromParam(const llvm::Value *param) const {
-        if (!param->getType()->isPointerTy()) return nullptr;
-
-        auto itr = std::find_if(param->users().begin(), param->users().end(), [](const User *user) {
-            // I don't think it's important to handle every such case,
-            // but if it's a GEP instruction, then that's a smoking gun.
-
-            // TODO: what other cases will help?
-            return isa<GetElementPtrInst>(user);
-        });
-
-        if (itr == param->users().end()) return nullptr;
-        return *itr;
-    }
+    const llvm::Value* findAggregateFromParam(const Context* startCtx, 
+        const Context* ctx, const llvm::Value *param) const;
 
     void printFields(FieldType &fields) const {
         errs() << "fields = [";

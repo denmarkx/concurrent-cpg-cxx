@@ -181,7 +181,7 @@ bool Andersen::runOnModule(const Module &M) {
 
   optimizeConstraints();
 
-  if (DumpConstraintInfo)
+  if (1)
     dumpConstraints();
 
   solveConstraints();
@@ -191,7 +191,7 @@ bool Andersen::runOnModule(const Module &M) {
     dumpPtsGraphPlainVanilla();
   }
 
-  if (DumpResultInfo) {
+  if (1) {
     nodeFactory.dumpNodeInfo();
     errs() << "\n";
     dumpPtsGraphPlainVanilla();
