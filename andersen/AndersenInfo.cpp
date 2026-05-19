@@ -1,8 +1,9 @@
 #include "Andersen.h"
 
 static bool DumpDebugInfo = false;
-static bool DumpConstraintInfo = 1;
-static bool DumpResultInfo = 1;
+static bool DumpConstraintInfo = false;
+static bool DumpResultInfo = false;
+static bool SilenceEmptyPtsSetInfo = true;
 
 bool Andersen::runOnModule(const Module &M) {
   nodeFactory.setDataLayout(&M.getDataLayout());
@@ -43,6 +44,8 @@ void Andersen::printPointsToSet(const llvm::Value *value, unsigned int contextId
 
     PtsSetType ptsSet;
     getPointsToSet(value, ptsSet, contextId);
+
+    if (SilenceEmptyPtsSetInfo && ptsSet.empty()) return;
 
     errs() << "========================= Points To Set ==============================\n";
 
