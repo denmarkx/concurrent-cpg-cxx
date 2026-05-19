@@ -641,64 +641,6 @@ void Andersen::addArgumentConstraintForCall(const Context *calleeCtx,
   }
 }
 
-/*
- * Instead of adding a constraint of some type to dst and src, this will add the constraint
- * to each known field of dst to src given some context.
- *
- * It is the responsibility of the caller to properly check if src is an aggregate type.
- *
-*/
-void Andersen::propgateConstraintsToFields(AndersConstraint::ConstraintType type,
-    NodeIndex dstIndex, NodeIndex srcIndex, const Context* dstCtx, const Context* srcCtx) {
-  assert(dstCtx != nullptr);
-
-  const llvm::Value *src = nodeFactory.getValueForNode(srcIndex);
-  const llvm::Value *dst = nodeFactory.getValueForNode(dstIndex);
-  assert(src != nullptr && dst != nullptr);
-
-  // srcCtx is optional
-  if (!srcCtx) srcCtx = dstCtx;
-
-  errs() << "trying to find underlying object of: " << *src << "\n";
-
-  // Grab the underlying object:
-  auto itr = std::find_if(constraints.begin(), constraints.end(), [&](const AndersConstraint& c) {
-      // Only considering ADDR_OF and if getSrc is an object.
-      if (nodeFactory.isObjectNode(c.getSrc())) {
-        errs() << "candidate: " << c.getSrc() << " -- " << c.getDest() << "\n";
-      }
-      return (c.getType() == AndersConstraint::ADDR_OF || c.getType() == AndersConstraint::COPY) &&\
-        nodeFactory.isObjectNode(c.getSrc()) &&\
-        c.getDest() == srcIndex;
-  });
-  
-  // I can't think of when this may be possible, but if it is..I want to know.
-  assert(itr != constraints.end() && "Could not find underlying object.");
-  if (itr != constraints.end()) {
-    const llvm::Value *src = nodeFactory.getValueForNode(itr->getSrc());
-    assert(src != nullptr && "Underlying src is null.");
-
-    // Get only the fields that we currently know about:
-    auto fields = nodeFactory.lookupFields(AndersNode::OBJ_NODE, srcCtx, src);
-    for (const auto fieldSet : fields) {
-      NodeIndex fieldIdx = nodeFactory.getObjectNodeFor(srcCtx, src, fieldSet);
-      assert(fieldIdx != AndersNodeFactory::InvalidIndex && "CouldfieldIdx does not exist");
-
-      // Now, we can check if destIndex at this fieldSet exists:
-      NodeIndex dstIndex = nodeFactory.getObjectNodeFor(dstCtx, dst, fieldSet);
-      if (dstIndex == AndersNodeFactory::InvalidIndex)
-        // Not abnormal for it to not exist.
-        dstIndex = nodeFactory.createObjectNode(dstCtx, dst, fieldSet);
-
-      constraints.emplace_back(type, dstIndex, fieldIdx);
-    }
-    constraints.emplace_back(type, dstIndex, itr->getSrc());
-  }
-
-  // We'll also keep this, which is what was done before.
-  constraints.emplace_back(type, dstIndex, srcIndex);
-}
-
 Context* Andersen::getGlobalCtx() const {
   return _globalCtx;
 }
