@@ -144,7 +144,6 @@ bool Andersen::getTransitivePointsToSet(const Context *ctx, const llvm::Value *v
   std::queue<unsigned int> worklist;
 
   NodeIndex ptrTgt = nodeFactory.getMergeTarget(nodeFactory.getValueNodeFor(ctx, v));
-  errs() << ptrTgt << "--\n";
 
   auto ptsItr = ptsGraph.find(ptrTgt);
   if (ptsItr == ptsGraph.end()) return false;
@@ -155,8 +154,6 @@ bool Andersen::getTransitivePointsToSet(const Context *ctx, const llvm::Value *v
 
   while (!worklist.empty()) {
     unsigned int c = worklist.front();
-    errs() << "  popping: " << c << '\n';
-    errs() << "    merge tgt = " << nodeFactory.getMergeTarget(c) << "\n";
     worklist.pop();
 
     const llvm::Value *cv = nodeFactory.getValueForNode(c);
@@ -168,7 +165,6 @@ bool Andersen::getTransitivePointsToSet(const Context *ctx, const llvm::Value *v
       auto ptsItr = ptsGraph.find(c);
       if (ptsItr == ptsGraph.end()) continue;
       for (auto vx : ptsItr->second) {
-        errs() << vx << "--\n";
         if (vx == nodeFactory.getNullObjectNode()) continue;
         worklist.push(vx);
       }
@@ -185,7 +181,7 @@ bool Andersen::runOnModule(const Module &M) {
 
   optimizeConstraints();
 
-  if (1)
+  if (DumpConstraintInfo)
     dumpConstraints();
 
   solveConstraints();
@@ -195,7 +191,7 @@ bool Andersen::runOnModule(const Module &M) {
     dumpPtsGraphPlainVanilla();
   }
 
-  if (1) {
+  if (DumpResultInfo) {
     nodeFactory.dumpNodeInfo();
     errs() << "\n";
     dumpPtsGraphPlainVanilla();

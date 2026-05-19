@@ -58,16 +58,6 @@ NodeIndex AndersNodeFactory::createObjectNode(const Context *context, const Valu
   return nextIdx;
 }
 
-// const llvm::Value* AndersNodeFactory::getConstantGlobalFieldValue(const llvm::Value *aggregate, std::vector<unsigned int> fieldIdx) const {
-//   const GlobalVariable* globalVariable = dyn_cast<GlobalVariable>(aggregate);
-//   if (!globalVariable || !globalVariable->isConstant()) return nullptr;
-
-//   const Constant *globalConst = globalVariable->getInitializer();
-//   if (!globalConst || !globalConst->getType()->isAggregateType()) return nullptr;
-
-//   return globalConst->getAggregateElement(fieldIdx[0]);
-// }
-
 NodeIndex AndersNodeFactory::createReturnNode(const Context *context, const llvm::Function *f) {
   auto existing = returnMap.find({context, f});
   if (existing != returnMap.end()) return existing->second;
@@ -222,19 +212,13 @@ void AndersNodeFactory::getAllocSites(
 
 void AndersNodeFactory::dumpNode(NodeIndex idx) const {
   const AndersNode n = nodes.at(idx);
-  // const AndersFieldNode *fieldNode = dynamic_cast<const AndersFieldNode*>(n);
   if (n.type == AndersNode::VALUE_NODE)
     errs() << "[V ";
   else if (n.type == AndersNode::OBJ_NODE)
     errs() << "[O ";
-  // else if (n->type == AndersNode::FIELD_NODE)
-    // errs() << "[F ";
   else
     assert(false && "Wrong type number!");
   errs() << "#" << n.idx;
-  // if (fieldNode) {
-    // errs() << ", field=" << fieldNode->getFieldStr();
-  // }
   errs() << "]";
 }
 
@@ -261,10 +245,6 @@ void AndersNodeFactory::dumpNodeInfo() const {
   for (auto const &mapping : varargMap)
     errs() << mapping.first->getName() << "  -->>  [Node #" << mapping.second
            << "]\n";
-  // errs() << "\nField Map:\n";
-  // for (auto const &mapping : fieldMap)
-    // errs() << mapping.getFirst()->value->getName() << "  -->>  [Node #" << mapping.second
-           // << "]\n";
   errs() << "----- End of Print -----\n";
 }
 
