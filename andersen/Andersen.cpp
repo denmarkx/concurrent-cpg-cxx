@@ -167,7 +167,7 @@ void Andersen::getPointsToSet(const llvm::Value *v, PtsSetType &ptsSet, unsigned
  * 
  * Return boolean indicating if the constraint was successfully added.
 */
-bool Andersen::addConstraint(AndersConstraint::ConstraintType type, const llvm::Value *lhs, const llvm::Value *rhs) {
+bool Andersen::addConstraint(AndersConstraint::ConstraintType type, const llvm::Value *lhs, const llvm::Value *rhs, bool argument) {
     if (!lhs || !rhs) return false;
     if (!lhs->getType()->isPointerTy() || !rhs->getType()->isPointerTy()) return false;
 
@@ -178,16 +178,53 @@ bool Andersen::addConstraint(AndersConstraint::ConstraintType type, const llvm::
 
         // A rightIdx may not always exist for this context:
         NodeIndex rightIdx = nodeFactory.getValueNodeFor(ctx, rhs);
+        if (argument && ctx->prevCtx)
+            rightIdx = nodeFactory.getValueNodeFor(ctx->prevCtx, rhs);
+
         if (rightIdx == AndersNodeFactory::InvalidIndex) {
             // If that's the case, it's not necessarily an error.
-            rightIdx = nodeFactory.createValueNode(ctx, rhs);
+            if (argument && ctx->prevCtx)
+                rightIdx = nodeFactory.createValueNode(ctx->prevCtx, rhs);
+            else
+                rightIdx = nodeFactory.createValueNode(ctx, rhs);
         }
 
-        constraints.emplace_back(type, leftIdx, rightIdx);
+        // calleeCtx = whatever caller is from _4.i (rhs)
+        // 1365 callee, 8221 routine
+        // 1365 callee ctx, _4.i27 = 5205
+        // ctx = the ctx of the routine
+          constraints.emplace_back(type, leftIdx, rightIdx);
         constraintAdded = true;
     }
     return constraintAdded;
 }
+
+
+void Andersen::connectContexts(const Function* parent, const Function* child) {
+    if (!parent || !child) return;
+
+    // If there are no callers, then we put it in the global context.
+    if (parent->users().empty()) {
+        const Context *parentCtx = nodeFactory.createContext(const_cast<Context*>(nodeFactory.getGlobalCtx()), nullptr);
+        setupFunctionConstraints(parentCtx, child);
+        scanFunction(const_cast<Context*>(parentCtx), child);
+        return;
+    }
+
+    for (const User *user : parent->users()) {
+        const CallBase *caller = dyn_cast<CallBase>(user);
+        if (!caller) continue;
+
+        const Context *ctx = nodeFactory.getContext(caller);
+        if (!ctx) continue;
+
+        const Context *parentCtx = nodeFactory.createContext(const_cast<Context*>(ctx), caller);
+
+        setupFunctionConstraints(parentCtx, child);
+        scanFunction(const_cast<Context*>(parentCtx), child);
+    }
+}
+
 
 /*
  * Public API of Andersen::solveConstraints.

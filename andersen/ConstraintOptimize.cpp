@@ -1,6 +1,7 @@
 #include "Andersen.h"
 #include "CycleDetector.h"
 #include "SparseBitVectorGraph.h"
+#include "andersen/Constraint.h"
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
@@ -110,6 +111,10 @@ protected:
         predGraph.insertEdge(dstTgt, srcTgt);
         // *Dest = *Src edge
         predGraph.insertEdge(getRefNodeIndex(dstTgt), getRefNodeIndex(srcTgt));
+        break;
+      }
+      case AndersConstraint::GEP: {
+        predGraph.insertEdge(dstTgt, srcTgt);
         break;
       }
       }
@@ -333,6 +338,12 @@ protected:
           newConstraints.emplace_back(AndersConstraint::COPY, destTgt, srcTgt);
         }
 
+        break;
+      }
+      case AndersConstraint::GEP: {
+        if (destTgt == srcTgt)
+          break;
+        newConstraints.emplace_back(AndersConstraint::GEP, destTgt, srcTgt, c.getFields());
         break;
       }
       }

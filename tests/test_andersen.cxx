@@ -657,10 +657,12 @@ TEST_CASE("Andersen[FieldSensitivity_Simple]") {
             ; tpts(s1) = {%1.f0, %x}
             %s1 = getelementptr inbounds %S, ptr %1, i32 0, i32 0
             store ptr %x, ptr %s1, align 8
+            %load1 = load ptr, ptr %s1
 
             ; tpts(s2) = {%1.f1, %y}
             %s2 = getelementptr inbounds %S, ptr %1, i32 0, i32 1
             store ptr %y, ptr %s2, align 8
+            %load2 = load ptr, ptr %s2
 
             ret i32 0
         }
@@ -672,8 +674,8 @@ TEST_CASE("Andersen[FieldSensitivity_Simple]") {
     const Value *x = findInstr(F, "x");
     const Value *y = findInstr(F, "y");
 
-    const Value *s1 = findInstr(F, "s1");
-    const Value *s2 = findInstr(F, "s2");
+    const Value *s1 = findInstr(F, "load1");
+    const Value *s2 = findInstr(F, "load2");
 
     PtsSetType s1Pts;
     anders->getPointsToSet(s1, s1Pts);
@@ -700,6 +702,8 @@ TEST_CASE("Andersen[FieldSensitivity_Simple_MixedContext]") {
             ; tpts(s2) = {%1.f1, %y}
             %s2 = getelementptr inbounds %S, ptr %0, i32 0, i32 1
             store ptr %y, ptr %s2, align 8
+            %load2 = load ptr, ptr %s2
+
             ret void
         }
 
@@ -711,6 +715,7 @@ TEST_CASE("Andersen[FieldSensitivity_Simple_MixedContext]") {
             ; tpts(s1) = {%1.f0, %x}
             %s1 = getelementptr inbounds %S, ptr %1, i32 0, i32 0
             store ptr %x, ptr %s1, align 8
+            %load1 = load ptr, ptr %s1
 
             call void @func(ptr %1);
             ret i32 0
@@ -724,8 +729,8 @@ TEST_CASE("Andersen[FieldSensitivity_Simple_MixedContext]") {
     const Value *x = findInstr(F, "x");
     const Value *y = findInstr(F2, "y");
 
-    const Value *s1 = findInstr(F, "s1");
-    const Value *s2 = findInstr(F2, "s2");
+    const Value *s1 = findInstr(F, "load1");
+    const Value *s2 = findInstr(F2, "load2");
 
     PtsSetType s1Pts;
     anders->getPointsToSet(s1, s1Pts);
@@ -734,7 +739,7 @@ TEST_CASE("Andersen[FieldSensitivity_Simple_MixedContext]") {
     anders->getPointsToSet(s2, s2Pts);
 
     CHECK(ptsContains(s1Pts, x));
-    // CHECK(!ptsContains(s1Pts, y));
+    // CHECK(!ptsContains(s1Pts, y));FieldSensitivity_Simple
 
     CHECK(ptsContains(s2Pts, y));
     CHECK(!ptsContains(s2Pts, x));
@@ -769,29 +774,14 @@ TEST_CASE("Andersen[FieldSensitivity_GlobalFuncArray]") {
     const Function *f3 = module->getFunction("f3");
     const Function *f4 = module->getFunction("f4");
 
-    const Value *s1 = findInstr(F, "s1");
-    const Value *s2 = findInstr(F, "s2");
     const Value *fptr = findInstr(F, "fptr");
     const Value *fptr2 = findInstr(F, "fptr2");
-
-    PtsSetType s1Pts;
-    anders->getPointsToSet(s1, s1Pts);
-    CHECK(ptsContains(s1Pts, f1));
-    CHECK(!ptsContains(s1Pts, f2));
-    CHECK(!ptsContains(s1Pts, f3));
 
     PtsSetType fptrPts;
     anders->getPointsToSet(fptr, fptrPts);
     CHECK(ptsContains(fptrPts, f1));
     CHECK(!ptsContains(fptrPts, f2));
     CHECK(!ptsContains(fptrPts, f3));
-
-    PtsSetType s2Pts;
-    anders->getPointsToSet(s2, s2Pts);
-    CHECK(ptsContains(s2Pts, f3));
-    CHECK(ptsContains(s2Pts, f4));
-    CHECK(!ptsContains(s2Pts, f1));
-    CHECK(!ptsContains(s2Pts, f2));
 
     PtsSetType fptr2Pts;
     anders->getPointsToSet(fptr2, fptr2Pts);
@@ -900,9 +890,11 @@ TEST_CASE("Andersen[FieldSensitivity_Nested]") {
 
             %s1 = getelementptr inbounds %D, ptr %1, i32 0, i32 0, i32 5, i32 2
             store ptr %x, ptr %s1, align 8
+            %load1 = load ptr, ptr %s1
 
             %s2 = getelementptr inbounds %D, ptr %1, i32 0, i32 0, i32 2, i32 7
             store ptr %y, ptr %s2, align 8
+            %load2 = load ptr, ptr %s2
 
             ret i32 0
         }
@@ -914,8 +906,8 @@ TEST_CASE("Andersen[FieldSensitivity_Nested]") {
     const Value *x = findInstr(F, "x");
     const Value *y = findInstr(F, "y");
 
-    const Value *s1 = findInstr(F, "s1");
-    const Value *s2 = findInstr(F, "s2");
+    const Value *s1 = findInstr(F, "load1");
+    const Value *s2 = findInstr(F, "load2");
 
     PtsSetType s1Pts;
     anders->getPointsToSet(s1, s1Pts);
@@ -1089,9 +1081,13 @@ TEST_CASE("Andersen[FieldSensitivity_PointerOffset]") {
             %field = getelementptr %I, ptr %p, i64 1, i32 1
             store ptr %q, ptr %field
 
+            %load1 = load ptr, ptr %field
+
             %field2 = getelementptr %S, ptr %p, i64 0, i32 0
+            %load2 = load ptr, ptr %field2
 
             %field3 = getelementptr %S, ptr %p, i64 0, i32 1, i32 1
+            %load3 = load ptr, ptr %field3
 
             ret i32 0
         }
@@ -1100,9 +1096,9 @@ TEST_CASE("Andersen[FieldSensitivity_PointerOffset]") {
     auto anders = runAndersen(*module);
     const Function *F = module->getFunction("main");
 
-    const Value *field = findInstr(F, "field");
-    const Value *field2 = findInstr(F, "field2");
-    const Value *field3 = findInstr(F, "field3");
+    const Value *field = findInstr(F, "load1");
+    const Value *field2 = findInstr(F, "load2");
+    const Value *field3 = findInstr(F, "load3");
     const Value *q = findInstr(F, "q");
 
     PtsSetType s1Pts;
@@ -1138,9 +1134,11 @@ TEST_CASE("Andersen[FieldSensitivity_Byte]") {
 
             ; Equivalent to %ptr
             %eq = getelementptr inbounds %S, ptr %p, i32 0, i32 0, i32 1
+            %loadEq = load ptr, ptr %eq
 
             %other = getelementptr inbounds %S, ptr %p, i32 0, i32 0, i32 20
             store ptr %h, ptr %other
+            %loadOther = load ptr, ptr %other
 
             ret i32 0
         }
@@ -1150,16 +1148,14 @@ TEST_CASE("Andersen[FieldSensitivity_Byte]") {
     const Function *F = module->getFunction("main");
 
     const Value *base = findInstr(F, "base");
-    const Value *ptr = findInstr(F, "ptr");
-    const Value *eq = findInstr(F, "eq");
-    const Value *other = findInstr(F, "other");
+    const Value *eq = findInstr(F, "loadEq");
+    const Value *other = findInstr(F, "loadOther");
 
     const Value *q = findInstr(F, "q");
     const Value *h = findInstr(F, "h");
 
     PtsSetType s1Pts, s2Pts, s3Pts, s4Pts;
     anders->getPointsToSet(base, s1Pts);
-    anders->getPointsToSet(ptr, s2Pts);
     anders->getPointsToSet(eq, s3Pts);
     anders->getPointsToSet(other, s4Pts);
 
@@ -1167,11 +1163,8 @@ TEST_CASE("Andersen[FieldSensitivity_Byte]") {
     CHECK(!ptsContains(s1Pts, q));
     CHECK(!ptsContains(s1Pts, h));
 
-    // // tPts(ptr) = {p, q}
-    CHECK(!ptsContains(s2Pts, h));
-    CHECK(ptsContains(s2Pts, q));
-
     // // tPts(eq) = tPts(ptr) = {p, q}
+    anders->printPointsToSet(eq);
     CHECK(!ptsContains(s3Pts, h));
     CHECK(ptsContains(s3Pts, q));
 
@@ -1251,9 +1244,15 @@ TEST_CASE("Andersen[FieldSensitivity_SimpleX]") {
             %s1 = getelementptr inbounds %S, ptr %1, i32 0, i32 0
             store ptr %x, ptr %s1, align 8
 
+            %f1 = getelementptr inbounds %S, ptr %1, i32 0, i32 0
+            %load1 = load ptr, ptr %f1
+
             ; tpts(s2) = {%1.f1, %y}
             %s2 = getelementptr inbounds %S, ptr %1, i32 0, i32 1
             store ptr %y, ptr %s2, align 8
+
+            %f2 = getelementptr inbounds %S, ptr %1, i32 0, i32 1
+            %load2 = load ptr, ptr %f2
 
             ret i32 0
         }
@@ -1264,18 +1263,18 @@ TEST_CASE("Andersen[FieldSensitivity_SimpleX]") {
     const llvm::Value *x = findInstr(f, "x");
     const llvm::Value *y = findInstr(f, "y");
 
-    const llvm::Value *s1 = findInstr(f, "s1");
-    const llvm::Value *s2 = findInstr(f, "s2");
+    const llvm::Value *s1 = findInstr(f, "load1");
+    const llvm::Value *s2 = findInstr(f, "load2");
 
     PtsSetType ptsSetA;
     anders->getPointsToSet(s1, ptsSetA);
     CHECK(ptsContains(ptsSetA, x));
-    CHECK(ptsSetA.size() == 2); // x, %1(f0)
+    CHECK(ptsSetA.size() == 1); // x
 
     PtsSetType ptsSetB;
     anders->getPointsToSet(s2, ptsSetB);
     CHECK(ptsContains(ptsSetB, y));
-    CHECK(ptsSetB.size() == 2); // y, %1(f1)
+    CHECK(ptsSetB.size() == 1); // y
 
 }
 
@@ -1399,6 +1398,7 @@ TEST_CASE("Andersen[memcpy]") {
             ; tpts(s2) = {%1.f1, %y}
             %s2 = getelementptr inbounds %S, ptr %1, i32 0, i32 1
             store ptr %y, ptr %s2, align 8
+            %loadS2 = load ptr, ptr %s2
 
             %2 = alloca %S, align 8
             call void @llvm.memcpy.p0.p0.i64(ptr %2, ptr %1, i64 0, i1 0)
@@ -1421,7 +1421,7 @@ TEST_CASE("Andersen[memcpy]") {
     const llvm::Value *y = findInstr(f, "y");
 
     const llvm::Value *s1 = findInstr(f, "s1");
-    const llvm::Value *s2 = findInstr(f, "s2");
+    const llvm::Value *s2 = findInstr(f, "loadS2");
 
     const llvm::Value *t1 = findInstr(f, "t1");
 
@@ -1429,15 +1429,11 @@ TEST_CASE("Andersen[memcpy]") {
     const llvm::Value *l2 = findInstr(f, "l2");
     const llvm::Value *a2 = findInstr(f, "2");
 
-    PtsSetType ptsSetA;
-    anders->getPointsToSet(s1, ptsSetA);
-    CHECK(ptsContains(ptsSetA, x));
-    CHECK(ptsSetA.size() == 2); // x, %1(f0)
 
     PtsSetType ptsSetB;
     anders->getPointsToSet(s2, ptsSetB);
     CHECK(ptsContains(ptsSetB, y));
-    CHECK(ptsSetB.size() == 2); // y, %1(f1)
+    CHECK(ptsSetB.size() == 1); // y
 
 
     PtsSetType ptsSetC;

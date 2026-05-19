@@ -72,7 +72,8 @@ public:
      * Returns the associated nodeIdx or InvalidIndex.
     */
     NodeIndex find(const Context *ctx, const llvm::Value *val, FieldType fields) const {
-        fields = fields.empty() ? getFields(ctx, val) : fields;
+        if (fields.empty())
+            fields = getFields(ctx, val);
         auto itr = _map.find({ctx, val, fields});
         if (itr == _map.end())
             return InvalidIndex;

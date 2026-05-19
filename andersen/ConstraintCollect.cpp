@@ -8,6 +8,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PatternMatch.h"
+#include <queue>
 
 using namespace llvm;
 
@@ -296,45 +297,73 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
     // P1 = getelementptr P2, ... --> <Copy/P1/P2>
     const llvm::Value *src = inst->getOperand(0);
     auto fields = nodeFactory.getFields(context, inst);
-    NodeIndex srcIndex = nodeFactory.getObjectNodeFor(context, src, fields);
+
+    NodeIndex srcIndex = nodeFactory.getValueNodeFor(context, src);
+    NodeIndex dstIndex = nodeFactory.getValueNodeFor(context, inst);
 
     // If our source is a GEP, we need to resolve the alloc site.
     if (const GetElementPtrInst *sourceInst = dyn_cast<GetElementPtrInst>(src)) {
-      NodeIndex srcValIndex = nodeFactory.getValueNodeFor(context, sourceInst, nodeFactory.getFields(context, sourceInst));
-      assert(srcValIndex != AndersNodeFactory::InvalidIndex && "Could not find valid srcValIndex.");
+      NodeIndex underlyingSrcIndex = AndersNodeFactory::InvalidIndex;
 
       // We can assume that the source GEP has been resolved properly.
       // ..meaning it already has a constraint to an object:
       auto itr = std::find_if(constraints.begin(), constraints.end(), [&](const AndersConstraint& c) {
-        // Only considering ADDR_OF and if getSrc is an object.
-        return c.getType() == AndersConstraint::ADDR_OF &&\
-          nodeFactory.isObjectNode(c.getSrc()) &&\
-          c.getDest() == srcValIndex;
+        return (c.getType() == AndersConstraint::ADDR_OF || c.getType() == AndersConstraint::GEP) && c.getDest() == srcIndex;
       });
 
-      if (itr != constraints.end()) {
-        // However, we're more interested as the what the actual object is:
-        src = nodeFactory.getValueForNode(itr->getSrc());
-        assert(src != nullptr && "GEP Constraint failed: underlying src is null.");
+      // Best case scenario is itr isnt the end..otherwise, we have to try and find it:
+      if (itr != constraints.end() && itr->getType() != AndersConstraint::GEP)
+        underlyingSrcIndex = itr->getSrc();
+      else {
+        std::queue<NodeIndex> worklist;
+        worklist.push(itr->getSrc());
 
-        // We can change our srcIndex, because it may exist already if we've been through this before.
-        srcIndex = nodeFactory.getObjectNodeFor(context, src, fields);
+        while (!worklist.empty()) {
+          NodeIndex current = worklist.front();
+          worklist.pop();
+          for (const AndersConstraint &c : constraints) {
+            if (c.getDest() == current) {
+              if (c.getType() == AndersConstraint::ADDR_OF) {
+                // In this case, the destination is acceptable. Otherwise we'll be getting the object.
+                underlyingSrcIndex = c.getDest();
+                break;
+              }
+              else if (c.getType() == AndersConstraint::GEP) {
+                worklist.push(c.getSrc());
+                break;
+              }
+            }
+          }
+        }
+        if (underlyingSrcIndex != AndersNodeFactory::InvalidIndex)
+          srcIndex = underlyingSrcIndex;
       }
     }
+    constraints.emplace_back(AndersConstraint::GEP, dstIndex, srcIndex, fields);
 
-    if (srcIndex == AndersNodeFactory::InvalidIndex) {
-      // We don't create objects for each field when we encounter an allocation
-      // ..meaning it's not an oddity if srcIndex is invalid.
-      srcIndex = nodeFactory.createObjectNode(context, src, fields);
-    }
+    //   if (itr != constraints.end()) {
+    //     // However, we're more interested as the what the actual object is:
+    //     src = nodeFactory.getValueForNode(itr->getSrc());
+    //     assert(src != nullptr && "GEP Constraint failed: underlying src is null.");
 
-    assert(srcIndex != AndersNodeFactory::InvalidIndex &&
-           "Failed to find gep src node");
-    NodeIndex dstIndex = nodeFactory.getValueNodeFor(context, inst, fields);
-    assert(dstIndex != AndersNodeFactory::InvalidIndex &&
-           "Failed to find gep dst node");
+    //     // We can change our srcIndex, because it may exist already if we've been through this before.
+    //     srcIndex = nodeFactory.getObjectNodeFor(context, src, fields);
+    //   }
+    // }
 
-    constraints.emplace_back(AndersConstraint::ADDR_OF, dstIndex, srcIndex);
+    // if (srcIndex == AndersNodeFactory::InvalidIndex) {
+    //   // We don't create objects for each field when we encounter an allocation
+    //   // ..meaning it's not an oddity if srcIndex is invalid.
+    //   srcIndex = nodeFactory.createObjectNode(context, src, fields);
+    // }
+
+    // assert(srcIndex != AndersNodeFactory::InvalidIndex &&
+    //        "Failed to find gep src node");
+    // NodeIndex dstIndex = nodeFactory.getValueNodeFor(context, inst, fields);
+    // assert(dstIndex != AndersNodeFactory::InvalidIndex &&
+    //        "Failed to find gep dst node");
+
+    // constraints.emplace_back(AndersConstraint::ADDR_OF, dstIndex, srcIndex);
 
     break;
   }
@@ -584,12 +613,7 @@ void Andersen::addArgumentConstraintForCall(const Context *calleeCtx,
         NodeIndex aIndex = nodeFactory.getValueNodeFor(context, actual);
         assert(aIndex != AndersNodeFactory::InvalidIndex &&
                "Failed to find actual arg node!");
-
-        const Type *sourceType = nodeFactory.typeInfo.resolveType(actual);
-        if (sourceType && sourceType->isAggregateType())
-          propgateConstraintsToFields(AndersConstraint::COPY, fIndex, aIndex, calleeCtx, context);
-        else
-          constraints.emplace_back(AndersConstraint::COPY, fIndex, aIndex);
+        constraints.emplace_back(AndersConstraint::COPY, fIndex, aIndex);
       } else
         constraints.emplace_back(AndersConstraint::COPY, fIndex,
                                  nodeFactory.getUniversalPtrNode());
@@ -635,10 +659,15 @@ void Andersen::propgateConstraintsToFields(AndersConstraint::ConstraintType type
   // srcCtx is optional
   if (!srcCtx) srcCtx = dstCtx;
 
+  errs() << "trying to find underlying object of: " << *src << "\n";
+
   // Grab the underlying object:
   auto itr = std::find_if(constraints.begin(), constraints.end(), [&](const AndersConstraint& c) {
       // Only considering ADDR_OF and if getSrc is an object.
-      return c.getType() == AndersConstraint::ADDR_OF &&\
+      if (nodeFactory.isObjectNode(c.getSrc())) {
+        errs() << "candidate: " << c.getSrc() << " -- " << c.getDest() << "\n";
+      }
+      return (c.getType() == AndersConstraint::ADDR_OF || c.getType() == AndersConstraint::COPY) &&\
         nodeFactory.isObjectNode(c.getSrc()) &&\
         c.getDest() == srcIndex;
   });
@@ -663,6 +692,7 @@ void Andersen::propgateConstraintsToFields(AndersConstraint::ConstraintType type
 
       constraints.emplace_back(type, dstIndex, fieldIdx);
     }
+    constraints.emplace_back(type, dstIndex, itr->getSrc());
   }
 
   // We'll also keep this, which is what was done before.

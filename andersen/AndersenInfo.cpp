@@ -97,7 +97,23 @@ void Andersen::dumpConstraint(const AndersConstraint &item) const {
     nodeFactory.dumpNode(dest);
     errs() << " = &";
     nodeFactory.dumpNode(src);
+    break;
   }
+  case AndersConstraint::GEP: {
+    nodeFactory.dumpNode(dest);
+    errs() << " = &";
+    nodeFactory.dumpNode(src);
+    break;
+  }
+  }
+
+  FieldType fields = item.getFields();
+  if (!fields.empty()) {
+    errs() << " | Fields = [";
+    for (const auto &x : fields) {
+      errs() << x << " ";
+    }
+    errs() << "]";
   }
 
   errs() << "\n";

@@ -102,8 +102,16 @@ NodeIndex AndersNodeFactory::getValueNodeForConstant(const Context *context, con
     switch (ce->getOpcode()) {
     // Pointer to any field within a struct is treated as a pointer to the first
     // field
-    case Instruction::GetElementPtr:
-      return getValueNodeFor(context, c->getOperand(0), getFields(context, c));
+    case Instruction::GetElementPtr: {
+      FieldType fields = getFields(context, c);
+      NodeIndex base = getValueNodeFor(context, c->getOperand(0), {});
+      if (base == InvalidIndex)
+          return InvalidIndex;
+      NodeIndex existing = getValueNodeFor(context, c->getOperand(0), fields);
+      if (existing != InvalidIndex)
+          return existing;
+      return createValueNode(context, c->getOperand(0), fields);
+    }
     case Instruction::IntToPtr:
     case Instruction::PtrToInt:
       return createValueNode(context);
@@ -359,4 +367,30 @@ void AndersNodeFactory::setDataLayout(const DataLayout *layout) {
 
 const DataLayout* AndersNodeFactory::getDataLayout() const {
   return _layout;
+}
+
+NodeIndex AndersNodeFactory::getOrCreateFieldObject(NodeIndex baseObj, const FieldType& fields) {
+    auto key = std::make_pair(baseObj, fields);
+    auto it = fieldObjectMap.find(key);
+    if (it != fieldObjectMap.end())
+        return it->second;
+
+    const llvm::Value *baseVal = getValueForNode(baseObj);
+    if (baseVal != nullptr) {
+        NodeIndex existing = getObjectNodeFor(_globalCtx, baseVal, fields);
+        if (existing == InvalidIndex) {
+            unsigned baseCtxId = nodes[baseObj].contextId;
+            const Context *ctx = getContextByID(baseCtxId);
+            if (ctx != _globalCtx)
+                existing = getObjectNodeFor(ctx, baseVal, fields);
+        }
+        if (existing != InvalidIndex) {
+            fieldObjectMap[key] = existing;
+            return existing;
+        }
+    }
+
+    NodeIndex fieldObj = createObjectNode(nullptr);
+    fieldObjectMap[key] = fieldObj;
+    return fieldObj;
 }

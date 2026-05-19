@@ -2,6 +2,7 @@
 #define ANDERSEN_CONSTRAINT_H
 
 #include "NodeFactory.h"
+#include "andersen/NodeMap.h"
 
 #include <cassert>
 
@@ -19,20 +20,23 @@ public:
     COPY,
     LOAD,
     STORE,
+    GEP,
   };
 
 private:
   ConstraintType type;
   NodeIndex dest;
   NodeIndex src;
+  FieldType fields;
 
 public:
-  AndersConstraint(ConstraintType Ty, NodeIndex D, NodeIndex S)
-      : type(Ty), dest(D), src(S) {}
+  AndersConstraint(ConstraintType Ty, NodeIndex D, NodeIndex S, FieldType F={})
+      : type(Ty), dest(D), src(S), fields(F) {}
 
   ConstraintType getType() const { return type; }
   NodeIndex getDest() const { return dest; }
   NodeIndex getSrc() const { return src; }
+  FieldType getFields() const { return fields; }
 
   bool operator==(const AndersConstraint &RHS) const {
     return RHS.type == type && RHS.dest == dest && RHS.src == src;

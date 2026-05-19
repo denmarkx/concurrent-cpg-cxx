@@ -142,6 +142,8 @@ private:
   // take variable arguments.
   llvm::DenseMap<const llvm::Function *, NodeIndex> varargMap;
 
+  DenseMap<std::pair<NodeIndex,FieldType>, NodeIndex> fieldObjectMap;
+
   std::vector<const Context*> _contexts;
 
   unsigned int _ctxCounter = 0;
@@ -164,6 +166,7 @@ public:
   NodeIndex getObjectNodeForConstant(const Context *context, const llvm::Constant *c, FieldType fields={}) const;
   NodeIndex getReturnNodeFor(const Context *context, const llvm::Function *f) const;
   NodeIndex getVarargNodeFor(const llvm::Function *f) const;
+  NodeIndex getOrCreateFieldObject(NodeIndex baseObj, const FieldType& fields);
 
   // [deprecated] - use lookupFields
   llvm::SmallVector<unsigned int, 4> getFields(const Context *ctx, const llvm::Value *v) const;

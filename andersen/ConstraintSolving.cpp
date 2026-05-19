@@ -3,6 +3,7 @@
 #include "NodeFactory.h"
 #include "PtsSet.h"
 #include "SparseBitVectorGraph.h"
+#include "andersen/Constraint.h"
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
@@ -28,10 +29,16 @@ bool EnableLCD = true;
 
 namespace {
 
+struct GepEdge {
+    NodeIndex dst;
+    FieldType fields;
+};
+
 // This class represent the constraint graph
 class ConstraintGraphNode {
 private:
   NodeIndex idx;
+  SmallVector<GepEdge, 4> GepEdges;
 
   using NodeSet = llvm::SmallVector<NodeIndex, 4>;
 
@@ -64,6 +71,11 @@ private:
 
   bool insertStoreEdge(NodeIndex dst) { return insertEdge(storeEdges, dst); }
   bool removeStoreEdge(NodeIndex dst) { return removeEdge(storeEdges, dst); }
+
+  bool addGepEdge(NodeIndex dst, FieldType fields) {
+    GepEdges.push_back({dst, fields});
+    return true;
+  }
 
   bool isEmpty() const {
     return copyEdges.empty() && loadEdges.empty() && storeEdges.empty();
@@ -104,6 +116,13 @@ public:
     return removeStoreEdge(oldIdx) && insertStoreEdge(newIdx);
   }
 
+  void replaceGepEdge(NodeIndex oldDst, NodeIndex newDst) {
+    for (auto &e : GepEdges) {
+      if (e.dst == oldDst)
+        e.dst = newDst;
+    }
+  }
+
   iterator begin() { return copyEdges.begin(); }
   iterator end() { return copyEdges.end(); }
 
@@ -122,6 +141,16 @@ public:
 
   llvm::iterator_range<const_iterator> stores() const {
     return {store_begin(), store_end()};
+  }
+
+  auto gep_begin() { return GepEdges.begin(); }
+  auto gep_end()   { return GepEdges.end(); }
+
+  auto gep_begin() const { return GepEdges.begin(); }
+  auto gep_end()   const { return GepEdges.end(); }
+
+  const SmallVector<GepEdge,4>& geps() const {
+    return GepEdges;
   }
 
   friend class ConstraintGraph;
@@ -171,6 +200,11 @@ public:
       return true;
     } else
       return (itr->second).insertStoreEdge(dst);
+  }
+
+  bool insertGepEdge(NodeIndex src,NodeIndex dst,const FieldType &fields) {
+    ConstraintGraphNode *node = getOrInsertNode(src);
+    return node->addGepEdge(dst, fields);
   }
 
   void mergeNodes(NodeIndex dst, NodeIndex src) {
@@ -328,6 +362,9 @@ private:
         offlineGraph.insertEdge(srcTgt, dstTgt);
         break;
       }
+      case AndersConstraint::GEP: {
+        // offlineGraph.insertGepEdge()
+      }
       }
     }
   }
@@ -425,6 +462,10 @@ void buildConstraintGraph(ConstraintGraph &cGraph,
     }
     case AndersConstraint::COPY: {
       cGraph.insertCopyEdge(srcTgt, dstTgt);
+      break;
+    }
+    case AndersConstraint::GEP: {
+      cGraph.insertGepEdge(c.getSrc(), c.getDest(), c.getFields());
       break;
     }
     }
@@ -635,8 +676,9 @@ void Andersen::solveConstraints() {
 
         const bool hasLoads  = cNode->load_begin()  != cNode->load_end();
         const bool hasStores = cNode->store_begin() != cNode->store_end();
+        const bool hasGeps = cNode->gep_begin() != cNode->gep_end();
 
-        if (hasLoads || hasStores) {
+        if (hasLoads || hasStores || hasGeps) {
           for (auto v : delta) {
             NodeIndex vRep = nodeFactory.getMergeTarget(v);
             for (auto dst : cNode->loads()) {
@@ -672,6 +714,16 @@ void Andersen::solveConstraints() {
               if (tgtNode != dst)
                 updateMap[dst] = tgtNode;
             }
+
+            for (auto const &gep : cNode->geps()) {
+              NodeIndex fieldObj = nodeFactory.getOrCreateFieldObject(vRep, gep.fields);
+              AndersPtsSet& dstPts = ptsGraph[gep.dst];
+              if (!dstPts.has(fieldObj)) {
+                dstPts.insert(fieldObj);
+                deltaPts[gep.dst].insert(fieldObj);
+                nextWorkList->enqueue(gep.dst);
+              }
+            }
           }
         }
 
@@ -682,6 +734,9 @@ void Andersen::solveConstraints() {
         // Now perform the store edge updates
         for (auto const &mapping : updateMap)
           cNode->replaceStoreEdge(mapping.first, mapping.second);
+
+        for (auto const &mapping : updateMap)
+          cNode->replaceGepEdge(mapping.first, mapping.second);
         updateMap.clear();
 
         // Finally, it's time to propagate pts-to info along the copy edges

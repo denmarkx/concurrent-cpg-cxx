@@ -139,7 +139,8 @@ public:
   void getPointsToSet(const llvm::Value *v, PtsSetType &ptsSet, unsigned int contextId=GenericContextID);
   void printPointsToSet(const llvm::Value *v, unsigned int contextId=GenericContextID);
 
-  bool addConstraint(AndersConstraint::ConstraintType type, const llvm::Value*, const llvm::Value*);
+  void connectContexts(const Function* parent, const Function* child);
+  bool addConstraint(AndersConstraint::ConstraintType type, const llvm::Value*, const llvm::Value*, bool argument=false);
   void resolveConstraints();
 
   Context* getGlobalCtx() const;
