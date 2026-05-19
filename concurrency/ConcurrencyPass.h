@@ -86,6 +86,7 @@ public:
         for (auto *node : threads) {
             handleThreadNode(node);
         }
+        GraphManager::get()->getAliasResult()->resolveConstraints();
         computeThreadSummaries();
         // printSummaries();
 
@@ -133,8 +134,6 @@ private:
     void handleThreadNode(ThreadNode *node) {
         std::vector<const llvm::Value *> ptsSet{};
         // errs() << "getting transitive pts set of: " << *node->getDataNode()->getValue() << "\n";
-        GraphManager::get()->getAliasResult()->printPointsToSet(
-            node->getDataNode()->getValue());
         // GraphManager::get()->getAliasResult()->printTransitivePointsToSet(node->getDataNode()->getValue());
         // errs() << "routine = " << *node->getRoutine()->getValue() << "\n";
 
@@ -146,9 +145,7 @@ private:
         GraphManager::get()->getAliasResult()->connectContexts(parent, routine);
         GraphManager::get()->getAliasResult()->addConstraint(AndersConstraint::COPY, 
             dyn_cast<Function>(node->getRoutine()->getValue())->getArg(0),node->getDataNode()->getValue(), 1);
-        GraphManager::get()->getAliasResult()->resolveConstraints();
         auto x = dyn_cast<Function>(node->getRoutine()->getValue())->getArg(0);
-        GraphManager::get()->getAliasResult()->printPointsToSet(x);
         return;
         
 
