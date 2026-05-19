@@ -1,10 +1,11 @@
 #include <llvm/Analysis/MemorySSA.h>
 
-#include "BidirectionalCallGraph.h"
+#include "components/BidirectionalCallGraph.h"
+#include "passes/GraphBuilderPass.h"
+
 #include "graph/GraphBuilder.h"
 #include "graph/GraphManager.h"
 #include "graph/GraphParser.h"
-#include "GraphBuilderPass.h"
 #include "andersen/Andersen.h"
 
 bool GraphBuilderPass::runOnModule(Module &M) {

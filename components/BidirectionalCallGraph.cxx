@@ -1,4 +1,4 @@
-#include "BidirectionalCallGraph.h"
+#include "components/BidirectionalCallGraph.h"
 #include <iostream>
 
 BidirectionalCallGraph::BidirectionalCallGraph(Module& module): CallGraph(module) {

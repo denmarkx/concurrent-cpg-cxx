@@ -1,3 +1,3 @@
-valgrind --tool=callgrind ./build/analysis
+valgrind --tool=callgrind ../build/analysis
 callgrind_annotate --include=graph callgrind.out.*
 kcachegrind callgrind.out.*

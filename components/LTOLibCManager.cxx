@@ -3,7 +3,7 @@
 #include <llvm/Support/SourceMgr.h>
 #include <stdexcept>
 
-#include "LTOLibCManager.h"
+#include "components/LTOLibCManager.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/IR/DerivedTypes.h"
 

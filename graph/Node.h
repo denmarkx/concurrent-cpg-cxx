@@ -3,8 +3,8 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
-#include "Debug.h"
-#include "APIHelper.h"
+#include "utility/Debug.h"
+#include "utility/APIHelper.h"
 
 #include <string>
 #include <unordered_map>

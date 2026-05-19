@@ -3,7 +3,7 @@
 
 #include "GraphManager.h"
 #include "Node.h"
-#include "APIHelper.h"
+#include "utility/APIHelper.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/Support/AtomicOrdering.h"
 

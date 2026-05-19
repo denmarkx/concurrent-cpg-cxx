@@ -1,8 +1,8 @@
 #include <llvm/Analysis/MemorySSA.h>
 #include <stdexcept>
 
-#include "GraphBuilderFuncPass.h"
-#include "GraphBuilderPass.h"
+#include "passes/GraphBuilderFuncPass.h"
+#include "passes/GraphBuilderPass.h"
 #include "graph/BasicBlockNode.h"
 #include "graph/GraphManager.h"
 #include "graph/BasicBlockNode.h"

@@ -4,7 +4,7 @@ project(analysis)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_COMPILER "clang++")
+set(CMAKE_CXX_COMPILER "clang++-17")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 if (WANT_VALGRIND)
@@ -40,7 +40,6 @@ set (ANDERSEN_FILES
     andersen/FunctionPointerSolver.cxx
     andersen/NodeFactory.cpp
     andersen/NodeMap.cxx
-    utility/TypeInformation.cxx
 )
 
 add_library(Andersen SHARED ${ANDERSEN_FILES})
@@ -49,6 +48,8 @@ target_link_libraries(Andersen PUBLIC ${LLVM_LIBS})
 
 set(FILES
     components/ControlFlowGraph.cxx
+    components/BidirectionalCallGraph.cxx
+    components/LTOLibCManager.cxx
     graph/GraphManager.cxx
     graph/Node.cxx
     graph/FunctionNode.h
@@ -74,13 +75,9 @@ set(FILES
     concurrency/ConcurrencyPass.h
     concurrency/ThreadNode.h
     concurrency/JoinNode.h
-    BidirectionalCallGraph.cxx
-    GraphBuilderPass.cxx
-    GraphBuilderFuncPass.cxx
-    GraphBuilderProcessPass.cxx
-    LTOLibCManager.cxx
-    APIHelper.h
-    Debug.h
+    passes/GraphBuilderPass.cxx
+    passes/GraphBuilderFuncPass.cxx
+    passes/GraphBuilderProcessPass.cxx
     main.cxx
 )
 

@@ -1,4 +1,4 @@
-#include "ControlFlowGraph.h"
+#include "components/ControlFlowGraph.h"
 #include "graph/FunctionNode.h"
 #include "graph/GraphManager.h"
 #include "graph/Node.h"

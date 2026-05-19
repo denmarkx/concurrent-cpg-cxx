@@ -1,7 +1,8 @@
 #include "GraphManager.h"
-#include "LTOLibCManager.h"
+#include "components/LTOLibCManager.h"
+#include "utility/APIHelper.h"
+
 #include "LiteralNode.h"
-#include "APIHelper.h"
 #include "GraphParser.h"
 #include "NullNode.h"
 #include "llvm/Analysis/AliasAnalysis.h"

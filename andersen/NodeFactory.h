@@ -1,8 +1,6 @@
 #ifndef ANDERSEN_NODE_FACTORY_H
 #define ANDERSEN_NODE_FACTORY_H
 
-#include "utility/TypeInformation.h"
-
 #include "NodeMap.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Hashing.h"
@@ -172,8 +170,6 @@ public:
   llvm::SmallVector<unsigned int, 4> getFields(const Context *ctx, const llvm::Value *v) const;
 
   std::vector<FieldType> lookupFields(AndersNode::AndersNodeType type, const Context *ctx, const llvm::Value *v) const;
-
-  TypeInformation typeInfo;
 
   // Node merge interfaces
   void mergeNode(NodeIndex n0, NodeIndex n1); // Merge n1 into n0

@@ -11,9 +11,9 @@
 #include "andersen/Andersen.h"
 
 #include "graph/GraphBuilder.h"
-#include "GraphBuilderPass.h"
-#include "GraphBuilderFuncPass.h"
-#include "GraphBuilderProcessPass.h"
+#include "passes/GraphBuilderPass.h"
+#include "passes/GraphBuilderFuncPass.h"
+#include "passes/GraphBuilderProcessPass.h"
 #include "graph/GraphManager.h"
 
 using namespace llvm;

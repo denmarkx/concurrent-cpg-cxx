@@ -1,7 +1,7 @@
 #include "GraphBuilder.h"
 #include "GraphManager.h"
-#include "APIHelper.h"
-#include "Debug.h"
+#include "utility/APIHelper.h"
+#include "utility/Debug.h"
 
 #include "Node.h"
 #include "components/ControlFlowGraph.h"

@@ -2,7 +2,7 @@
 #include "GraphManager.h"
 #include "Node.h"
 #include "graph/IntrinsicHandler.h"
-#include "Debug.h"
+#include "utility/Debug.h"
 
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/MemoryLocation.h"

@@ -3,7 +3,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/InstrTypes.h"
 
-#include "APIHelper.h"
+#include "utility/APIHelper.h"
 #include "Node.h"
 #include "graph/BranchNode.h"
 #include "graph/GraphManager.h"

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "BidirectionalCallGraph.h"
-#include "LTOLibCManager.h"
+#include "components/BidirectionalCallGraph.h"
+#include "components/LTOLibCManager.h"
 #include "Node.h"
 #include "llvm/Analysis/MemorySSA.h"
 #include "llvm/IR/Instruction.h"

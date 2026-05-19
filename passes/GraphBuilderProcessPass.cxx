@@ -1,4 +1,4 @@
-#include "GraphBuilderProcessPass.h"
+#include "passes/GraphBuilderProcessPass.h"
 #include "components/ControlFlowGraph.h"
 #include "concurrency/ConcurrencyPass.h"
 #include "llvm/IR/Instructions.h"
