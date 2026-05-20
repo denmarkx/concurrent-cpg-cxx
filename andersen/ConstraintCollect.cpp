@@ -234,6 +234,27 @@ void Andersen::addGlobalAggregateConstraints(const llvm::Value *aggregate, const
   }
 }
 
+const AllocaInst* Andersen::findAlloc(const llvm::Value *v) const {
+  if (!v) return nullptr;
+
+  if (isa<AllocaInst>(v))
+      return dyn_cast<AllocaInst>(v);
+
+  // If we're a GEP, we can try the source?
+  if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(v)) {
+      const llvm::AllocaInst *alloca = findAlloc(gep->getOperand(0));
+      if (alloca) return alloca;
+  }
+
+  for (const llvm::User *user : v->users()) {
+      const llvm::AllocaInst *alloca = findAlloc(user);
+      if (alloca) return alloca;
+  }
+
+  return nullptr;
+}
+
+
 void Andersen::collectConstraintsForInstruction(const Context *context, const Instruction *inst, bool recursiveHack) {
   switch (inst->getOpcode()) {
   case Instruction::Alloca: {
@@ -298,18 +319,33 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
     assert(inst->getType()->isPointerTy());
 
     // P1 = getelementptr P2, ... --> <Copy/P1/P2>
+    NodeIndex srcIndex;
+    const llvm::Value *src = nullptr;
 
     auto fields = nodeFactory.getFields(context, inst);
 
-    // We don't create every field for every aggregate during AllocaInst.
-    // ..so we need to check if this exists:
-    NodeIndex srcIndex = nodeFactory.getValueNodeFor(context, inst->getOperand(0), fields);
+    // If our source is a GEP, we need to resolve the alloc site.
+    if (const GetElementPtrInst *sourceInst = dyn_cast<GetElementPtrInst>(inst->getOperand(0))) {
+      const AllocaInst *alloc = findAlloc(sourceInst);
+
+      // Our constraint then gets added there:
+      // TODO: technically, this should continuously propagate from the 1st gep..
+      // ...and the current approach we had before this should've worked in theory..
+      srcIndex = nodeFactory.getValueNodeFor(context, alloc, fields);
+      src = alloc;
+    } else {
+      // We don't create every field for every aggregate during AllocaInst.
+      // ..so we need to check if this exists:
+      srcIndex = nodeFactory.getValueNodeFor(context, inst->getOperand(0), fields);
+      src = inst->getOperand(0);
+    }
+
     if (srcIndex == AndersNodeFactory::InvalidIndex) {
       // In this case, we're going to create:
-      srcIndex = nodeFactory.createValueNode(context, inst->getOperand(0), fields);
+      srcIndex = nodeFactory.createValueNode(context, src, fields);
 
       // This also gets an object:
-      NodeIndex objIndex = nodeFactory.createObjectNode(context, inst->getOperand(0), fields);
+      NodeIndex objIndex = nodeFactory.createObjectNode(context, src, fields);
 
       // And a constraint:
       constraints.emplace_back(AndersConstraint::ADDR_OF, srcIndex, objIndex);

@@ -143,6 +143,10 @@ public:
             const llvm::Value *offset = gep->getOperand(1);
             if (const ConstantInt *offsetInt = dyn_cast<ConstantInt>(offset)) {
                 if (offsetInt->getZExtValue() > 0) {
+                    // Theoretically, we should be able to resolve getFields() on the source.
+                    auto indices = getFields(ctx, gep->getOperand(0));
+                    fields.append(indices.begin(), indices.end());
+
                     // When the pointer offset is > 0, we need to at least make an attempt
                     // to normalize this back into an index-only instruction.
                     // The main problem with this comes from the fact that we need to figure out
@@ -206,18 +210,12 @@ private:
         if (const AllocaInst *alloca = dyn_cast<AllocaInst>(value))
             return alloca->getAllocatedType();
 
-        // Alternatively, a GEP will be useful here under a few conditions:
+        // Alternatively, a GEP will be useful here:
         if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(value)) {
-            // Obviously, the source must be the value.
-            if (gep->getOperand(0) != value) return nullptr;
-
-            // AND the pointer offset must be 0.
+            // Since we know that the GEP is the value,
+            // we can assume the source type is OK if the pointer offset is 0.
             const ConstantInt *offsetInt = dyn_cast<ConstantInt>(gep->getOperand(1));
-            if (!offsetInt) return nullptr;
-
-            // Since it's 0, we're indexing directly into it and we can hopefully assume that
-            // we aren't using some arbitrary type.
-            if (offsetInt->getZExtValue() == 0)
+            if (offsetInt && offsetInt->getZExtValue() == 0)
                 return gep->getSourceElementType();
         }
 
