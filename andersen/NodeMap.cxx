@@ -12,22 +12,9 @@ const llvm::Value* NodeMap::findAggregateFromParam(
     if (!param->getType()->isPointerTy()) return nullptr;
     if (!startCtx || !ctx) return nullptr;
 
-    // errs() << "findAggregateFromParam:\n";
-    // errs() << "   startCtx: " << startCtx->id << "\n";
-    // errs() << "           : " << startCtx << "\n";
-    // errs() << "   ctx     : " << ctx->id << "\n";
-    // errs() << "           : " << ctx << "\n\n";
-
     // If this is a gep already, we return it.
-    if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(param)) {
-        if (gep->getSourceElementType()->isAggregateType()) {
-            // errs() << "going to return param: " << *param << "\n";
-            return param;
-        }
-
-        // TODO: otherwise..? we need to find the alloca
-        return nullptr;
-    }
+    if (isAggregateGEP(param))
+        return param;
 
     // Load instructions are particularly useful:
     if (isa<LoadInst>(param)) {
@@ -42,26 +29,18 @@ const llvm::Value* NodeMap::findAggregateFromParam(
         return
             ctx != startCtx &&
             (
-                isa<GetElementPtrInst>(user) ||
+                isAggregateGEP(user) ||
                 isa<LoadInst>(user)
             );
     });
 
     if (itr == param->users().end()) {
-        // errs() << "checking orig callsite....\n";
         // Let's move up to the original callsite and check the arg's uses.
         // I suppose only if we're still a formal argument:
         const Argument *formal = dyn_cast<Argument>(param);
         if (!formal) return nullptr;
 
-        // errs() << "ctx?: " << (ctx != nullptr) << "\n";
-        // if (ctx) {
-        //     errs() << "ctx id: " << ctx->id << "\n";
-        //     errs() << "ctx cs?: " << (ctx->callSite != nullptr) << "\n";
-        // }
-
         if (ctx && ctx->callSite) {
-            // errs() << "checking orig callsite: " << *ctx->callSite << "\n";
             const Function *function = formal->getParent();
 
             // Get the index of this param.
@@ -80,12 +59,6 @@ const llvm::Value* NodeMap::findAggregateFromParam(
         }
         return nullptr;
     }
-
-    // this is because of itr not following the same check
-    if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(*itr)) {
-        if (!gep->getSourceElementType()->isAggregateType()) return nullptr;
-    }
-
 
     return *itr;
 }

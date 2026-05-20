@@ -2,6 +2,7 @@
 
 #include "llvm/ADT/APInt.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/TypeSize.h"
 struct Context;
 
@@ -117,7 +118,6 @@ public:
     */
     FieldType getFields(const Context *ctx, const llvm::Value *value) const {
         if (!value) return {};
-        // errs() << "getFields: " << *value << "\n";
 
         FieldType fields;
 
@@ -145,7 +145,6 @@ public:
             if (const ConstantInt *offsetInt = dyn_cast<ConstantInt>(offset)) {
                 if (offsetInt->getZExtValue() > 0) {
                     // Theoretically, we should be able to resolve getFields() on the source.
-                    // errs() << "  ..inner call for getFields on " << *gep->getOperand(0) << "\n";
                     auto indices = getFields(ctx, gep->getOperand(0));
                     fields.append(indices.begin(), indices.end());
 
@@ -193,18 +192,21 @@ public:
 
             // The last actual thing I can think of to try is walking the users to find a GEP:
             const llvm::Value *candidate = findAggregateFromParam(ctx, ctx, param);
-            // if (candidate)
-                // errs() << "candidate identified as: " << *candidate << "\n";
             return getFields(ctx, candidate);
         }
 
-        // errs() << "returning fields...\n";
         return fields;
     }
 
 private:
     const llvm::Value* findAggregateFromParam(const Context* startCtx, 
         const Context* ctx, const llvm::Value *param) const;
+
+    bool isAggregateGEP(const llvm::Value *value) const {
+        if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(value))
+            return gep->getSourceElementType()->isAggregateType();
+        return false;
+    }
 
     /*
      * Walks the DEF-USE graph to attempt to find the underlying type.
