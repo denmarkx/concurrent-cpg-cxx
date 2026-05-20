@@ -117,6 +117,7 @@ public:
     */
     FieldType getFields(const Context *ctx, const llvm::Value *value) const {
         if (!value) return {};
+        // errs() << "getFields: " << *value << "\n";
 
         FieldType fields;
 
@@ -144,6 +145,7 @@ public:
             if (const ConstantInt *offsetInt = dyn_cast<ConstantInt>(offset)) {
                 if (offsetInt->getZExtValue() > 0) {
                     // Theoretically, we should be able to resolve getFields() on the source.
+                    // errs() << "  ..inner call for getFields on " << *gep->getOperand(0) << "\n";
                     auto indices = getFields(ctx, gep->getOperand(0));
                     fields.append(indices.begin(), indices.end());
 
@@ -191,8 +193,12 @@ public:
 
             // The last actual thing I can think of to try is walking the users to find a GEP:
             const llvm::Value *candidate = findAggregateFromParam(ctx, ctx, param);
+            // if (candidate)
+                // errs() << "candidate identified as: " << *candidate << "\n";
             return getFields(ctx, candidate);
         }
+
+        // errs() << "returning fields...\n";
         return fields;
     }
 
