@@ -319,3 +319,8 @@ std::vector<const Context*> AndersNodeFactory::getAssociatedContexts(const Value
 unsigned int AndersNodeFactory::getNumContexts() {
   return _contexts.size();
 }
+
+void AndersNodeFactory::setDataLayout(const DataLayout *layout) {
+  valueNodeMap.setDataLayout(layout);
+  objNodeMap.setDataLayout(layout);
+}

@@ -1,5 +1,8 @@
 #pragma once
 
+#include "llvm/ADT/APInt.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/Support/TypeSize.h"
 struct Context;
 
 #include "llvm/IR/Instructions.h"
@@ -104,6 +107,11 @@ public:
         return contexts;
     }
 
+    void setDataLayout(const DataLayout *layout) {
+        assert(_layout == nullptr);
+        _layout = const_cast<DataLayout*>(layout);
+    }
+
     /*
      * Attempts to resolve the indices that this value uses.
     */
@@ -127,9 +135,38 @@ public:
         else if (const ConstantExpr *cExpr = dyn_cast<ConstantExpr>(value))
             return getFields(ctx, cExpr->getAsInstruction());
 
-        // GEP: I should note that this doesn't support the first index (ptr offset).
+        // GEP:
         else if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(value)) {
             fields.reserve(gep->getNumIndices());
+
+            // Pointer offset:
+            const llvm::Value *offset = gep->getOperand(1);
+            if (const ConstantInt *offsetInt = dyn_cast<ConstantInt>(offset)) {
+                if (offsetInt->getZExtValue() > 0) {
+                    // When the pointer offset is > 0, we need to at least make an attempt
+                    // to normalize this back into an index-only instruction.
+                    // The main problem with this comes from the fact that we need to figure out
+                    // the type of the pointer operand (op0)..because it's an opaque ptr.
+                    llvm::Type *ptrType = findType(gep->getOperand(0));
+
+                    // Some instructions will do stuff like use i8 for traversing bytes
+                    // ...I don't really know what to do about that right now: TODO
+                    if (ptrType && ptrType->isAggregateType()) {
+                        // Byte-wise we move sizeof(ptrType)*offsetInt
+                        // The main assumption here is that this won't put us
+                        // in the middle of the aggregate..non-standard layouts might..
+                        llvm::TypeSize size = _layout->getTypeAllocSize(ptrType);
+                        APInt ap = APInt(
+                            _layout->getIndexTypeSizeInBits(offsetInt->getType()),
+                            size * offsetInt->getZExtValue()
+                        );
+
+                        auto indices = _layout->getGEPIndicesForOffset(ptrType, ap);
+                        for (const auto &e: indices)
+                            fields.push_back(e.getZExtValue());
+                    }
+                }
+            }
 
             for (unsigned int i=2; i < gep->getNumOperands(); i++) {
                 if (const ConstantInt *index = dyn_cast<ConstantInt>(gep->getOperand(i))) {
@@ -159,6 +196,39 @@ private:
     const llvm::Value* findAggregateFromParam(const Context* startCtx, 
         const Context* ctx, const llvm::Value *param) const;
 
+    /*
+     * Walks the DEF-USE graph to attempt to find the underlying type.
+    */
+    llvm::Type* findType(const llvm::Value *value) const {
+        if (!value) return nullptr;
+
+        // Best case is that this is directly an alloca.
+        if (const AllocaInst *alloca = dyn_cast<AllocaInst>(value))
+            return alloca->getAllocatedType();
+
+        // Alternatively, a GEP will be useful here under a few conditions:
+        if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(value)) {
+            // Obviously, the source must be the value.
+            if (gep->getOperand(0) != value) return nullptr;
+
+            // AND the pointer offset must be 0.
+            const ConstantInt *offsetInt = dyn_cast<ConstantInt>(gep->getOperand(1));
+            if (!offsetInt) return nullptr;
+
+            // Since it's 0, we're indexing directly into it and we can hopefully assume that
+            // we aren't using some arbitrary type.
+            if (offsetInt->getZExtValue() == 0)
+                return gep->getSourceElementType();
+        }
+
+        for (const llvm::User *user : value->users()) {
+            llvm::Type *type = findType(user);
+            if (type) return type;
+        }
+
+        return nullptr;
+    }
+
     void printFields(FieldType &fields) const {
         errs() << "fields = [";
         for (const auto &v : fields) {
@@ -169,6 +239,7 @@ private:
 
 private:
     NodeMapType _map;
+    DataLayout *_layout = nullptr;
 
     static constexpr unsigned int InvalidIndex = ~0u;
 };
