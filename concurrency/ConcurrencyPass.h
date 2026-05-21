@@ -88,9 +88,9 @@ public:
         computeThreadSummaries();
         printSummaries();
 
-        for (ThreadSummary *summary : _summaries) {
-            LocksetAnalysis::get()->handleThread(*summary);
-        }
+        // for (ThreadSummary *summary : _summaries) {
+            // LocksetAnalysis::get()->handleThread(*summary);
+        // }
     }
 
     void printSharedMap() {
@@ -131,8 +131,10 @@ public:
 private:
     void handleThreadNode(ThreadNode *node) {
         std::vector<const llvm::Value *> ptsSet{};
-        GraphManager::get()->getAliasResult()->getPointsToSet(nullptr,
+        errs() << "getting transitive pts set of: " << *node->getDataNode()->getValue() << "\n";
+        GraphManager::get()->getAliasResult()->getTransitivePointsToSet(
             node->getDataNode()->getValue(), ptsSet);
+        GraphManager::get()->getAliasResult()->printTransitivePointsToSet(node->getDataNode()->getValue());
 
         for (const Value *v : ptsSet) {
             _sharedVariableMap[v].push_back(node);

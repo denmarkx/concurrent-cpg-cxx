@@ -242,6 +242,22 @@ void AndersNodeFactory::dumpNodeInfo() const {
       errs() << "  <func> " << val->getName();
     else
       errs() << *val;
+    NodeMap nodeMap = valueNodeMap;
+    if (node.type == AndersNode::OBJ_NODE)
+      nodeMap = objNodeMap;
+    if (node.type == AndersNode::VALUE_NODE || node.type == AndersNode::OBJ_NODE) {
+      for (auto const &x : nodeMap) {
+        if (x.getSecond() == node.getIndex()) {
+          auto fields = nodeMap.getFields(std::get<0>(x.first), node.getValue());
+          if (!fields.empty()) {
+            errs() << "\n    Fields: {";
+            for (const auto &f : fields)
+              errs() << f << ", ";
+            errs() << "}";
+          }
+        }
+      }
+    }
     errs() << "\n";
   }
 
@@ -323,4 +339,9 @@ unsigned int AndersNodeFactory::getNumContexts() {
 void AndersNodeFactory::setDataLayout(const DataLayout *layout) {
   valueNodeMap.setDataLayout(layout);
   objNodeMap.setDataLayout(layout);
+  _layout = layout;
+}
+
+const DataLayout* AndersNodeFactory::getDataLayout() const {
+  return _layout;
 }

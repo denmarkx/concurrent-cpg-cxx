@@ -211,7 +211,33 @@ bool Andersen::addConstraintForExternalLibrary(const Context* context,
     // constraints.emplace_back(AndersConstraint::LOAD, tempIndex, arg1Index);
     // constraints.emplace_back(AndersConstraint::STORE, arg0Index, tempIndex);
 
-    constraints.emplace_back(AndersConstraint::COPY, arg1Index, arg0Index);
+    constraints.emplace_back(AndersConstraint::COPY, arg0Index, arg1Index);
+
+    // If both src and dst refer to a struct, we emit a copy constraint for each field relative to the bytes to copy size.
+    // TODO: I will note that getUnderlyingObject is intraprocedural and skips shit like phi. It would be best to make this
+    // recursively traverse back upwards later.
+    const llvm::Value *dstUO = llvm::getUnderlyingObject(cs->getArgOperand(0));
+    const llvm::Value *srcUO = llvm::getUnderlyingObject(cs->getArgOperand(1));
+
+    if (dstUO && srcUO) {
+      const llvm::AllocaInst *dstA = dyn_cast<AllocaInst>(dstUO);
+      const llvm::AllocaInst *srcA = dyn_cast<AllocaInst>(srcUO);
+      if (dstA && srcA) {
+        // TODO: support when types are not the same
+        if (dstA->getAllocatedType() == srcA->getAllocatedType() && dstA->getAllocatedType()->isAggregateType()) {
+          // TODO: need to use datalayout and structlayout here and go more than 1 level deep
+          for (unsigned int i=0; i < dstA->getAllocatedType()->getStructNumElements(); i++) {
+            NodeIndex arg0Index = nodeFactory.getValueNodeFor(context, dstUO, {i});
+            if (arg0Index == AndersNodeFactory::InvalidIndex)
+              arg0Index = nodeFactory.createValueNode(context, dstUO, {i});
+            NodeIndex arg1Index = nodeFactory.getValueNodeFor(context, srcUO, {i});
+            if (arg1Index == AndersNodeFactory::InvalidIndex)
+              arg1Index = nodeFactory.createValueNode(context, srcUO, {i});
+            constraints.emplace_back(AndersConstraint::COPY, arg0Index, arg1Index);
+          }
+        }
+      }
+    }
 
     // Don't forget the return value
     NodeIndex retIndex = nodeFactory.getValueNodeFor(context, cs);

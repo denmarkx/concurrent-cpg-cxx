@@ -195,6 +195,9 @@ public:
   std::vector<const Context*> getAssociatedContexts(const Value* val) const;
 
   void setDataLayout(const DataLayout *layout);
+  const DataLayout* getDataLayout() const;
+
+  const DataLayout *_layout = nullptr;
 
   // For debugging purpose
   void dumpNode(NodeIndex) const;
