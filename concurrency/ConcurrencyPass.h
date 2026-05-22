@@ -83,12 +83,12 @@ public:
     void run() {
         std::vector<ThreadNode*> threads = 
             ConcurrencyManager::get()->getConcurrencyNodes<ThreadNode>();
-        for (auto *node : threads) {
+        for (auto *node : threads)
             handleThreadNode(node);
-        }
         GraphManager::get()->getAliasResult()->resolveConstraints();
         computeThreadSummaries();
         // printSummaries();
+        // printSharedMap();
 
         // for (ThreadSummary *summary : _summaries) {
             // LocksetAnalysis::get()->handleThread(*summary);
@@ -132,11 +132,6 @@ public:
 
 private:
     void handleThreadNode(ThreadNode *node) {
-        std::vector<const llvm::Value *> ptsSet{};
-        // errs() << "getting transitive pts set of: " << *node->getDataNode()->getValue() << "\n";
-        // GraphManager::get()->getAliasResult()->printTransitivePointsToSet(node->getDataNode()->getValue());
-        // errs() << "routine = " << *node->getRoutine()->getValue() << "\n";
-
         // The routine is not connected to the context of the data node (unless -Clto=fat)
         const Instruction* instr = dyn_cast<Instruction>(node->getDataNode()->getValue());
         const Function *parent = instr->getFunction();
@@ -145,19 +140,11 @@ private:
         GraphManager::get()->getAliasResult()->connectContexts(parent, routine);
         GraphManager::get()->getAliasResult()->addConstraint(AndersConstraint::COPY, 
             dyn_cast<Function>(node->getRoutine()->getValue())->getArg(0),node->getDataNode()->getValue(), 1);
-        auto x = dyn_cast<Function>(node->getRoutine()->getValue())->getArg(0);
-        return;
-        
 
-        for (const Value *v : ptsSet) {
-            _sharedVariableMap[v].push_back(node);
+        Node* routineNode = node->getRoutine();
+        if (routine && !doesSummaryExist(routineNode)) {
+            _summaries.push_back(new ThreadSummary{routineNode, node});
         }
-
-        // TODO: i don't think its necessary to model threadnodes who don't have a routine.
-        // Node* routine = node->getRoutine();
-        // if (routine && !doesSummaryExist(routine)) {
-        //     _summaries.push_back(new ThreadSummary{routine, node});
-        // }
     }
 
     /**
@@ -172,6 +159,12 @@ private:
 
     void computeThreadSummaries() {
         for (ThreadSummary *summary : _summaries) {
+            std::vector<const llvm::Value*> ptsSet;
+            GraphManager::get()->getAliasResult()->getPointsToSet(summary->threadNode->getDataNode()->getValue(), ptsSet);
+
+            for (const auto &x : ptsSet)
+                _sharedVariableMap[x].push_back(summary->threadNode);
+
             const Function *routine = dyn_cast<Function>(
                 summary->routineNode->getValue());
             collectFunctionUsage(summary, routine, {});

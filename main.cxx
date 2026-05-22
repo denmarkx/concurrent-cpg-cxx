@@ -35,7 +35,6 @@ int main() {
     legacy::PassManager PM;
     PM.add(new AndersenAAWrapperPass());
     // PM.add(new MemorySSAWrapperPass());
-    // PM.add(new ConstructionPass());
     PM.add(new GraphBuilderPass());
     PM.add(new GraphBuilderFuncPass());
     PM.add(new GraphBuilderProcessPass());
