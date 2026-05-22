@@ -2,6 +2,7 @@
 #define TCFS_ANDERSEN_AA_H
 
 #include "Andersen.h"
+#include "Constraint.h"
 
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Pass.h"
@@ -48,6 +49,10 @@ public:
   void printTransitivePointsToSet(const llvm::Value *v);
 
   std::vector<unsigned int> getContextIDs(const llvm::Value* v);
+
+  void addConstraint(AndersConstraint::ConstraintType type, 
+    const llvm::Value *lhs, const llvm::Value *rhs);
+  void solveConstraints();
 };
 
 class AndersenAAWrapperPass : public llvm::ModulePass {
