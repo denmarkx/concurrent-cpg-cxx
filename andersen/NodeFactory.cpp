@@ -9,6 +9,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include <algorithm>
 #include <limits>
 
 using namespace llvm;
@@ -317,6 +318,21 @@ const Context* AndersNodeFactory::getContext(unsigned int ctxId) const {
   assert(ctxId < _contexts.size());
   return _contexts[ctxId];
 }
+
+/*
+ * Returns the Context given a CallBase (CallInst, InvokeInst)
+*/
+const Context* AndersNodeFactory::getContext(const llvm::Value *v) const {
+  const CallBase *callBase = dyn_cast<CallBase>(v);
+  if (!callBase) return nullptr;
+
+  auto itr = std::find_if(_contexts.begin(), _contexts.end(), [callBase](const Context *candidate) {
+    return candidate->callSite == callBase;
+  });
+  if (itr == _contexts.end()) return nullptr;
+  return *itr;
+}
+
 
 /**
  * Given a nodeId, return a list of all associated contexts.

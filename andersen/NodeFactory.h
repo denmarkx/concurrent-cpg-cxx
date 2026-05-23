@@ -41,6 +41,15 @@ struct Context {
   std::string str() {
     return "Context[" + std::to_string(id) + "]";
   }
+
+  void printChain(size_t indent=0) const {
+    if (!callSite) return;
+    for (unsigned int i=0; i < indent; i++)
+      errs() << " ";
+    errs() << *callSite << "\n";
+    if (prevCtx)
+      prevCtx->printChain(indent + 4);
+  }
 };
 
 // AndersNode class - This class is used to represent a node in the constraint
@@ -189,6 +198,7 @@ public:
 
   const Context* getGlobalCtx() const;
   const Context* getContext(unsigned int id) const;
+  const Context* getContext(const llvm::Value *v) const;
   unsigned int getNumContexts();
 
   std::vector<const Context*> getAssociatedContexts(NodeIndex n) const;
