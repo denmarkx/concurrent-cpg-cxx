@@ -529,7 +529,7 @@ void Andersen::solveConstraints() {
   ConstraintGraph constraintGraph;
   buildConstraintGraph(constraintGraph, constraints, nodeFactory, ptsGraph);
   // The constraint vector is useless now
-  constraints.clear();
+  // constraints.clear();
 
   // We switch between two work lists instead of relying on only one work list
   AndersWorkList workList1, workList2;
