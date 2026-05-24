@@ -314,9 +314,18 @@ const Context* AndersNodeFactory::getGlobalCtx() const {
   return _contexts[0];
 }
 
+// TODO: this is wrong, see: getContextByID
 const Context* AndersNodeFactory::getContext(unsigned int ctxId) const {
   assert(ctxId < _contexts.size());
   return _contexts[ctxId];
+}
+
+const Context* AndersNodeFactory::getContextByID(unsigned int ctxId) const {
+  auto itr = std::find_if(_contexts.begin(), _contexts.end(), [ctxId](const Context *candidate) {
+    return candidate->id == ctxId;
+  });
+  if (itr == _contexts.end()) return nullptr;
+  return *itr;
 }
 
 /*

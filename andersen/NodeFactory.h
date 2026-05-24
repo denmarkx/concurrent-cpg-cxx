@@ -198,6 +198,7 @@ public:
 
   const Context* getGlobalCtx() const;
   const Context* getContext(unsigned int id) const;
+  const Context* getContextByID(unsigned int ctxId) const;
   const Context* getContext(const llvm::Value *v) const;
   unsigned int getNumContexts();
 
