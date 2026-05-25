@@ -1,16 +1,18 @@
 #pragma once
 
+struct Context;
+
 #include "llvm/ADT/APInt.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/TypeSize.h"
-struct Context;
-
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/ADT/DenseMap.h"
 using namespace llvm;
+
+#include <ranges>
 
 typedef llvm::SmallVector<unsigned int, 4> FieldType;
 
@@ -50,6 +52,20 @@ public:
 
     NodeIndex get(const Context *ctx, const llvm::Value *val) const {
         return _map.lookup({ctx, val, getFields(ctx, val)});
+    }
+
+    /*
+     * Returns a vector of fields that are tracked by the NodeMap.
+    */
+    std::vector<FieldType> lookupFields(const Context *ctx, const llvm::Value *val) const {
+        auto matches = _map | std::views::filter([&](const auto &x) {
+            return std::get<0>(x.first) == ctx && std::get<1>(x.first) == val;
+        });
+        std::vector<FieldType> fields;
+        for (const auto &x : matches) {
+            fields.push_back(std::get<2>(x.first));
+        }
+        return fields;
     }
 
     /*
@@ -93,7 +109,8 @@ public:
     std::vector<const Context*> getAssociatedContexts(NodeIndex index) const {
         std::vector<const Context*> contexts;
         for (const auto &[k, v] : _map) {
-            if (v == index)
+            const Context *candidate = std::get<0>(k);
+            if (v == index && std::find(contexts.begin(), contexts.end(), candidate) == contexts.end())
                 contexts.push_back(std::get<0>(k));
         }
         return contexts;
@@ -102,7 +119,9 @@ public:
     std::vector<const Context*> getAssociatedContexts(const llvm::Value *v) const {
         std::vector<const Context*> contexts;
         for (const auto &[k, _] : _map) {
-            if (std::get<1>(k) == v)
+            const Context *candidate = std::get<0>(k);
+            if (std::get<1>(k) == v &&\
+                std::find(contexts.begin(), contexts.end(), candidate) == contexts.end())
                 contexts.push_back(std::get<0>(k));
         }
         return contexts;
