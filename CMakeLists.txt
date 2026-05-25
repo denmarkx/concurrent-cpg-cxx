@@ -101,3 +101,7 @@ add_executable(unit_test ${TEST_FILES})
 target_include_directories(unit_test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(unit_test Andersen)
 doctest_discover_tests(unit_test)
+
+add_executable(playground "playground/main.cxx")
+target_include_directories(playground PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(playground Andersen)
