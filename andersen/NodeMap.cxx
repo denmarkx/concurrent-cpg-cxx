@@ -12,8 +12,8 @@ const llvm::Value* NodeMap::findAggregateFromParam(
     if (!param->getType()->isPointerTy()) return nullptr;
     if (!startCtx || !ctx) return nullptr;
 
-    // If this is a gep already, we return it.
-    if (isAggregateGEP(param))
+    // If this is a gep already..or allocas, we return it.
+    if (isAggregateGEP(param) || isa<AllocaInst>(param))
         return param;
 
     // Load instructions are particularly useful:

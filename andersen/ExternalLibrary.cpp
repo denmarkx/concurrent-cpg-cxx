@@ -220,6 +220,15 @@ bool Andersen::addConstraintForExternalLibrary(const Context* context,
     const llvm::Value *srcUO = llvm::getUnderlyingObject(cs->getArgOperand(1));
 
     if (dstUO && srcUO) {
+      // the types here honestly don't matter if we can show that we are memcpying the entire size of the src.
+      // ..because at that point its a simple copy instruction.
+
+      // and once again, we're getting fucked by the fact that a struct allocation is at the same addr as its first index.
+      // ..but thats a TODO for refactoring
+
+      // also, i cant really remember why we are looking for alloca specifically
+      // so im gonna leave that shit there until i refactor
+      // errs() << "memcpy:\n  dstUO = " << *dstUO << "\n  srcUO = " << *srcUO << "\n\n";
       const llvm::AllocaInst *dstA = dyn_cast<AllocaInst>(dstUO);
       const llvm::AllocaInst *srcA = dyn_cast<AllocaInst>(srcUO);
       if (dstA && srcA) {
@@ -227,6 +236,21 @@ bool Andersen::addConstraintForExternalLibrary(const Context* context,
         if (dstA->getAllocatedType() == srcA->getAllocatedType() && dstA->getAllocatedType()->isAggregateType()) {
           // TODO: need to use datalayout and structlayout here and go more than 1 level deep
           for (unsigned int i=0; i < dstA->getAllocatedType()->getStructNumElements(); i++) {
+            NodeIndex arg0Index = nodeFactory.getValueNodeFor(context, dstUO, {i});
+            if (arg0Index == AndersNodeFactory::InvalidIndex)
+              arg0Index = nodeFactory.createValueNode(context, dstUO, {i});
+            NodeIndex arg1Index = nodeFactory.getValueNodeFor(context, srcUO, {i});
+            if (arg1Index == AndersNodeFactory::InvalidIndex)
+              arg1Index = nodeFactory.createValueNode(context, srcUO, {i});
+            constraints.emplace_back(AndersConstraint::COPY, arg0Index, arg1Index);
+          }
+        }
+      // note that this entire if statement is BS
+      } else if (srcA) {
+        // if anyone here is an aggregate, we assume a copy on all fields
+        // but again, thats bullshit because of the size arg: TODO
+        if (srcA->getAllocatedType()->isAggregateType()) {
+          for (unsigned int i=0; i < srcA->getAllocatedType()->getStructNumElements(); i++) {
             NodeIndex arg0Index = nodeFactory.getValueNodeFor(context, dstUO, {i});
             if (arg0Index == AndersNodeFactory::InvalidIndex)
               arg0Index = nodeFactory.createValueNode(context, dstUO, {i});

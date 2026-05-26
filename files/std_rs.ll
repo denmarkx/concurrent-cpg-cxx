@@ -4499,7 +4499,7 @@ declare void @_ZN3std10sys_common11thread_info3set17h2c664b76c70cf208E(ptr align
 ; Function Attrs: nonlazybind
 define internal fastcc i32 @__rust_try(ptr nocapture readonly %0, ptr %1, ptr nocapture readonly %2) unnamed_addr #22 personality ptr @rust_eh_personality {
 entry-block:
-  invoke void %0(ptr %1)
+  invoke void @_ZN3std9panicking3try7do_call17h884d2486ad7a52f8E(ptr %1)
           to label %common.ret unwind label %catch, !callees !17
 
 common.ret:                                       ; preds = %entry-block, %catch

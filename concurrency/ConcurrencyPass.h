@@ -1,6 +1,7 @@
 #pragma once
 
 #include "andersen/AndersenAA.h"
+#include "andersen/Constraint.h"
 #include "concurrency/ConcurrencyManager.h"
 #include "concurrency/ThreadNode.h"
 #include "graph/GraphManager.h"
@@ -86,7 +87,7 @@ public:
             handleThreadNode(node);
         }
         computeThreadSummaries();
-        printSummaries();
+        // printSummaries();
 
         // for (ThreadSummary *summary : _summaries) {
             // LocksetAnalysis::get()->handleThread(*summary);
@@ -131,10 +132,19 @@ public:
 private:
     void handleThreadNode(ThreadNode *node) {
         std::vector<const llvm::Value *> ptsSet{};
-        errs() << "getting transitive pts set of: " << *node->getDataNode()->getValue() << "\n";
+        // errs() << "getting transitive pts set of: " << *node->getDataNode()->getValue() << "\n";
         GraphManager::get()->getAliasResult()->getTransitivePointsToSet(
             node->getDataNode()->getValue(), ptsSet);
-        GraphManager::get()->getAliasResult()->printTransitivePointsToSet(node->getDataNode()->getValue());
+        // GraphManager::get()->getAliasResult()->printTransitivePointsToSet(node->getDataNode()->getValue());
+        // errs() << "routine = " << *node->getRoutine()->getValue() << "\n";
+
+        GraphManager::get()->getAliasResult()->addConstraint(AndersConstraint::COPY, 
+            dyn_cast<Function>(node->getRoutine()->getValue())->getArg(0),node->getDataNode()->getValue());
+        GraphManager::get()->getAliasResult()->solveConstraints();
+        auto x = dyn_cast<Function>(node->getRoutine()->getValue())->getArg(0);
+        GraphManager::get()->getAliasResult()->printTransitivePointsToSet(x);
+
+        
 
         for (const Value *v : ptsSet) {
             _sharedVariableMap[v].push_back(node);

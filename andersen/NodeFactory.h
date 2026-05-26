@@ -88,18 +88,6 @@ public:
 // but it is efficient.
 typedef llvm::DenseMap<std::pair<const Context*, const llvm::Value*>, NodeIndex> NodeMapType;
 
-// struct FieldNodeMap {
-//   const Context *ctx;
-//   const llvm::Value *value;
-//   const std::vector<unsigned int> fieldIdxs;
-
-//   friend bool operator==(const FieldNodeMap& lhs, const FieldNodeMap& rhs) {
-//     return lhs.ctx == rhs.ctx &&\
-//       lhs.value == rhs.value &&\
-//       lhs.fieldIdxs == rhs.fieldIdxs;
-//   }
-// };
-
 class AndersNodeFactory {
 public:
   // The largest unsigned int is reserved for invalid index
@@ -155,6 +143,8 @@ public:
   NodeIndex getObjectNodeForConstant(const Context *context, const llvm::Constant *c, FieldType fields={}) const;
   NodeIndex getReturnNodeFor(const Context *context, const llvm::Function *f) const;
   NodeIndex getVarargNodeFor(const llvm::Function *f) const;
+
+  std::vector<FieldType> lookupFields(const Context *, const llvm::Value*) const;
 
   llvm::SmallVector<unsigned int, 4> getFields(const Context *ctx, const llvm::Value *v) const;
 

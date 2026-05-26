@@ -370,3 +370,11 @@ void AndersNodeFactory::setDataLayout(const DataLayout *layout) {
 const DataLayout* AndersNodeFactory::getDataLayout() const {
   return _layout;
 }
+
+/*
+ * Looks up fields for a given value and context. This strictly looks up
+ * fields that exist within valueNodeMap.
+*/
+std::vector<FieldType> AndersNodeFactory::lookupFields(const Context *context, const llvm::Value* v) const {
+  return valueNodeMap.lookupFields(context, v);
+}
