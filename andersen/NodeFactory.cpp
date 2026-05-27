@@ -291,7 +291,8 @@ Context* AndersNodeFactory::createContext(Context* _prevCtx, const llvm::CallBas
     Context* existing = _prevCtx->getChild(callSite);
     if (existing) return existing;
   }
-  Context* context = new Context(_prevCtx, callSite);
+  Context* context = new Context(_ctxCounter, _prevCtx, callSite);
+  _ctxCounter++;
   _contexts.push_back(context);
   return context;
 }
@@ -300,7 +301,8 @@ Context* AndersNodeFactory::createContext(Context* _prevCtx, const llvm::CallBas
  * Creates a new Context object without an associated previous context or callsite. 
 */
 Context* AndersNodeFactory::createContext() {
-  Context* context = new Context(nullptr, nullptr);
+  Context* context = new Context(_ctxCounter, nullptr, nullptr);
+  _ctxCounter++;
   _contexts.push_back(context);
   return context;
 }
