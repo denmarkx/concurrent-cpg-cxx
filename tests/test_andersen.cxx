@@ -1223,3 +1223,46 @@ TEST_CASE("Andersen[HeapCopy]") {
     // anders->getPointsToSet(main, set);
     // CHECK(ptsContains(set, local));
 }
+
+
+TEST_CASE("Andersen[FieldSensitivity_SimpleX]") {
+    AndersPassTest pass;
+    // O: %1, %1.f0, %1.f1, %x, %y
+    // V: %1, %x, %y, %s1, %s2
+    // pt(%1)      = { o1 }
+    // pt(%x)      = { ox }
+    // pt(%y)      = { oy }
+
+    // pt(%s1)     = { o1.f0 }
+    // pt(%s2)     = { o1.f1 }
+
+    // pt(o1.f0)   = { ox }
+    // pt(o1.f1)   = { oy }
+    auto module = pass.ParseAssembly(R"(
+        %S = type { ptr, ptr }
+
+        define i32 @main() {
+            %1 = alloca %S, align 8
+            %x = alloca i32, align 4
+            %y = alloca i32, align 4
+
+            ; tpts(s1) = {%1.f0, %x}
+            %s1 = getelementptr inbounds %S, ptr %1, i32 0, i32 0
+            store ptr %x, ptr %s1, align 8
+
+            ; tpts(s2) = {%1.f1, %y}
+            %s2 = getelementptr inbounds %S, ptr %1, i32 0, i32 1
+            store ptr %y, ptr %s2, align 8
+
+            ret i32 0
+        }
+    )");
+
+    auto anders = runAndersen(*module);
+    const Function *f = module->getFunction("main");
+    const auto *s1 = findInstr(f, "s1");
+    const auto *s2 = findInstr(f, "s2");
+
+    anders->printPointsToSet(s1);
+    anders->printPointsToSet(s2);
+}

@@ -2,14 +2,12 @@
 #include "Constraint.h"
 #include "NodeFactory.h"
 
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PatternMatch.h"
-#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -131,8 +129,7 @@ Context* Andersen::collectConstraintsForGlobals(const Module &M) {
     setupFunctionConstraints(_globalCtx, &f);
   }
 
-  // Init globals here since an initializer may refer to a global var/func below
-  // it
+  // Init globals here since an initializer may refer to a global var/func below it
   for (auto const &globalVal : M.globals()) {
     NodeIndex gObj = nodeFactory.getObjectNodeFor(_globalCtx, &globalVal);
     assert(gObj != AndersNodeFactory::InvalidIndex &&
@@ -319,39 +316,33 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
     assert(inst->getType()->isPointerTy());
 
     // P1 = getelementptr P2, ... --> <Copy/P1/P2>
-    NodeIndex srcIndex;
-    const llvm::Value *src = nullptr;
-
+    const llvm::Value *src = inst->getOperand(0);
     auto fields = nodeFactory.getFields(context, inst);
+    NodeIndex srcIndex = nodeFactory.getObjectNodeFor(context, src, fields);
 
-    // If our source is a GEP, we need to resolve the alloc site.
-    if (const GetElementPtrInst *sourceInst = dyn_cast<GetElementPtrInst>(inst->getOperand(0))) {
-      const AllocaInst *alloc = findAlloc(sourceInst);
+    // // If our source is a GEP, we need to resolve the alloc site.
+    // if (const GetElementPtrInst *sourceInst = dyn_cast<GetElementPtrInst>(inst->getOperand(0))) {
+    //   const AllocaInst *alloc = findAlloc(sourceInst);
 
-      // Our constraint then gets added there:
-      // TODO: technically, this should continuously propagate from the 1st gep..
-      // ...and the current approach we had before this should've worked in theory..
-      srcIndex = nodeFactory.getValueNodeFor(context, alloc, fields);
-      src = alloc;
-    } else {
-      // If our source is a parameter, we take it as-is.
-      if (isa<Argument>(inst->getOperand(0)))
-        fields = {};
-      // We don't create every field for every aggregate during AllocaInst.
-      // ..so we need to check if this exists:
-      srcIndex = nodeFactory.getValueNodeFor(context, inst->getOperand(0), fields);
-      src = inst->getOperand(0);
-    }
+    //   // Our constraint then gets added there:
+    //   // TODO: technically, this should continuously propagate from the 1st gep..
+    //   // ...and the current approach we had before this should've worked in theory..
+    //   srcIndex = nodeFactory.getValueNodeFor(context, alloc, fields);
+    //   src = alloc;
+    // } else {
+    //   // If our source is a parameter, we take it as-is.
+    //   if (isa<Argument>(inst->getOperand(0)))
+    //     fields = {};
+    //   // We don't create every field for every aggregate during AllocaInst.
+    //   // ..so we need to check if this exists:
+    //   srcIndex = nodeFactory.getValueNodeFor(context, inst->getOperand(0), fields);
+    //   src = inst->getOperand(0);
+    // }
 
     if (srcIndex == AndersNodeFactory::InvalidIndex) {
-      // In this case, we're going to create:
-      srcIndex = nodeFactory.createValueNode(context, src, fields);
-
-      // This also gets an object:
-      NodeIndex objIndex = nodeFactory.createObjectNode(context, src, fields);
-
-      // And a constraint:
-      constraints.emplace_back(AndersConstraint::ADDR_OF, srcIndex, objIndex);
+      // We don't create objects for each field when we encounter an allocation
+      // ..meaning it's not an oddity if srcIndex is invalid.
+      srcIndex = nodeFactory.createObjectNode(context, src, fields);
     }
 
     assert(srcIndex != AndersNodeFactory::InvalidIndex &&
@@ -360,7 +351,7 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
     assert(dstIndex != AndersNodeFactory::InvalidIndex &&
            "Failed to find gep dst node");
 
-    constraints.emplace_back(AndersConstraint::COPY, dstIndex, srcIndex);
+    constraints.emplace_back(AndersConstraint::ADDR_OF, dstIndex, srcIndex);
 
     break;
   }
