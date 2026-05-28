@@ -37,25 +37,25 @@ AndersNodeFactory::AndersNodeFactory() {
 NodeIndex AndersNodeFactory::createValueNode(const Context *context, const Value *val, FieldType fields) {
   unsigned contextId = context != nullptr ? context->id : GlobalContextID;
   unsigned nextIdx = nodes.size();
-  nodes.push_back(AndersNode(AndersNode::VALUE_NODE, contextId, nextIdx, val));
   if (val != nullptr) {
     assert(!valueNodeMap.contains(context, val, fields) &&
            "Trying to insert two mappings to valueNodeMap!");
     valueNodeMap[{context, val, fields}] = nextIdx;
   }
+  nodes.push_back(AndersNode(AndersNode::VALUE_NODE, contextId, nextIdx, val, fields));
   return nextIdx;
 }
 
 NodeIndex AndersNodeFactory::createObjectNode(const Context *context, const Value *val, FieldType fields) {
   unsigned contextId = context != nullptr ? context->id : GlobalContextID;
   unsigned nextIdx = nodes.size();
-  nodes.push_back(AndersNode(AndersNode::OBJ_NODE, contextId, nextIdx, val));
   if (val != nullptr) {
     assert(!objNodeMap.contains(context, val, fields) &&
            "Trying to insert two mappings to objNodeMap!");
     objNodeMap[{context, val, fields}] = nextIdx;
   }
 
+  nodes.push_back(AndersNode(AndersNode::OBJ_NODE, contextId, nextIdx, val, fields));
   return nextIdx;
 }
 
@@ -219,18 +219,16 @@ void AndersNodeFactory::dumpNode(NodeIndex idx) const {
     assert(false && "Wrong type number!");
   errs() << "\033[38;2;174;245;184m#" << n.idx << "\033[0m";
   errs() << ", C \033[38;2;255;253;161m#" << n.contextId << "\033[0m";
+  if (n.hasFields()) {
+    errs() << ", Fields: ";
+    n.printFields();
+  }
   errs() << "]";
 }
 
 void AndersNodeFactory::dumpNodeInfo() const {
   errs() << "\n----- Print AndersNodeFactory Info -----\n";
   errs() << "Value Node Map:\n";
-  for (auto const &x : valueNodeMap) {
-    errs() << "[" << x.getSecond() << ", C= ";
-    errs() << std::get<0>(x.getFirst())->id << " ]: "; 
-    errs() << *std::get<1>(x.getFirst()) << "\n"; 
-  }
-  errs() << "\n";
 
   for (auto const &node : nodes) {
     dumpNode(node.getIndex());
@@ -242,22 +240,6 @@ void AndersNodeFactory::dumpNodeInfo() const {
       errs() << "  <func> " << val->getName();
     else
       errs() << *val;
-    NodeMap nodeMap = valueNodeMap;
-    if (node.type == AndersNode::OBJ_NODE)
-      nodeMap = objNodeMap;
-    if (node.type == AndersNode::VALUE_NODE || node.type == AndersNode::OBJ_NODE) {
-      for (auto const &x : nodeMap) {
-        if (x.getSecond() == node.getIndex()) {
-          auto fields = nodeMap.getFields(std::get<0>(x.first), node.getValue());
-          if (!fields.empty()) {
-            errs() << "\n    Fields: {";
-            for (const auto &f : fields)
-              errs() << f << ", ";
-            errs() << "}";
-          }
-        }
-      }
-    }
     errs() << "\n";
   }
 
@@ -367,12 +349,4 @@ void AndersNodeFactory::setDataLayout(const DataLayout *layout) {
 
 const DataLayout* AndersNodeFactory::getDataLayout() const {
   return _layout;
-}
-
-/*
- * Looks up fields for a given value and context. This strictly looks up
- * fields that exist within valueNodeMap.
-*/
-std::vector<FieldType> AndersNodeFactory::lookupFields(const Context *context, const llvm::Value* v) const {
-  return valueNodeMap.lookupFields(context, v);
 }
