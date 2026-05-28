@@ -102,7 +102,6 @@ private:
   NodeIndex getRefNodeIndex(NodeIndex n) const;
   NodeIndex getAdrNodeIndex(NodeIndex n) const;
 
-  const AllocaInst* findAlloc(const llvm::Value *v) const;
 
   const std::vector<unsigned int> getFieldIds(const llvm::Value *v) const;
   
