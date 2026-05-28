@@ -178,7 +178,6 @@ public:
                     llvm::Type *ptrType = findType(gep->getOperand(0));
 
                     // Some instructions will do stuff like use i8 for traversing bytes
-                    // ...I don't really know what to do about that right now: TODO
                     if (ptrType && ptrType->isAggregateType()) {
                         // Byte-wise we move sizeof(ptrType)*offsetInt
                         // The main assumption here is that this won't put us
