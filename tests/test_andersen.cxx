@@ -1260,9 +1260,123 @@ TEST_CASE("Andersen[FieldSensitivity_SimpleX]") {
 
     auto anders = runAndersen(*module);
     const Function *f = module->getFunction("main");
-    const auto *s1 = findInstr(f, "s1");
-    const auto *s2 = findInstr(f, "s2");
+    const llvm::Value *x = findInstr(f, "x");
+    const llvm::Value *y = findInstr(f, "y");
 
-    anders->printPointsToSet(s1);
-    anders->printPointsToSet(s2);
+    const llvm::Value *s1 = findInstr(f, "s1");
+    const llvm::Value *s2 = findInstr(f, "s2");
+
+    PtsSetType ptsSetA;
+    anders->getPointsToSet(s1, ptsSetA);
+    CHECK(ptsContains(ptsSetA, x));
+    CHECK(ptsSetA.size() == 2); // x, %1(f0)
+
+    PtsSetType ptsSetB;
+    anders->getPointsToSet(s2, ptsSetB);
+    CHECK(ptsContains(ptsSetB, y));
+    CHECK(ptsSetB.size() == 2); // y, %1(f1)
+
+}
+
+TEST_CASE("Andersen[FieldSensitivity_Constant_Global_Nested]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        @in0 = internal constant [2 x ptr] [ptr @f1, ptr @f2], align 8
+        @in1 = internal constant [2 x ptr] [ptr @f3, ptr @f4], align 8
+        @x = internal constant { ptr, ptr } { ptr @in0, ptr @in1 }, align 8
+
+        define i32 @main() {
+            %s1 = getelementptr inbounds { ptr, ptr }, ptr @x, i64 0, i32 0
+            %t1 = getelementptr inbounds [2 x ptr], ptr %s1, i64 0, i32 0
+            %fptr = load ptr, ptr %t1, align 8
+
+            %s2 = getelementptr inbounds { ptr, ptr }, ptr @x, i64 0, i32 1
+            %t2 = getelementptr inbounds [2 x ptr], ptr %s2, i64 0, i32 1
+            store ptr @f5, ptr %t2, align 8
+            %fptr2 = load ptr, ptr %s2, align 8
+            ret i32 0
+        }
+
+        define void @f1() { ret void }
+        define void @f2() { ret void }
+        define void @f3() { ret void }
+        define void @f4() { ret void }
+        define void @f5() { ret void }
+    )");
+
+    auto anders = runAndersen(*module);
+    const Function *F = module->getFunction("main");
+    const Function *f1 = module->getFunction("f1");
+    const Function *f2 = module->getFunction("f2");
+    const Function *f3 = module->getFunction("f3");
+    const Function *f4 = module->getFunction("f4");
+    const Function *f5 = module->getFunction("f5");
+
+    const Value *s1 = findInstr(F, "s1");
+    const Value *t1 = findInstr(F, "t1");
+    const Value *s2 = findInstr(F, "s1");
+    const Value *t2 = findInstr(F, "t1");
+    const Value *fptr = findInstr(F, "fptr");
+    const Value *fptr2 = findInstr(F, "fptr2");
+
+    PtsSetType ptsSetA;
+    anders->getPointsToSet(fptr2, ptsSetA);
+    CHECK(ptsContains(ptsSetA, f3));
+    CHECK(ptsContains(ptsSetA, f5));
+    CHECK(ptsSetA.size() == 3); // @in1, f5, f3
+
+    PtsSetType ptsSetB;
+    anders->getPointsToSet(fptr, ptsSetB);
+    CHECK(ptsContains(ptsSetB, f1));
+    CHECK(ptsSetB.size() == 2); // @in0, f1
+}
+
+TEST_CASE("Andersen[Function_Pointer_2]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        define i32 @main() {
+            %x = alloca ptr, align 8
+            %y = alloca i32, align 8
+            store ptr %y, ptr %x
+
+            %l = load ptr, ptr %x, align 8
+
+            %z = alloca ptr, align 8
+            %q = alloca i32, align 8
+            store ptr %q, ptr %z
+
+            %l2 = load ptr, ptr %z, align 8
+            call void @func(ptr @f1, ptr %l)
+            call void @func(ptr @f2, ptr %l2)
+            ret i32 0
+        }
+
+        define void @func(ptr %_1, ptr %_2) {
+            call void %_1(ptr %_2)
+            ret void
+        }
+        define void @f1(ptr %paramA) { ret void }
+        define void @f2(ptr %paramB) { ret void }
+
+    )");
+
+    auto anders = runAndersen(*module);
+    const Function *F = module->getFunction("main");
+    const Function *f1 = module->getFunction("f1");
+    const Function *f2 = module->getFunction("f2");
+
+    const llvm::Value *q = findInstr(F, "q");
+    const llvm::Value *y = findInstr(F, "y");
+    
+    std::vector<const llvm::Value*> ptsSetA;
+    std::vector<const llvm::Value*> ptsSetB;
+
+    anders->getPointsToSet(f1->getArg(0), ptsSetA);
+    anders->getPointsToSet(f2->getArg(0), ptsSetB);
+
+    CHECK(ptsSetA.size() == 1);
+    CHECK(ptsContains(ptsSetA, y));
+   
+    CHECK(ptsSetA.size() == 1);
+    CHECK(ptsContains(ptsSetB, q));
 }
