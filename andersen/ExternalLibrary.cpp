@@ -1,4 +1,5 @@
 #include "Andersen.h"
+#include "Constraint.h"
 #include "NodeFactory.h"
 
 #include "llvm/ADT/STLExtras.h"
@@ -208,42 +209,11 @@ bool Andersen::addConstraintForExternalLibrary(const Context* context,
     assert(arg1Index != AndersNodeFactory::InvalidIndex &&
            "Failed to find arg1 node");
 
-    const llvm::Value *dst = cs->getArgOperand(0);
-    const llvm::Value *src = cs->getArgOperand(1);
-    const llvm::AllocaInst *allocaSrc = dyn_cast<AllocaInst>(src);
+    const llvm::AllocaInst *allocaSrc = dyn_cast<AllocaInst>(cs->getArgOperand(1));
 
     // TODO: Does not support anything other than allocas until we can recover type information properly.
     if (allocaSrc && allocaSrc->getAllocatedType()->isAggregateType()) {
-      // Grab the underlying object:
-      auto itr = std::find_if(constraints.begin(), constraints.end(), [&](const AndersConstraint& c) {
-          // Only considering ADDR_OF and if getSrc is an object.
-          return c.getType() == AndersConstraint::ADDR_OF &&\
-            nodeFactory.isObjectNode(c.getSrc()) &&\
-            c.getDest() == arg1Index;
-      });
-
-      // I can't think of when this may be possible, but if it is..I want to know.
-      assert(itr != constraints.end() && "Could not find underlying object in memcpy field resolution.");
-      if (itr != constraints.end()) {
-        const llvm::Value *src = nodeFactory.getValueForNode(itr->getSrc());
-        assert(src != nullptr && "Underlying src is null.");
-
-        // Get only the fields that we currently know about:
-        auto fields = nodeFactory.lookupFields(AndersNode::OBJ_NODE, context, src);
-        for (const auto fieldSet : fields) {
-          // Unlike GEP, it's not really correct to say that the index may not exist.
-          NodeIndex fieldIdx = nodeFactory.getObjectNodeFor(context, src, fieldSet);
-          assert(fieldIdx != AndersNodeFactory::InvalidIndex && "memcpy field resolution - fieldIdx does not exist");
-
-          // Now, we can check if destIndex at this fieldSet exists:
-          NodeIndex dstIndex = nodeFactory.getObjectNodeFor(context, dst, fieldSet);
-          if (dstIndex == AndersNodeFactory::InvalidIndex)
-            // Not abnormal for it to not exist.
-            dstIndex = nodeFactory.createObjectNode(context, dst, fieldSet);
-
-          constraints.emplace_back(AndersConstraint::COPY, dstIndex, fieldIdx);
-        }
-      }
+      propgateConstraintsToFields(AndersConstraint::COPY, arg0Index, arg1Index, context);
     } else
       constraints.emplace_back(AndersConstraint::COPY, arg0Index, arg1Index);
 

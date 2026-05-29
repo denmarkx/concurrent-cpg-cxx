@@ -572,13 +572,9 @@ void Andersen::addArgumentConstraintForCall(const Context *calleeCtx,
                                             const Function *f) {
   Function::const_arg_iterator fItr = f->arg_begin();
   CallBase::User::const_op_iterator aItr = cs->arg_begin();
-  // errs() << "addArgumentConstraintForCall [F=" << f->getName() << "]\n";
-  // errs() << " [REG CS]: " << *cs << "\n";
   while (fItr != f->arg_end() && aItr != cs->arg_end()) {
     const Argument *formal = &*fItr;
     const Value *actual = *aItr;
-    // errs() << "  formal arg = " << *formal << "\n";
-    // errs() << "  actual arg = " << *actual << "\n";
 
     if (formal->getType()->isPointerTy()) {
       NodeIndex fIndex = nodeFactory.getValueNodeFor(calleeCtx, formal);
@@ -588,9 +584,14 @@ void Andersen::addArgumentConstraintForCall(const Context *calleeCtx,
         NodeIndex aIndex = nodeFactory.getValueNodeFor(context, actual);
         assert(aIndex != AndersNodeFactory::InvalidIndex &&
                "Failed to find actual arg node!");
-        // errs() << "new constraint: " << fIndex << ", arg=" << aIndex << "\n";
-        // errs() << "addArgumentConstraintForCall[COPY]: " << fIndex << " = " << aIndex << "\n";
-        constraints.emplace_back(AndersConstraint::COPY, fIndex, aIndex);
+
+        // TODO: similar to memcpy, we need to try to figure out if this is an aggregate type
+        const AllocaInst *alloca = dyn_cast<AllocaInst>(actual);
+        if (alloca && alloca->getAllocatedType()->isAggregateType()) {
+          propgateConstraintsToFields(AndersConstraint::COPY, fIndex, aIndex, calleeCtx, context);
+        }
+        else
+          constraints.emplace_back(AndersConstraint::COPY, fIndex, aIndex);
       } else
         constraints.emplace_back(AndersConstraint::COPY, fIndex,
                                  nodeFactory.getUniversalPtrNode());
@@ -614,6 +615,55 @@ void Andersen::addArgumentConstraintForCall(const Context *calleeCtx,
       }
 
       ++aItr;
+    }
+  }
+}
+
+/*
+ * Instead of adding a constraint of some type to dst and src, this will add the constraint
+ * to each known field of dst to src given some context.
+ *
+ * It is the responsibility of the caller to properly check if src is an aggregate type.
+ *
+*/
+void Andersen::propgateConstraintsToFields(AndersConstraint::ConstraintType type,
+    NodeIndex dstIndex, NodeIndex srcIndex, const Context* dstCtx, const Context* srcCtx) {
+  assert(dstCtx != nullptr);
+
+  const llvm::Value *src = nodeFactory.getValueForNode(srcIndex);
+  const llvm::Value *dst = nodeFactory.getValueForNode(dstIndex);
+  assert(src != nullptr && dst != nullptr);
+
+  // srcCtx is optional
+  if (!srcCtx) srcCtx = dstCtx;
+
+  // Grab the underlying object:
+  auto itr = std::find_if(constraints.begin(), constraints.end(), [&](const AndersConstraint& c) {
+      // Only considering ADDR_OF and if getSrc is an object.
+      return c.getType() == AndersConstraint::ADDR_OF &&\
+        nodeFactory.isObjectNode(c.getSrc()) &&\
+        c.getDest() == srcIndex;
+  });
+  
+  // I can't think of when this may be possible, but if it is..I want to know.
+  assert(itr != constraints.end() && "Could not find underlying object.");
+  if (itr != constraints.end()) {
+    const llvm::Value *src = nodeFactory.getValueForNode(itr->getSrc());
+    assert(src != nullptr && "Underlying src is null.");
+
+    // Get only the fields that we currently know about:
+    auto fields = nodeFactory.lookupFields(AndersNode::OBJ_NODE, srcCtx, src);
+    for (const auto fieldSet : fields) {
+      NodeIndex fieldIdx = nodeFactory.getObjectNodeFor(srcCtx, src, fieldSet);
+      assert(fieldIdx != AndersNodeFactory::InvalidIndex && "CouldfieldIdx does not exist");
+
+      // Now, we can check if destIndex at this fieldSet exists:
+      NodeIndex dstIndex = nodeFactory.getObjectNodeFor(dstCtx, dst, fieldSet);
+      if (dstIndex == AndersNodeFactory::InvalidIndex)
+        // Not abnormal for it to not exist.
+        dstIndex = nodeFactory.createObjectNode(dstCtx, dst, fieldSet);
+
+      constraints.emplace_back(type, dstIndex, fieldIdx);
     }
   }
 }
