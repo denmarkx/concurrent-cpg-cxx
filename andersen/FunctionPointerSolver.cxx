@@ -11,6 +11,8 @@
  *       that were not resolved during the second pass are left unresolved.
 */
 void Andersen::solveFunctionPointers() {
+    if (deferredFuncPointers.empty()) return;
+
     for (const DeferredFunctionPointer& fp : deferredFuncPointers) {
         const CallBase *cs = fp.value;
         const Context *ctx = fp.ctx;
