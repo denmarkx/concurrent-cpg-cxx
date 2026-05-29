@@ -1197,8 +1197,6 @@ TEST_CASE("Andersen[TestALC]") {
 }
 
 TEST_CASE("Andersen[HeapCopy]") {
-    // TODO: need to get proper type information: see todos of memcpy and in propgateConstraintsToFields
-    return;
     AndersPassTest pass;
     auto module = pass.ParseFile("tests/HeapCopy.ll");
     auto anders = runAndersen(*module);
@@ -1518,11 +1516,11 @@ TEST_CASE("Andersen[FieldSensitivity_Aggregate_Parameter_Type]") {
     anders->getPointsToSet(tLoad1, ptsSetC, 3u);
     CHECK(ptsContains(ptsSetC, y));
     CHECK(!ptsContains(ptsSetC, z));
-    CHECK(ptsSetB.size() == 1);
+    CHECK(ptsSetC.size() == 1);
 
     PtsSetType ptsSetD;
     anders->getPointsToSet(tLoad2, ptsSetD, 3u);
     CHECK(ptsContains(ptsSetD, z));
     CHECK(!ptsContains(ptsSetD, y));
-    CHECK(ptsSetB.size() == 1);
+    CHECK(ptsSetD.size() == 1);
 }
