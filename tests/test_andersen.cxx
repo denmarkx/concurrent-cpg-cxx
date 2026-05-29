@@ -1214,14 +1214,15 @@ TEST_CASE("Andersen[HeapCopy]") {
     anders->getPointsToSet(F1A, set);
     CHECK(!ptsContains(set, local));
 
-    // anders->addConstraint(AndersConstraint::COPY, F1A, main);
-    // anders->solveConstraints();
+    bool success = anders->addConstraint(AndersConstraint::COPY, F1A, main);
+    CHECK(success);
+    anders->resolveConstraints();
 
-    // anders->getPointsToSet(F1A, set);
-    // CHECK(ptsContains(set, local));
+    anders->getPointsToSet(F1A, set);
+    CHECK(ptsContains(set, local));
 
-    // anders->getPointsToSet(main, set);
-    // CHECK(ptsContains(set, local));
+    anders->getPointsToSet(main, set);
+    CHECK(ptsContains(set, local));
 }
 
 
@@ -1379,4 +1380,73 @@ TEST_CASE("Andersen[Function_Pointer_2]") {
    
     CHECK(ptsSetA.size() == 1);
     CHECK(ptsContains(ptsSetB, q));
+}
+
+TEST_CASE("Andersen[memcpy]") {
+    AndersPassTest pass;
+    auto module = pass.ParseAssembly(R"(
+        %S = type { ptr, ptr }
+
+        define i32 @main() {
+            %1 = alloca %S, align 8
+            %x = alloca i32, align 4
+            %y = alloca i32, align 4
+
+            ; tpts(s1) = {%1.f0, %x}
+            %s1 = getelementptr inbounds %S, ptr %1, i32 0, i32 0
+            store ptr %x, ptr %s1, align 8
+
+            ; tpts(s2) = {%1.f1, %y}
+            %s2 = getelementptr inbounds %S, ptr %1, i32 0, i32 1
+            store ptr %y, ptr %s2, align 8
+
+            %2 = alloca %S, align 8
+            call void @llvm.memcpy.p0.p0.i64(ptr %2, ptr %1, i64 0, i1 0)
+
+            %t1 = getelementptr inbounds %S, ptr %2, i32 0, i32 0
+            %l1 = load ptr, ptr %t1, align 8
+
+            %t2 = getelementptr inbounds %S, ptr %2, i32 0, i32 1
+            %l2 = load ptr, ptr %t2, align 8
+
+            ret i32 0
+        }
+        declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1 immarg)
+
+    )");
+
+    auto anders = runAndersen(*module);
+    const Function *f = module->getFunction("main");
+    const llvm::Value *x = findInstr(f, "x");
+    const llvm::Value *y = findInstr(f, "y");
+
+    const llvm::Value *s1 = findInstr(f, "s1");
+    const llvm::Value *s2 = findInstr(f, "s2");
+
+    const llvm::Value *t1 = findInstr(f, "t1");
+
+    const llvm::Value *l1 = findInstr(f, "l1");
+    const llvm::Value *l2 = findInstr(f, "l2");
+    const llvm::Value *a2 = findInstr(f, "2");
+
+    PtsSetType ptsSetA;
+    anders->getPointsToSet(s1, ptsSetA);
+    CHECK(ptsContains(ptsSetA, x));
+    CHECK(ptsSetA.size() == 2); // x, %1(f0)
+
+    PtsSetType ptsSetB;
+    anders->getPointsToSet(s2, ptsSetB);
+    CHECK(ptsContains(ptsSetB, y));
+    CHECK(ptsSetB.size() == 2); // y, %1(f1)
+
+
+    PtsSetType ptsSetC;
+    anders->getPointsToSet(l1, ptsSetC);
+    CHECK(ptsContains(ptsSetC, x));
+    CHECK(ptsSetC.size() == 1); // x
+
+    PtsSetType ptsSetD;
+    anders->getPointsToSet(l2, ptsSetD);
+    CHECK(ptsContains(ptsSetD, y));
+    CHECK(ptsSetD.size() == 1); // y
 }

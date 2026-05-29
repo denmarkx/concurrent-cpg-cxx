@@ -1,4 +1,5 @@
 #include "Andersen.h"
+#include "NodeFactory.h"
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -207,61 +208,44 @@ bool Andersen::addConstraintForExternalLibrary(const Context* context,
     assert(arg1Index != AndersNodeFactory::InvalidIndex &&
            "Failed to find arg1 node");
 
-    // NodeIndex tempIndex = nodeFactory.createValueNode();
-    // constraints.emplace_back(AndersConstraint::LOAD, tempIndex, arg1Index);
-    // constraints.emplace_back(AndersConstraint::STORE, arg0Index, tempIndex);
+    const llvm::Value *dst = cs->getArgOperand(0);
+    const llvm::Value *src = cs->getArgOperand(1);
+    const llvm::AllocaInst *allocaSrc = dyn_cast<AllocaInst>(src);
 
-    constraints.emplace_back(AndersConstraint::COPY, arg0Index, arg1Index);
+    // TODO: Does not support anything other than allocas until we can recover type information properly.
+    if (allocaSrc && allocaSrc->getAllocatedType()->isAggregateType()) {
+      // Grab the underlying object:
+      auto itr = std::find_if(constraints.begin(), constraints.end(), [&](const AndersConstraint& c) {
+          // Only considering ADDR_OF and if getSrc is an object.
+          return c.getType() == AndersConstraint::ADDR_OF &&\
+            nodeFactory.isObjectNode(c.getSrc()) &&\
+            c.getDest() == arg1Index;
+      });
 
-    // If both src and dst refer to a struct, we emit a copy constraint for each field relative to the bytes to copy size.
-    // TODO: I will note that getUnderlyingObject is intraprocedural and skips shit like phi. It would be best to make this
-    // recursively traverse back upwards later.
-    const llvm::Value *dstUO = llvm::getUnderlyingObject(cs->getArgOperand(0));
-    const llvm::Value *srcUO = llvm::getUnderlyingObject(cs->getArgOperand(1));
+      // I can't think of when this may be possible, but if it is..I want to know.
+      assert(itr != constraints.end() && "Could not find underlying object in memcpy field resolution.");
+      if (itr != constraints.end()) {
+        const llvm::Value *src = nodeFactory.getValueForNode(itr->getSrc());
+        assert(src != nullptr && "Underlying src is null.");
 
-    if (dstUO && srcUO) {
-      // the types here honestly don't matter if we can show that we are memcpying the entire size of the src.
-      // ..because at that point its a simple copy instruction.
+        // Get only the fields that we currently know about:
+        auto fields = nodeFactory.lookupFields(AndersNode::OBJ_NODE, context, src);
+        for (const auto fieldSet : fields) {
+          // Unlike GEP, it's not really correct to say that the index may not exist.
+          NodeIndex fieldIdx = nodeFactory.getObjectNodeFor(context, src, fieldSet);
+          assert(fieldIdx != AndersNodeFactory::InvalidIndex && "memcpy field resolution - fieldIdx does not exist");
 
-      // and once again, we're getting fucked by the fact that a struct allocation is at the same addr as its first index.
-      // ..but thats a TODO for refactoring
+          // Now, we can check if destIndex at this fieldSet exists:
+          NodeIndex dstIndex = nodeFactory.getObjectNodeFor(context, dst, fieldSet);
+          if (dstIndex == AndersNodeFactory::InvalidIndex)
+            // Not abnormal for it to not exist.
+            dstIndex = nodeFactory.createObjectNode(context, dst, fieldSet);
 
-      // also, i cant really remember why we are looking for alloca specifically
-      // so im gonna leave that shit there until i refactor
-      // errs() << "memcpy:\n  dstUO = " << *dstUO << "\n  srcUO = " << *srcUO << "\n\n";
-      const llvm::AllocaInst *dstA = dyn_cast<AllocaInst>(dstUO);
-      const llvm::AllocaInst *srcA = dyn_cast<AllocaInst>(srcUO);
-      if (dstA && srcA) {
-        // TODO: support when types are not the same
-        if (dstA->getAllocatedType() == srcA->getAllocatedType() && dstA->getAllocatedType()->isAggregateType()) {
-          // TODO: need to use datalayout and structlayout here and go more than 1 level deep
-          for (unsigned int i=0; i < dstA->getAllocatedType()->getStructNumElements(); i++) {
-            NodeIndex arg0Index = nodeFactory.getValueNodeFor(context, dstUO, {i});
-            if (arg0Index == AndersNodeFactory::InvalidIndex)
-              arg0Index = nodeFactory.createValueNode(context, dstUO, {i});
-            NodeIndex arg1Index = nodeFactory.getValueNodeFor(context, srcUO, {i});
-            if (arg1Index == AndersNodeFactory::InvalidIndex)
-              arg1Index = nodeFactory.createValueNode(context, srcUO, {i});
-            constraints.emplace_back(AndersConstraint::COPY, arg0Index, arg1Index);
-          }
-        }
-      // note that this entire if statement is BS
-      } else if (srcA) {
-        // if anyone here is an aggregate, we assume a copy on all fields
-        // but again, thats bullshit because of the size arg: TODO
-        if (srcA->getAllocatedType()->isAggregateType()) {
-          for (unsigned int i=0; i < srcA->getAllocatedType()->getStructNumElements(); i++) {
-            NodeIndex arg0Index = nodeFactory.getValueNodeFor(context, dstUO, {i});
-            if (arg0Index == AndersNodeFactory::InvalidIndex)
-              arg0Index = nodeFactory.createValueNode(context, dstUO, {i});
-            NodeIndex arg1Index = nodeFactory.getValueNodeFor(context, srcUO, {i});
-            if (arg1Index == AndersNodeFactory::InvalidIndex)
-              arg1Index = nodeFactory.createValueNode(context, srcUO, {i});
-            constraints.emplace_back(AndersConstraint::COPY, arg0Index, arg1Index);
-          }
+          constraints.emplace_back(AndersConstraint::COPY, dstIndex, fieldIdx);
         }
       }
-    }
+    } else
+      constraints.emplace_back(AndersConstraint::COPY, arg0Index, arg1Index);
 
     // Don't forget the return value
     NodeIndex retIndex = nodeFactory.getValueNodeFor(context, cs);
