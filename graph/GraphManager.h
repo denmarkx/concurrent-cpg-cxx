@@ -6,7 +6,7 @@
 #include "llvm/Analysis/MemorySSA.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Value.h"
-#include "andersen/AndersenAA.h"
+#include "andersen/Andersen.h"
 
 #include <functional>
 #include <unordered_map>
@@ -41,8 +41,8 @@ public:
 
     bool alias(const Value* v1, const Value* v2);
 
-    void setAliasResult(AndersenAAResult &AA);
-    AndersenAAResult* getAliasResult() const;
+    void setAliasResult(Andersen &AA);
+    Andersen* getAliasResult() const;
 
     void setMemorySSACall(MSSAGet func);
     MemorySSA &getMemorySSAResult(const Function* F) const;
@@ -72,7 +72,7 @@ private:
     std::unordered_map<const Value*, Node*> _valueNodeMap;
     // std::unordered_map<const Function*, MemorySSA*> _memorySSAMap;
 
-    AndersenAAResult* _AA;
+    Andersen* _AA;
     BidirectionalCallGraph* _callGraph;
     MSSAGet _mssaGetter = nullptr;
     LTOLibCManager* _ltoMgr;

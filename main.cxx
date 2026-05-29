@@ -8,9 +8,8 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/MemorySSA.h"
 
-#include "andersen/AndersenAA.h"
+#include "andersen/Andersen.h"
 
-#include "ConstructionPass.h"
 #include "graph/GraphBuilder.h"
 #include "GraphBuilderPass.h"
 #include "GraphBuilderFuncPass.h"
@@ -35,7 +34,7 @@ int main() {
 
     legacy::PassManager PM;
     PM.add(new AndersenAAWrapperPass());
-    PM.add(new MemorySSAWrapperPass());
+    // PM.add(new MemorySSAWrapperPass());
     // PM.add(new ConstructionPass());
     PM.add(new GraphBuilderPass());
     PM.add(new GraphBuilderFuncPass());

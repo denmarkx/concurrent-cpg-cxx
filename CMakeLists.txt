@@ -75,7 +75,6 @@ set(FILES
     concurrency/ThreadNode.h
     concurrency/JoinNode.h
     BidirectionalCallGraph.cxx
-    ConstructionPass.cxx
     GraphBuilderPass.cxx
     GraphBuilderFuncPass.cxx
     GraphBuilderProcessPass.cxx

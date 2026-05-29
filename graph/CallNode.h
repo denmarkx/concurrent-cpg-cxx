@@ -49,8 +49,8 @@ public:
                 LoadInst *load = dyn_cast<LoadInst>(funcPtrV);
             }
             std::vector<const llvm::Value *> ptsSet{};
-            AndersenAAResult *AA = GraphManager::get()->getAliasResult();
-            AA->getTransitivePointsToSet(funcPtrV, ptsSet); // TODO
+            Andersen *AA = GraphManager::get()->getAliasResult();
+            AA->getPointsToSet(funcPtrV, ptsSet); // TODO
 
             functions.reserve(ptsSet.size());
             for (auto &v : ptsSet) {
