@@ -306,13 +306,6 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
     if (const GetElementPtrInst *sourceInst = dyn_cast<GetElementPtrInst>(src)) {
       NodeIndex srcValIndex = nodeFactory.getValueNodeFor(context, src, {});
 
-      // We might be doing byte-based indexing here if our source type is an int type:
-      if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(inst)) {
-        if (gep->getSourceElementType()->isIntegerTy()) {
-          // We need to do our best to figure out where exactly this is wanting to point to.
-        }
-      }
-
       // We can assume that the source GEP has a constraint = &V_Fn.
       // What we need to do is walk back the ADDR_OF constraint chain until we can find the object.
       std::queue<NodeIndex> worklist;

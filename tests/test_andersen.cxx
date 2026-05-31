@@ -1062,9 +1062,7 @@ TEST_CASE("Andersen[FieldSensitivity_PointerOffset]") {
     CHECK(ptsContains(s3Pts, q));
 }
 
-// TODO: byte offset code was removed from constraintcollect i think
 TEST_CASE("Andersen[FieldSensitivity_Byte]") {
-    return;
     AndersPassTest pass;
     auto module = pass.ParseAssembly(R"(
         %S = type { [64 x i8] }
@@ -1473,68 +1471,4 @@ TEST_CASE("Andersen[FieldSensitivity_Aggregate_Parameter_Type]") {
     CHECK(ptsContains(ptsSetD, z));
     CHECK(!ptsContains(ptsSetD, y));
     CHECK(ptsSetD.size() == 3); // z, %_2, x
-}
-
-
-TEST_CASE("Andersen[FieldSensitivity_Byte]") {
-    AndersPassTest pass;
-    auto module = pass.ParseAssembly(R"(
-        %S = type { [64 x i8] }
-
-        define i32 @main() {
-            %p = alloca %S
-            %q = alloca i8
-            %h = alloca i8
-
-            ; First field: [64 x i8]
-            %base = getelementptr inbounds %S, ptr %p, i32 0, i32 0
-
-            ; Move 8 bytes..yields &S->field[1]
-            %ptr = getelementptr inbounds i8, ptr %base, i64 1
-            ;store ptr %q, ptr %ptr
-
-            ; Equivalent to %ptr
-            ;%eq = getelementptr inbounds %S, ptr %p, i32 0, i32 0, i32 1
-            ;%loadEq = load ptr, ptr %eq
-
-            ;%other = getelementptr inbounds %S, ptr %p, i32 0, i32 0, i32 20
-            ;store ptr %h, ptr %other
-
-            ret i32 0
-        }
-    )");
-
-    auto anders = runAndersen(*module);
-    const Function *F = module->getFunction("main");
-
-    // const Value *base = findInstr(F, "base");
-    // const Value *ptr = findInstr(F, "ptr");
-    // const Value *eq = findInstr(F, "loadEq");
-    // const Value *other = findInstr(F, "other");
-
-    // const Value *q = findInstr(F, "q");
-    // const Value *h = findInstr(F, "h");
-
-    // PtsSetType s1Pts, s2Pts, s3Pts, s4Pts;
-    // anders->getPointsToSet(base, s1Pts);
-    // anders->getPointsToSet(ptr, s2Pts);
-    // anders->getPointsToSet(eq, s3Pts);
-    // anders->getPointsToSet(other, s4Pts);
-
-    // // tPts(base) = {p}
-    // CHECK(!ptsContains(s1Pts, q));
-    // CHECK(!ptsContains(s1Pts, h));
-
-    // // // tPts(ptr) = {p, q}
-    // CHECK(!ptsContains(s2Pts, h));
-    // CHECK(ptsContains(s2Pts, q));
-
-    // // // tPts(eq) = tPts(ptr) = {p, q}
-    // anders->printPointsToSet(eq);
-    // CHECK(!ptsContains(s3Pts, h));
-    // CHECK(ptsContains(s3Pts, q));
-
-    // // // tPts(other) = {p, h}
-    // CHECK(!ptsContains(s4Pts, q));
-    // CHECK(ptsContains(s4Pts, h));
 }
