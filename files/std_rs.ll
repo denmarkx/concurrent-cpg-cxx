@@ -1840,6 +1840,8 @@ bb4:                                              ; preds = %bb3
 bb5:                                              ; preds = %bb4
   %10 = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 3
   %11 = load ptr, ptr %10, align 8, !nonnull !6, !noundef !6
+  %test = getelementptr inbounds %"{closure@std::thread::Builder::spawn_unchecked_<'_, '_, {closure@files/std_rs.rs:10:27: 10:34}, ()>::{closure#1}}", ptr %_1, i64 0, i32 1
+  %load = load ptr, ptr %test
   store ptr %11, ptr %f, align 8
   invoke void @_ZN3std3sys3pal4unix6thread5guard7current17ha2bb65882033f000E(ptr nonnull sret(%"core::option::Option<core::ops::range::Range<usize>>") align 8 %_12)
           to label %bb6 unwind label %bb11

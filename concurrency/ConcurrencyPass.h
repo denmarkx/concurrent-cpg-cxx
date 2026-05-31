@@ -138,11 +138,18 @@ private:
         // GraphManager::get()->getAliasResult()->printTransitivePointsToSet(node->getDataNode()->getValue());
         // errs() << "routine = " << *node->getRoutine()->getValue() << "\n";
 
+        // The routine is not connected to the context of the data node (unless -Clto=fat)
+        const Instruction* instr = dyn_cast<Instruction>(node->getDataNode()->getValue());
+        const Function *parent = instr->getFunction();
+        const Function *routine = dyn_cast<Function>(node->getRoutine()->getValue());
+
+        GraphManager::get()->getAliasResult()->connectContexts(parent, routine);
+
         GraphManager::get()->getAliasResult()->addConstraint(AndersConstraint::COPY, 
-            dyn_cast<Function>(node->getRoutine()->getValue())->getArg(0),node->getDataNode()->getValue());
+            dyn_cast<Function>(node->getRoutine()->getValue())->getArg(0),node->getDataNode()->getValue(), 1, 1);
         GraphManager::get()->getAliasResult()->resolveConstraints();
-        auto x = dyn_cast<Function>(node->getRoutine()->getValue())->getArg(0);
-        GraphManager::get()->getAliasResult()->printPointsToSet(x);
+        // auto x = dyn_cast<Function>(node->getRoutine()->getValue())->getArg(0);
+        // GraphManager::get()->getAliasResult()->printPointsToSet(x);
         return;
         
 
@@ -151,10 +158,10 @@ private:
         }
 
         // TODO: i don't think its necessary to model threadnodes who don't have a routine.
-        Node* routine = node->getRoutine();
-        if (routine && !doesSummaryExist(routine)) {
-            _summaries.push_back(new ThreadSummary{routine, node});
-        }
+        // Node* routine = node->getRoutine();
+        // if (routine && !doesSummaryExist(routine)) {
+            // _summaries.push_back(new ThreadSummary{routine, node});
+        // }
     }
 
     /**
