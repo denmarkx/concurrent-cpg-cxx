@@ -137,6 +137,10 @@ private:
         const Function *parent = instr->getFunction();
         const Function *routine = dyn_cast<Function>(node->getRoutine()->getValue());
 
+        // While we're here, we need to connect the routine's parameter to its data.
+        Node *paramNode = GraphManager::get()->getNode(routine->getArg(0));
+        paramNode->registerCopyEdge(node->getDataNode());
+
         GraphManager::get()->getAliasResult()->connectContexts(parent, routine);
         GraphManager::get()->getAliasResult()->addConstraint(AndersConstraint::COPY, 
             dyn_cast<Function>(node->getRoutine()->getValue())->getArg(0),node->getDataNode()->getValue(), 1);

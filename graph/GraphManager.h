@@ -36,6 +36,17 @@ public:
     Node* getNode(const Instruction* instr);
     Node* getNodeFromOperand(const Instruction* instr, unsigned int idx);
 
+    template <typename T>
+    std::vector<T*> getAllNodesOf() {
+        std::vector<T*> singles;
+        auto itr = _nodes | std::views::filter([](Node *node) {
+            return dynamic_cast<T*>(node) != nullptr;
+        });
+        for (Node *node : itr)
+            singles.push_back(dynamic_cast<T*>(node));
+        return singles;
+    }
+
     bool hasNode(const Value* value);
     Node* getNodeOrNull(const Value *value);
 

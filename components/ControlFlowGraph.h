@@ -44,6 +44,8 @@ public:
     void parseModule(const Module& module);
     EdgeInfo getProcessedEdges() const;
 
+    const std::unordered_map<Node*, std::vector<CFGEdge>>& getEdges();
+
     static ControlFlowGraph* get();
     static ControlFlowGraph* _graph;
 
