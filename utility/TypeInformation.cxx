@@ -14,9 +14,9 @@ const Type* TypeInformation::resolveType(const Value *v) {
 
     // Few things to try and do here: simplest case would be if
     //  its a GEP or an Alloca..because a type is required there.
-    if (const AllocaInst *alloca = dyn_cast<AllocaInst>(v))
+    if (const AllocaInst *alloca = dyn_cast<AllocaInst>(origin))
         return alloca->getAllocatedType();
-    if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(v))
+    else if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(origin))
         return gep->getSourceElementType();
 
     return nullptr;
