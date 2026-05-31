@@ -41,7 +41,7 @@ NodeIndex AndersNodeFactory::createValueNode(const Context *context, const Value
   if (val != nullptr) {
     assert(!valueNodeMap.contains(context, val, fields) &&
            "Trying to insert two mappings to valueNodeMap!");
-    valueNodeMap[{context, val, fields}] = nextIdx;
+    valueNodeMap.insert(context, val, fields, nextIdx);
   }
   nodes.push_back(AndersNode(AndersNode::VALUE_NODE, contextId, nextIdx, val, fields));
   return nextIdx;
@@ -350,6 +350,13 @@ std::vector<const Context*> AndersNodeFactory::getAssociatedContexts(const Value
 unsigned int AndersNodeFactory::getNumContexts() {
   return _contexts.size();
 }
+
+void AndersNodeFactory::pruneValueNodes(std::vector<NodeIndex>& valueIndices) {
+  for (const NodeIndex &i : valueIndices) {
+    valueNodeMap.erase(i);
+  }
+}
+
 
 void AndersNodeFactory::setDataLayout(const DataLayout *layout) {
   valueNodeMap.setDataLayout(layout);

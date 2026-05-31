@@ -2,12 +2,14 @@
 #include "Constraint.h"
 #include "NodeFactory.h"
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PatternMatch.h"
+#include "llvm/Support/Casting.h"
 #include <queue>
 #include <unordered_set>
 
@@ -302,26 +304,70 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
 
     // If our source is a GEP, we need to resolve the alloc site.
     if (const GetElementPtrInst *sourceInst = dyn_cast<GetElementPtrInst>(src)) {
-      NodeIndex srcValIndex = nodeFactory.getValueNodeFor(context, sourceInst, nodeFactory.getFields(context, sourceInst));
-      assert(srcValIndex != AndersNodeFactory::InvalidIndex && "Could not find valid srcValIndex.");
+      NodeIndex srcValIndex = nodeFactory.getValueNodeFor(context, src, {});
 
-      // We can assume that the source GEP has been resolved properly.
-      // ..meaning it already has a constraint to an object:
+      // We might be doing byte-based indexing here if our source type is an int type:
+      if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(inst)) {
+        if (gep->getSourceElementType()->isIntegerTy()) {
+          // We need to do our best to figure out where exactly this is wanting to point to.
+        }
+      }
+
+      // We can assume that the source GEP has a constraint = &V_Fn.
+      // What we need to do is walk back the ADDR_OF constraint chain until we can find the object.
+      std::queue<NodeIndex> worklist;
+      worklist.push(srcValIndex);
+      SmallVector<NodeIndex, 4> fieldPath;
+
+      NodeIndex objIdx = AndersNodeFactory::InvalidIndex;
+      NodeIndex objDstIdx = AndersNodeFactory::InvalidIndex;
+      while (!worklist.empty()) {
+        NodeIndex idx = worklist.front();
+        worklist.pop();
+
+        // First, we need to check if this idx has a constraint to an object:
+        auto itr = std::find_if(constraints.begin(), constraints.end(), [&](const AndersConstraint& c) {
+          // Only considering ADDR_OF and if getSrc is an object.
+          return c.getType() == AndersConstraint::ADDR_OF &&\
+            nodeFactory.isObjectNode(c.getSrc()) &&\
+            c.getDest() == idx;
+        });
+
+        // If we've found the object, we make note of it.
+        if (itr != constraints.end()) {
+          objIdx = itr->getSrc();
+          objDstIdx = itr->getDest();
+          break;
+        }
+
+        // Otherwise, we need to find the ADDR_OF constraint to a value.
+        itr = std::find_if(constraints.begin(), constraints.end(), [&](const AndersConstraint& c) {
+          return c.getType() == AndersConstraint::ADDR_OF && c.getDest() == idx;
+        });
+
+        // I can't really think of a reason why we can't find this.
+        assert(itr != constraints.end());
+
+        // We're going to have to move up..so add our source fields onto fieldPath.
+        fieldPath.append(nodeFactory.getFields(context, sourceInst));
+        worklist.push(itr->getSrc());
+      }
+      nodeFactory.dumpNodeInfo();
+      assert(objIdx != AndersNodeFactory::InvalidIndex);
+
+      // Check what the obj refers to:
       auto itr = std::find_if(constraints.begin(), constraints.end(), [&](const AndersConstraint& c) {
-        // Only considering ADDR_OF and if getSrc is an object.
-        return c.getType() == AndersConstraint::ADDR_OF &&\
-          nodeFactory.isObjectNode(c.getSrc()) &&\
-          c.getDest() == srcValIndex;
+        return c.getType() == AndersConstraint::ADDR_OF && c.getDest() == objIdx;
       });
 
-      if (itr != constraints.end()) {
-        // However, we're more interested as the what the actual object is:
-        src = nodeFactory.getValueForNode(itr->getSrc());
-        assert(src != nullptr && "GEP Constraint failed: underlying src is null.");
+      // There's no guarantee that this specific field is actually populated by an object yet..
+      if (itr != constraints.end())
+        objDstIdx = itr->getSrc();
+      assert(objDstIdx != AndersNodeFactory::InvalidIndex);
 
-        // We can change our srcIndex, because it may exist already if we've been through this before.
-        srcIndex = nodeFactory.getObjectNodeFor(context, src, fields);
-      }
+      // Our src then becomes this:
+      src = nodeFactory.getValueForNode(objDstIdx);
+      srcIndex = nodeFactory.getValueNodeFor(context, src, fields);
     }
 
     if (srcIndex == AndersNodeFactory::InvalidIndex) {
@@ -334,7 +380,7 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
 
     assert(srcIndex != AndersNodeFactory::InvalidIndex &&
            "Failed to find gep src node");
-    NodeIndex dstIndex = nodeFactory.getValueNodeFor(context, inst, fields);
+    NodeIndex dstIndex = nodeFactory.getValueNodeFor(context, inst);
     assert(dstIndex != AndersNodeFactory::InvalidIndex &&
            "Failed to find gep dst node");
 
@@ -590,8 +636,6 @@ void Andersen::addArgumentConstraintForCall(const Context *calleeCtx,
                "Failed to find actual arg node!");
 
         const Type *sourceType = nodeFactory.typeInfo.resolveType(actual);
-        errs() << "source type? " << (sourceType != nullptr) << "\n";
-        errs() << "cs = " << *cs << "\n";
         // if ((sourceType && sourceType->isAggregateType()) || (cs->getCalledFunction()->getName().str() == "F2"))
         propgateConstraintsToFields(AndersConstraint::COPY, fIndex, aIndex, calleeCtx, context);
         // else
@@ -623,14 +667,45 @@ void Andersen::addArgumentConstraintForCall(const Context *calleeCtx,
   }
 }
 
-void Andersen::createAllFields(const Value *v, const Context *ctx) {
-  const Type *sourceType = nodeFactory.typeInfo.resolveType(v);
-  if (!sourceType) return;
+/*
+ * Creates value nodes of v with Context ctx for ALL possible fields.
+ * This should only ever be used when it is not feasible to backtrack through
+ * the list of potentially-used fields and remains more conservative than anything.
+ *
+ * ConstraintOptimize is responsible for cleaning up anything this creates that goes unused.
+*/
+void Andersen::createAllFields(const Value *v, const Context *ctx, SmallVector<unsigned int, 4> curSet) {
+  const Type *sourceType = v->getType();
 
-  // TODO: USE NodeMap::getFields instead
+  // We'll try to infer the type for opaque pointers..
+  if (sourceType->isPointerTy())
+    sourceType = nodeFactory.typeInfo.resolveType(v);
+  if (!sourceType || !sourceType->isAggregateType()) return;
+
+  // NOTE: There is no super type for aggregates, so I have to do this shit.
+  // TODO: I don't remember exactly how vectors work in LLVM.
+
   if (const StructType *structTy = dyn_cast<StructType>(sourceType)) {
     for (unsigned int i=0; i < structTy->getNumElements(); i++) {
-      nodeFactory.createValueNode(ctx, v, {i});
+      SmallVector<unsigned int, 4> innerSet;
+      innerSet.append(curSet);
+      innerSet.push_back(i);
+      nodeFactory.createValueNode(ctx, v, innerSet);
+
+      if (structTy->getElementType(i)->isAggregateType())
+        createAllFields(v, ctx, innerSet);
+    }
+  }
+
+  else if (const ArrayType *arrayTy = dyn_cast<ArrayType>(sourceType)) {
+    for (unsigned int i=0; i < arrayTy->getNumElements(); i++) {
+      SmallVector<unsigned int, 4> innerSet;
+      innerSet.append(curSet);
+      innerSet.push_back(i);
+      nodeFactory.createValueNode(ctx, v, innerSet);
+
+      if (arrayTy->getElementType()->isAggregateType())
+        createAllFields(v, ctx, curSet);
     }
   }
 }
@@ -653,9 +728,6 @@ void Andersen::propgateConstraintsToFields(AndersConstraint::ConstraintType type
   // srcCtx is optional
   if (!srcCtx) srcCtx = dstCtx;
 
-  errs() << "src = " << *src << "\n";
-  errs() << "dst = " << *dst << "\n";
-
   constraints.emplace_back(type, dstIndex, srcIndex);
 
   // Lookup the associated fields that we know about already:
@@ -669,100 +741,22 @@ void Andersen::propgateConstraintsToFields(AndersConstraint::ConstraintType type
   // I instead opt to conservatively assume lookupFields returns ALL possible fields.
   // It is very important to note that the unused fields will be optimized out prior to solving.
   if (fields.size() == 1 && fields[0].empty()) {
-    createAllFields(src, srcCtx);
+    createAllFields(src, srcCtx, {});
     fields = nodeFactory.lookupFields(AndersNode::VALUE_NODE, srcCtx, src);
   }
 
   for (const auto &fieldSet : fields) {
-    errs() << "field set: ";
-    for (const auto &f : fieldSet)
-      errs() << f << " ";
-    errs() << "\n";
+    NodeIndex fieldIdx = nodeFactory.getValueNodeFor(srcCtx, src, fieldSet);
+    assert(fieldIdx != AndersNodeFactory::InvalidIndex && "fieldIdx does not exist");
+
+    // Now, we can check if destIndex at this fieldSet exists:
+    NodeIndex dstIndex = nodeFactory.getValueNodeFor(dstCtx, dst, fieldSet);
+
+    if (dstIndex == AndersNodeFactory::InvalidIndex)
+      // Not abnormal for it to not exist.
+      dstIndex = nodeFactory.createValueNode(dstCtx, dst, fieldSet);
+    constraints.emplace_back(type, dstIndex, fieldIdx);
   }
-    for (const auto &fieldSet : fields) {
-      NodeIndex fieldIdx = nodeFactory.getValueNodeFor(srcCtx, src, fieldSet);
-      assert(fieldIdx != AndersNodeFactory::InvalidIndex && "CouldfieldIdx does not exist");
-
-      // Now, we can check if destIndex at this fieldSet exists:
-      NodeIndex dstIndex = nodeFactory.getValueNodeFor(dstCtx, dst, fieldSet);
-      if (dstIndex == AndersNodeFactory::InvalidIndex)
-        // Not abnormal for it to not exist.
-        dstIndex = nodeFactory.createValueNode(dstCtx, dst, fieldSet);
-
-      constraints.emplace_back(type, dstIndex, fieldIdx);
-    }
-
-
-  // // Grab the underlying object:
-  // auto itr = std::find_if(constraints.begin(), constraints.end(), [&](const AndersConstraint& c) {
-  //     // If this is a COPY constraint and the dest is the srcIndex, we'll keep track of it:
-  //     if (c.getType() == AndersConstraint::COPY && c.getDest() == srcIndex)
-  //       copyDestinations.push(c.getDest());
-
-  //     // Only considering ADDR_OF and if getSrc is an object.
-  //     return c.getType() == AndersConstraint::ADDR_OF &&\
-  //       nodeFactory.isObjectNode(c.getSrc()) &&\
-  //       c.getDest() == srcIndex;
-  // });
-
-  // // It's entirely possible that this value has no ADDR_OF constraints.
-  // // A prime example of that is callInstr = fRetIndex.
-  // NodeIndex objectSrc = AndersNodeFactory::InvalidIndex;
-  // if (itr == constraints.end()) {
-  //   std::unordered_set<NodeIndex> seen;
-  //   // In this case, we're going to keep moving backwards until we find the original allocation.
-  //   while (!copyDestinations.empty()) {
-  //     NodeIndex candidate = copyDestinations.front();
-  //     copyDestinations.pop();
-  //     if (seen.contains(candidate) || candidate <= 3) continue;
-  //     seen.insert(candidate);
-  //     errs() << "candidate = " << candidate << "\n";
-  //     errs() << "checking for: " << *nodeFactory.getValueForNode(candidate) << "\n";
-  //     errs() << "\n\n";
-
-  //     NodeIndex result = AndersNodeFactory::InvalidIndex;
-  //     // TODO: best to use c20 ranges instead of this shit
-  //     for (const AndersConstraint &c : constraints) {
-  //       if (c.getType() == AndersConstraint::COPY && c.getDest() == candidate) {
-  //         copyDestinations.push(c.getSrc());
-  //       }
-  //       if (c.getType() == AndersConstraint::ADDR_OF && c.getDest() == candidate) {
-  //         result = c.getSrc();
-  //         break;
-  //       }
-  //     }
-
-  //     if (result != AndersNodeFactory::InvalidIndex) {
-  //       objectSrc = result;
-  //       break;
-  //     }
-  //   }
-  // } else
-  //   objectSrc = itr->getSrc();
-
-  // assert(objectSrc != AndersNodeFactory::InvalidIndex);
-  // if (objectSrc != AndersNodeFactory::InvalidIndex) {
-  //   const llvm::Value *src = nodeFactory.getValueForNode(objectSrc);
-  //   assert(src != nullptr && "Underlying src is null.");
-
-  //   // Get only the fields that we currently know about:
-  //   auto fields = nodeFactory.lookupFields(AndersNode::OBJ_NODE, srcCtx, src);
-  //   for (const auto fieldSet : fields) {
-  //     NodeIndex fieldIdx = nodeFactory.getObjectNodeFor(srcCtx, src, fieldSet);
-  //     assert(fieldIdx != AndersNodeFactory::InvalidIndex && "CouldfieldIdx does not exist");
-
-  //     // Now, we can check if destIndex at this fieldSet exists:
-  //     NodeIndex dstIndex = nodeFactory.getObjectNodeFor(dstCtx, dst, fieldSet);
-  //     if (dstIndex == AndersNodeFactory::InvalidIndex)
-  //       // Not abnormal for it to not exist.
-  //       dstIndex = nodeFactory.createObjectNode(dstCtx, dst, fieldSet);
-
-  //     constraints.emplace_back(type, dstIndex, fieldIdx);
-  //   }
-  // }
-
-  // // We'll also keep this, which is what was done before.
-  // constraints.emplace_back(type, dstIndex, srcIndex);
 }
 
 Context* Andersen::getGlobalCtx() const {

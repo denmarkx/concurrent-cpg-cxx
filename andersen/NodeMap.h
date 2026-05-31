@@ -41,13 +41,11 @@ public:
     using NodeMapType = llvm::DenseMap<
         std::tuple<const Context*, const llvm::Value*, FieldType>, NodeIndex>;
 
-    NodeIndex insert(const Context *ctx, const llvm::Value *val, FieldType fields) {
-        unsigned int nodeIndex = size();
-
-        fields = fields.empty() ? getFields(ctx, val) : fields;
-
-        _map[{ctx, val, fields}] = nodeIndex;
-        return nodeIndex;
+    void insert(const Context *ctx, const llvm::Value *val, FieldType fields, unsigned int index) {
+        // GEPs are required to inform us of their fields.
+        if (!isa<GetElementPtrInst>(val))
+            fields = fields.empty() ? getFields(ctx, val) : fields;
+        _map[{ctx, val, fields}] = index;
     }
 
     NodeIndex get(const Context *ctx, const llvm::Value *val) const {
@@ -72,7 +70,10 @@ public:
      * Returns the associated nodeIdx or InvalidIndex.
     */
     NodeIndex find(const Context *ctx, const llvm::Value *val, FieldType fields) const {
-        fields = fields.empty() ? getFields(ctx, val) : fields;
+        // GEP operations are required to inform us of the fields.
+        // If fields is empty for GEP, then that's intentional.
+        if (!isa<GetElementPtrInst>(val))
+            fields = fields.empty() ? getFields(ctx, val) : fields;
         auto itr = _map.find({ctx, val, fields});
         if (itr == _map.end())
             return InvalidIndex;
@@ -99,6 +100,17 @@ public:
 
     void erase(const Context *ctx, const llvm::Value *val) {
         _map.erase({ctx, val, getFields(ctx, val)});
+    }
+
+    void erase(NodeIndex index) {
+        auto it = _map.begin();
+        while (it != _map.end()) {
+            if (it->second == index) {
+                _map.erase(it++);
+            }
+            else
+                ++it;
+        }
     }
 
     const unsigned int size() const { return _map.size(); }

@@ -178,11 +178,12 @@ bool Andersen::addConstraint(AndersConstraint::ConstraintType type, const llvm::
 
         // A rightIdx may not always exist for this context:
         NodeIndex rightIdx = nodeFactory.getValueNodeFor(ctx, rhs);
-        if (argument)
+        if (argument && ctx->prevCtx)
             rightIdx = nodeFactory.getValueNodeFor(ctx->prevCtx, rhs);
+
         if (rightIdx == AndersNodeFactory::InvalidIndex) {
             // If that's the case, it's not necessarily an error.
-            if (argument)
+            if (argument && ctx->prevCtx)
                 rightIdx = nodeFactory.createValueNode(ctx->prevCtx, rhs);
             else
                 rightIdx = nodeFactory.createValueNode(ctx, rhs);
@@ -209,6 +210,14 @@ bool Andersen::addConstraint(AndersConstraint::ConstraintType type, const llvm::
 */
 void Andersen::connectContexts(const Function* parent, const Function* child) {
     if (!parent || !child) return;
+
+    // If there are no callers, then we put it in the global context.
+    if (parent->users().empty()) {
+        const Context *parentCtx = nodeFactory.createContext(const_cast<Context*>(nodeFactory.getGlobalCtx()), nullptr);
+        setupFunctionConstraints(parentCtx, child);
+        scanFunction(const_cast<Context*>(parentCtx), child);
+        return;
+    }
 
     for (const User *user : parent->users()) {
         const CallBase *caller = dyn_cast<CallBase>(user);

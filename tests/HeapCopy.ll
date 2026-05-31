@@ -4,25 +4,30 @@ target triple = "arm64-apple-macosx14.0.0"
 %S = type { ptr, ptr, ptr, ptr }
 
 define void @F1(ptr %f1a) { ; f1a = %main
+  %f0 = getelementptr inbounds %S, ptr %f1a, i32 0, i32 2
+  %loadF1 = load ptr, ptr %f0
   call void @F2(ptr %f1a)
   ret void
 }
 
 define void @F2(ptr %f2a) {
   %f0 = getelementptr inbounds %S, ptr %f2a, i32 0, i32 2
-  %loadF = load ptr, ptr %f0
+  %loadF2 = load ptr, ptr %f0
   ret void
 }
 
 define i32 @main(ptr %_1) {
-  %local = alloca %S, align 8
+  %local = alloca ptr, align 8
+  %x = alloca ptr, align 8
   %main = alloca %S, align 8
-  %x = alloca %S, align 8
 
   %f0 = getelementptr inbounds %S, ptr %main, i32 0, i32 2
   store ptr %local, ptr %f0
 
-  call void @F1(ptr %main)
+  %f1 = getelementptr inbounds %S, ptr %main, i32 0, i32 1
+  store ptr %x, ptr %f1
+
+  ;call void @F1(ptr %main)
   ret i32 0
 }
 

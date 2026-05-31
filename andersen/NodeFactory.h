@@ -203,6 +203,8 @@ public:
     valueNodeMap.erase(context, val); 
   }
 
+  void pruneValueNodes(std::vector<NodeIndex>& valueIndices);
+
   // Size getters
   unsigned getNumNodes() const { return nodes.size(); }
 

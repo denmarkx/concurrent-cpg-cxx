@@ -560,6 +560,33 @@ void Andersen::optimizeConstraints() {
   // errs() << "\n#constraints = " << constraints.size() << "\n";
   // dumpConstraints();
 
+  // Identify any obvious orphan constraints:
+  // ie: any constraint of two values where those two values aren't apart of any other constraints.
+  // TODO: this still isn't a foolproof way for optimizing createAllFields
+  std::vector<NodeIndex> orphanedValues;
+  std::erase_if(constraints, [&](const AndersConstraint &c) {
+    NodeIndex src = c.getSrc();
+    NodeIndex dst = c.getDest();
+
+    if (nodeFactory.isObjectNode(src) || nodeFactory.isObjectNode(dst)) return false;
+
+    auto itr = std::find_if(constraints.begin(), constraints.end(), [&](const AndersConstraint &candidate) {
+      return candidate != c &&
+            (candidate.getSrc() == src ||
+            candidate.getSrc() == dst ||
+            candidate.getDest() == src ||
+            candidate.getDest() == dst);
+    });
+
+    if (itr == constraints.end()) {
+      orphanedValues.push_back(src);
+      orphanedValues.push_back(dst);
+    }
+    return itr == constraints.end();
+  });
+
+  nodeFactory.pruneValueNodes(orphanedValues);
+
   // First, let's do HVN
   // There is an additional assumption here that before HVN, we have not merged
   // any two nodes. Might fix that in the future
