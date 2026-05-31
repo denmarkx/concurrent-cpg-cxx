@@ -111,6 +111,7 @@ private:
   void scanFunction(Context*, const llvm::Function *f);
   void setupFunctionConstraints(const Context*, const llvm::Function *f);
 
+  void createAllFields(const Value*, const Context*);
   void propgateConstraintsToFields(AndersConstraint::ConstraintType type,
     NodeIndex dst, NodeIndex src, const Context* dstCtx, const Context* srcCtx=nullptr);
 
@@ -139,7 +140,8 @@ public:
   void getPointsToSet(const llvm::Value *v, PtsSetType &ptsSet, unsigned int contextId=GenericContextID);
   void printPointsToSet(const llvm::Value *v, unsigned int contextId=GenericContextID);
 
-  bool addConstraint(AndersConstraint::ConstraintType type, const llvm::Value*, const llvm::Value*);
+  void connectContexts(const Function* parent, const Function* child);
+  bool addConstraint(AndersConstraint::ConstraintType type, const llvm::Value*, const llvm::Value*, bool propagateFields=false, bool argument=false);
   void resolveConstraints();
 
   Context* getGlobalCtx() const;
