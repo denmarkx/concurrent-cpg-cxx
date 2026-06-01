@@ -111,7 +111,7 @@ private:
   void scanFunction(Context*, const llvm::Function *f);
   void setupFunctionConstraints(const Context*, const llvm::Function *f);
 
-  void createAllFields(const Value*, const Context*, SmallVector<unsigned int, 4>);
+  void createAllFields(const Value*, const Context*, const Type*, SmallVector<unsigned int, 4>);
   void createField(const Value*, const Context*, SmallVector<unsigned int, 4>);
   void propgateConstraintsToFields(AndersConstraint::ConstraintType type,
     NodeIndex dst, NodeIndex src, const Context* dstCtx, const Context* srcCtx=nullptr);

@@ -1,29 +1,24 @@
-#include "andersen/AndersenAA.h"
-#include "andersen/Constraint.h"
+#include "andersen/Andersen.h"
 #include "util.h"
 
 int main() {
     AndersPassTest pass;
-    Module *module = pass.ParseFile("playground/GEP_Test.ll");
-    auto anders = std::make_unique<AndersenAAResult>(*module);
+    Module *module = pass.ParseFile("playground/Thread_Test.ll");
+    auto anders = std::make_unique<Andersen>(*module);
 
-    Function *f = module->getFunction("main");
-    Function *F1 = module->getFunction("F1");
-    Function *F2 = module->getFunction("F2");
-    const Value *main = findInstr(f, "l");
-    const Value *F1A = F1->getArg(0);
-    const Value *F2A = F2->getArg(0);
-    // const Value *f0 = findInstr(F2, "f0"); 
-    const Value *loadF = findInstr(F2, "loadF"); 
-    // const Value *loadF_main = findInstr(f, "loadF");
-    // anders->printTransitivePointsToSet(main);
+    Function *spawn = module->getFunction("spawn");
+    Function *closure = module->getFunction("spawn_closure");
+    Function *vtable = module->getFunction("vtable_shim");
 
-    anders->addConstraint(AndersConstraint::COPY, F1A, main);
-    anders->solveConstraints();
+    const Value *_4i = findInstr(spawn, "_4.i");
+    const Value *vtableParam = vtable->getArg(0);
 
-    // anders->printTransitivePointsToSet(F2A); -> main [2x]
-    // anders->printTransitivePointsToSet(f0); -> f2a
-    // anders->printTransitivePointsToSet(loadF_main); -> output_capture
-    anders->printTransitivePointsToSet(main);
+    anders->connectContexts(spawn, vtable);
+    bool t = anders->addConstraint(AndersConstraint::COPY, vtableParam, _4i, 1, 1);
+    errs() << "success = " << t << "\n";
+    anders->resolveConstraints();
+
+    const Value *load = findInstr(closure, "load");
+    anders->printPointsToSet(load);
     return 0;
 }

@@ -37,7 +37,7 @@ const Value* TypeInformation::traceOrigin(const Value *v) {
         worklist.pop();
 
         if (seen.contains(cur)) continue;
-        seen.insert(v);
+        seen.insert(cur);
 
         // We might be a parameter:
         if (const Argument *arg = dyn_cast<Argument>(cur)) {
@@ -66,7 +66,36 @@ const Value* TypeInformation::traceOrigin(const Value *v) {
             .Case<LoadInst>([&](const LoadInst *instr) {
                 cur = getUnderlyingObject(instr->getOperand(0));
             })
-            .Default([](const Value* v) { return nullptr; });
+            .Default([&worklist](const Value* v) {
+                // I suppose the last option here would be to check the users:
+                // TODO: this is more of a hack just so I can move on from this bullshit
+                // i need to think of better ways to do this.
+                for (const User *user : v->users()) {
+                    // TODO: this is more of a hack just so I can move on from this bullshit
+                    if (const CallBase *call = dyn_cast<CallBase>(user)) {
+                        if (call->getCalledFunction()->getName() == "llvm.memcpy.p0.p0.i64") {
+                            if (v == call->getOperand(0))
+                                worklist.push(call->getOperand(1));
+                            else
+                                worklist.push(call->getOperand(0));
+                        } else {
+                            int i = 0;
+                            for (const auto &arg : call->args()) {
+                                if (arg == v)
+                                    if (call->getCalledFunction()) {
+                                        for (const auto &x : call->getCalledFunction()->getArg(i)->users()) {
+                                            // errs() << "arg user = " << *x << "\n";
+                                            worklist.push(x);
+                                        }
+                                    }
+                                i++;
+                            }
+                        }
+                    }
+                    worklist.push(user);
+                }
+                return nullptr;
+            });
 
         if (origin) return origin;
     }

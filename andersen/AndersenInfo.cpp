@@ -1,8 +1,8 @@
 #include "Andersen.h"
 
 static bool DumpDebugInfo = false;
-static bool DumpConstraintInfo = 1;
-static bool DumpResultInfo = 1;
+static bool DumpConstraintInfo = 0;
+static bool DumpResultInfo = 0;
 
 bool Andersen::runOnModule(const Module &M) {
   nodeFactory.setDataLayout(&M.getDataLayout());

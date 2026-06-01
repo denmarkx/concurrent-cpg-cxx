@@ -241,7 +241,7 @@ void Andersen::connectContexts(const Function* parent, const Function* child) {
 void Andersen::resolveConstraints() {
   optimizeConstraints();
   solveConstraints();
-  dumpConstraints();
-  nodeFactory.dumpNodeInfo();
-  dumpPtsGraphPlainVanilla();
+  // dumpConstraints();
+  // nodeFactory.dumpNodeInfo();
+  // dumpPtsGraphPlainVanilla();
 }

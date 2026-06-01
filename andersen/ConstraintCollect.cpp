@@ -667,18 +667,16 @@ void Andersen::addArgumentConstraintForCall(const Context *calleeCtx,
  *
  * ConstraintOptimize is responsible for cleaning up anything this creates that goes unused.
 */
-void Andersen::createAllFields(const Value *v, const Context *ctx, SmallVector<unsigned int, 4> curSet) {
-  const Type *sourceType = v->getType();
-
+void Andersen::createAllFields(const Value *v, const Context *ctx, const Type* curType, SmallVector<unsigned int, 4> curSet) {
   // We'll try to infer the type for opaque pointers..
-  if (sourceType->isPointerTy())
-    sourceType = nodeFactory.typeInfo.resolveType(v);
-  if (!sourceType || !sourceType->isAggregateType()) return;
+  if (curType->isPointerTy())
+    curType = nodeFactory.typeInfo.resolveType(v);
+  if (!curType || !curType->isAggregateType()) return;
 
   // NOTE: There is no super type for aggregates, so I have to do this shit.
   // TODO: I don't remember exactly how vectors work in LLVM.
 
-  if (const StructType *structTy = dyn_cast<StructType>(sourceType)) {
+  if (const StructType *structTy = dyn_cast<StructType>(curType)) {
     for (unsigned int i=0; i < structTy->getNumElements(); i++) {
       SmallVector<unsigned int, 4> innerSet;
       innerSet.append(curSet);
@@ -686,11 +684,11 @@ void Andersen::createAllFields(const Value *v, const Context *ctx, SmallVector<u
       nodeFactory.createValueNode(ctx, v, innerSet);
 
       if (structTy->getElementType(i)->isAggregateType())
-        createAllFields(v, ctx, innerSet);
+        createAllFields(v, ctx, structTy->getElementType(i), innerSet);
     }
   }
 
-  else if (const ArrayType *arrayTy = dyn_cast<ArrayType>(sourceType)) {
+  else if (const ArrayType *arrayTy = dyn_cast<ArrayType>(curType)) {
     for (unsigned int i=0; i < arrayTy->getNumElements(); i++) {
       SmallVector<unsigned int, 4> innerSet;
       innerSet.append(curSet);
@@ -698,7 +696,7 @@ void Andersen::createAllFields(const Value *v, const Context *ctx, SmallVector<u
       nodeFactory.createValueNode(ctx, v, innerSet);
 
       if (arrayTy->getElementType()->isAggregateType())
-        createAllFields(v, ctx, curSet);
+        createAllFields(v, ctx, arrayTy->getElementType(), curSet);
     }
   }
 }
@@ -716,7 +714,7 @@ void Andersen::propgateConstraintsToFields(AndersConstraint::ConstraintType type
 
   const llvm::Value *src = nodeFactory.getValueForNode(srcIndex);
   const llvm::Value *dst = nodeFactory.getValueForNode(dstIndex);
-  assert(src != nullptr && dst != nullptr);
+  if (!src || !dst) return;
 
   // srcCtx is optional
   if (!srcCtx) srcCtx = dstCtx;
@@ -734,7 +732,7 @@ void Andersen::propgateConstraintsToFields(AndersConstraint::ConstraintType type
   // I instead opt to conservatively assume lookupFields returns ALL possible fields.
   // It is very important to note that the unused fields will be optimized out prior to solving.
   if (fields.size() == 1 && fields[0].empty()) {
-    createAllFields(src, srcCtx, {});
+    createAllFields(src, srcCtx, src->getType(), {});
     fields = nodeFactory.lookupFields(AndersNode::VALUE_NODE, srcCtx, src);
   }
 
