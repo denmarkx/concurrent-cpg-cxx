@@ -628,9 +628,13 @@ void Andersen::addArgumentConstraintForCall(const Context *calleeCtx,
         assert(aIndex != AndersNodeFactory::InvalidIndex &&
                "Failed to find actual arg node!");
 
-        const Type *sourceType = nodeFactory.typeInfo.resolveType(actual);
-        if (sourceType && sourceType->isAggregateType())
-          propgateConstraintsToFields(AndersConstraint::COPY, fIndex, aIndex, sourceType, calleeCtx, context);
+
+        // TODO: we need to figure out a way to make it clear when we want this shit to propagate.
+        if (!isa<GetElementPtrInst>(actual)) {
+          const Type *sourceType = nodeFactory.typeInfo.resolveType(actual);
+          if (sourceType && sourceType->isAggregateType())
+            propgateConstraintsToFields(AndersConstraint::COPY, fIndex, aIndex, sourceType, calleeCtx, context);
+        }
         constraints.emplace_back(AndersConstraint::COPY, fIndex, aIndex);
       } else
         constraints.emplace_back(AndersConstraint::COPY, fIndex,
