@@ -629,10 +629,9 @@ void Andersen::addArgumentConstraintForCall(const Context *calleeCtx,
                "Failed to find actual arg node!");
 
         const Type *sourceType = nodeFactory.typeInfo.resolveType(actual);
-        // if ((sourceType && sourceType->isAggregateType()) || (cs->getCalledFunction()->getName().str() == "F2"))
-        propgateConstraintsToFields(AndersConstraint::COPY, fIndex, aIndex, calleeCtx, context);
-        // else
-        // constraints.emplace_back(AndersConstraint::COPY, fIndex, aIndex);
+        if (sourceType && sourceType->isAggregateType())
+          propgateConstraintsToFields(AndersConstraint::COPY, fIndex, aIndex, sourceType, calleeCtx, context);
+        constraints.emplace_back(AndersConstraint::COPY, fIndex, aIndex);
       } else
         constraints.emplace_back(AndersConstraint::COPY, fIndex,
                                  nodeFactory.getUniversalPtrNode());
@@ -709,7 +708,7 @@ void Andersen::createAllFields(const Value *v, const Context *ctx, const Type* c
  *
 */
 void Andersen::propgateConstraintsToFields(AndersConstraint::ConstraintType type,
-    NodeIndex dstIndex, NodeIndex srcIndex, const Context* dstCtx, const Context* srcCtx) {
+    NodeIndex dstIndex, NodeIndex srcIndex, const Type *srcType, const Context* dstCtx, const Context* srcCtx) {
   assert(dstCtx != nullptr);
 
   const llvm::Value *src = nodeFactory.getValueForNode(srcIndex);
@@ -718,8 +717,6 @@ void Andersen::propgateConstraintsToFields(AndersConstraint::ConstraintType type
 
   // srcCtx is optional
   if (!srcCtx) srcCtx = dstCtx;
-
-  constraints.emplace_back(type, dstIndex, srcIndex);
 
   // Lookup the associated fields that we know about already:
   auto fields = nodeFactory.lookupFields(AndersNode::VALUE_NODE, srcCtx, src);
@@ -732,7 +729,7 @@ void Andersen::propgateConstraintsToFields(AndersConstraint::ConstraintType type
   // I instead opt to conservatively assume lookupFields returns ALL possible fields.
   // It is very important to note that the unused fields will be optimized out prior to solving.
   if (fields.size() == 1 && fields[0].empty()) {
-    createAllFields(src, srcCtx, src->getType(), {});
+    createAllFields(src, srcCtx, srcType, {});
     fields = nodeFactory.lookupFields(AndersNode::VALUE_NODE, srcCtx, src);
   }
 

@@ -114,7 +114,7 @@ private:
   void createAllFields(const Value*, const Context*, const Type*, SmallVector<unsigned int, 4>);
   void createField(const Value*, const Context*, SmallVector<unsigned int, 4>);
   void propgateConstraintsToFields(AndersConstraint::ConstraintType type,
-    NodeIndex dst, NodeIndex src, const Context* dstCtx, const Context* srcCtx=nullptr);
+    NodeIndex dst, NodeIndex src, const Type* srcType, const Context* dstCtx, const Context* srcCtx=nullptr);
 
   // Helper functions for constraint optimization
   NodeIndex getRefNodeIndex(NodeIndex n) const;

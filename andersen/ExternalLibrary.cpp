@@ -211,9 +211,8 @@ bool Andersen::addConstraintForExternalLibrary(const Context* context,
 
     const Type *sourceType = nodeFactory.typeInfo.resolveType(cs->getArgOperand(1));
     if (sourceType && sourceType->isAggregateType())
-      propgateConstraintsToFields(AndersConstraint::COPY, arg0Index, arg1Index, context);
-    else
-      constraints.emplace_back(AndersConstraint::COPY, arg0Index, arg1Index);
+      propgateConstraintsToFields(AndersConstraint::COPY, arg0Index, arg1Index, sourceType, context);
+    constraints.emplace_back(AndersConstraint::COPY, arg0Index, arg1Index);
 
     // Don't forget the return value
     NodeIndex retIndex = nodeFactory.getValueNodeFor(context, cs);

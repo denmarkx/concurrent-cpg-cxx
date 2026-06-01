@@ -171,6 +171,10 @@ bool Andersen::addConstraint(AndersConstraint::ConstraintType type, const llvm::
     if (!lhs || !rhs) return false;
     if (!lhs->getType()->isPointerTy() || !rhs->getType()->isPointerTy()) return false;
 
+    const Type *lhsType = lhs->getType();
+    if (argument)
+        lhsType = nodeFactory.typeInfo.resolveType(lhs);
+
     bool constraintAdded = false;
     for (const Context *ctx : nodeFactory.getAssociatedContexts(lhs)) {
         NodeIndex leftIdx = nodeFactory.getValueNodeFor(ctx, lhs);
@@ -193,8 +197,8 @@ bool Andersen::addConstraint(AndersConstraint::ConstraintType type, const llvm::
         // 1365 callee, 8221 routine
         // 1365 callee ctx, _4.i27 = 5205
         // ctx = the ctx of the routine
-        if (ctx->prevCtx && argument)
-            propgateConstraintsToFields(type, leftIdx, rightIdx, ctx, ctx->prevCtx);
+        if (ctx->prevCtx && argument && lhsType->isAggregateType())
+            propgateConstraintsToFields(type, leftIdx, rightIdx, lhsType, ctx, ctx->prevCtx);
         else
             constraints.emplace_back(type, leftIdx, rightIdx);
         constraintAdded = true;
