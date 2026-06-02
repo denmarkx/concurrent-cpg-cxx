@@ -137,10 +137,28 @@ EdgeInfo ControlFlowGraph::getProcessedEdges() const {
     return info;
 }
 
-const std::unordered_map<Node*, std::vector<CFGEdge>>& ControlFlowGraph::getEdges() {
-    return _edges;
-}
+/*
+ * Returns a 
+*/
+std::vector<Node*> ControlFlowGraph::traverse(Node* start) {
+    std::vector<Node*> s{start};
+    std::queue<Node*> q;
+    q.push(start);
 
+    while (!q.empty()) {
+        Node *n = q.front();
+        q.pop();
+        for (auto edge : _edges[n]) {
+            s.push_back(edge.end);
+            q.push(edge.end);
+        }
+    }
+
+    for (auto &v : s) {
+        errs() << v->getName() << "\n";
+    }
+    return s;
+}
 
 ControlFlowGraph* ControlFlowGraph::get() { return _graph; }
 ControlFlowGraph* ControlFlowGraph::_graph = nullptr;

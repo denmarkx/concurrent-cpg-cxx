@@ -6,20 +6,23 @@
 bool GraphBuilderProcessPass::runOnModule(Module &M) {
     ConcurrencyPass *pass = new ConcurrencyPass();
     pass->handleGlobals(M.globals());
-    pass->run();
+    // pass->run();
 
-    const Function *F = M.getFunction("_ZN4core3ops8function6FnOnce40call_once$u7b$$u7b$vtable.shim$u7d$$u7d$17h0bf3243cbfc3701cE");
-    // GraphManager::get()->getAliasResult()->printPointsToSet(F->getArg(0));
+    // const Function *F = M.getFunction("_ZN4core3ops8function6FnOnce40call_once$u7b$$u7b$vtable.shim$u7d$$u7d$17h0bf3243cbfc3701cE");
+    // // GraphManager::get()->getAliasResult()->printPointsToSet(F->getArg(0));
 
-    const Function *F2 = M.getFunction("_ZN3std6thread7Builder16spawn_unchecked_28_$u7b$$u7b$closure$u7d$$u7d$17hcac0d9034fc41565E");
-    GraphManager::get()->getAliasResult()->printPointsToSet(F2->getArg(0));
-    errs() << "============ F2 =================\n";
+    // const Function *F2 = M.getFunction("_ZN3std6thread7Builder16spawn_unchecked_28_$u7b$$u7b$closure$u7d$$u7d$17hcac0d9034fc41565E");
+    // GraphManager::get()->getAliasResult()->printPointsToSet(F2->getArg(0));
+    // errs() << "============ F2 =================\n";
 
-    const Function *F3 = M.getFunction("_ZN3std6thread7Builder16spawn_unchecked_28_$u7b$$u7b$closure$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$17h36633d4df7a099c3E");
-    GraphManager::get()->getAliasResult()->printPointsToSet(F3->getArg(0));
+    // const Function *F3 = M.getFunction("_ZN3std6thread7Builder16spawn_unchecked_28_$u7b$$u7b$closure$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$17h36633d4df7a099c3E");
+    // GraphManager::get()->getAliasResult()->printPointsToSet(F3->getArg(0));
 
     ControlFlowGraph *cfg = new ControlFlowGraph();
     cfg->parseModule(M);
+
+    const Function *n = M.getFunction("main");
+    cfg->traverse(GraphManager::get()->getNode(n));
     return false;
 }
 

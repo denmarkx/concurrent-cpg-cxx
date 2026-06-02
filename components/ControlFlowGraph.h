@@ -3,6 +3,7 @@
 #include "graph/BasicBlockNode.h"
 #include "llvm/IR/InstrTypes.h"
 #include <array>
+#include <stack>
 
 enum CFGEdgeType {
     COND_TRUE,
@@ -44,7 +45,7 @@ public:
     void parseModule(const Module& module);
     EdgeInfo getProcessedEdges() const;
 
-    const std::unordered_map<Node*, std::vector<CFGEdge>>& getEdges();
+    std::vector<Node*> traverse(Node*);
 
     static ControlFlowGraph* get();
     static ControlFlowGraph* _graph;
