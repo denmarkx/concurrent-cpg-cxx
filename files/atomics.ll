@@ -6,27 +6,34 @@ target triple = "x86_64-pc-linux-gnu"
 @count = dso_local global i32 0, align 4
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local void @routine() #0 {
-  %1 = atomicrmw add ptr @count, i32 1 seq_cst, align 4
-  ret void
+define dso_local ptr @routine(ptr noundef %0) #0 {
+  store atomic i32 100, ptr @count release, align 4
+  ret ptr null
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local void @secondary() #0 {
-  %1 = atomicrmw add ptr @count, i32 1 seq_cst, align 4
-  ret void
+define dso_local ptr @secondary(ptr noundef %0) #0 {
+  %v = load atomic i32, ptr @count acquire, align 4
+  ret ptr null
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define dso_local i32 @main() #0 {
   %1 = alloca i32, align 4
+  %2 = alloca i64, align 8
+  %3 = alloca i64, align 8
   store i32 0, ptr %1, align 4
-  call void @routine()
-  call void @secondary()
+  %4 = call i32 @pthread_create(ptr noundef %2, ptr noundef null, ptr noundef @routine, ptr noundef null) #2
+  %5 = call i32 @pthread_create(ptr noundef %3, ptr noundef null, ptr noundef @secondary, ptr noundef null) #2
   ret i32 0
 }
 
+; Function Attrs: nounwind
+declare i32 @pthread_create(ptr noundef, ptr noundef, ptr noundef, ptr noundef) #1
+
 attributes #0 = { noinline nounwind optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #1 = { nounwind "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #2 = { nounwind }
 
 !llvm.module.flags = !{!0, !1, !2, !3, !4}
 !llvm.ident = !{!5}

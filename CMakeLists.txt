@@ -48,6 +48,7 @@ target_link_libraries(Andersen PUBLIC ${LLVM_LIBS})
 
 set(FILES
     components/ControlFlowGraph.cxx
+    components/HappensBeforeGraph.cxx
     components/BidirectionalCallGraph.cxx
     components/LTOLibCManager.cxx
     graph/GraphManager.cxx

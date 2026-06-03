@@ -5,6 +5,7 @@
 
 #include "Node.h"
 #include "components/ControlFlowGraph.h"
+#include "components/HappensBeforeGraph.h"
 #include <stdexcept>
 #include <tuple>
 #include <unordered_map>
@@ -96,6 +97,10 @@ void GraphBuilder::persistAll() {
     auto cfgEdges = ControlFlowGraph::get()->getProcessedEdges();
     rels.reserve(rels.size() + cfgEdges.size());
     rels.insert(rels.end(), cfgEdges.begin(), cfgEdges.end());
+
+    auto hbEdges = HappensBeforeGraph::get()->getProcessedEdges();
+    rels.reserve(rels.size() + hbEdges.size());
+    rels.insert(rels.end(), hbEdges.begin(), hbEdges.end());
 
     size_t numEdgeBatches = (rels.size() + batchSize - 1) / batchSize;
     for (size_t batch = 0; batch < numEdgeBatches; batch++) {

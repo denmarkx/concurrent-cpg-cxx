@@ -1,6 +1,9 @@
 #include "passes/GraphBuilderProcessPass.h"
 #include "components/ControlFlowGraph.h"
+#include "components/HappensBeforeGraph.h"
 #include "concurrency/ConcurrencyPass.h"
+#include "graph/AtomicRMWNode.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 
 bool GraphBuilderProcessPass::runOnModule(Module &M) {
@@ -21,8 +24,24 @@ bool GraphBuilderProcessPass::runOnModule(Module &M) {
     ControlFlowGraph *cfg = new ControlFlowGraph();
     cfg->parseModule(M);
 
+    HappensBeforeGraph *hbg = new HappensBeforeGraph();
+
     const Function *n = M.getFunction("main");
-    cfg->traverse(GraphManager::get()->getNode(n));
+    for (const auto &bb : *n) {
+        for (const auto &i : bb) {
+            if (i.getOpcode() == Instruction::Call) {
+                ThreadNode *x = GraphManager::get()->getNode<ThreadNode>(&i);
+                HappensBeforeGraph::get()->build(x);
+            }
+        }
+    }
+    // cfg->traverse(GraphManager::get()->getNode(n));
+
+    // ∀ release, ∀ acquire: mayalias(robj, aobj) -> r hb a
+    // probably be better if we track these lazily
+    for (AtomicRMWNode *n : GraphManager::get()->getAllNodesOf<AtomicRMWNode>()) {
+        
+    }
     return false;
 }
 

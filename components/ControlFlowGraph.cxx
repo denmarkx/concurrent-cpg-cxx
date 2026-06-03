@@ -1,4 +1,5 @@
 #include "components/ControlFlowGraph.h"
+#include "concurrency/ThreadNode.h"
 #include "graph/CallNode.h"
 #include "graph/FunctionNode.h"
 #include "graph/GraphManager.h"
@@ -12,6 +13,7 @@
 
 ControlFlowGraph::ControlFlowGraph() { _graph = this; };
 
+// TODO: i dont know why this doesnt flow through nodes instead of doing this raw instruction shit
 void ControlFlowGraph::parseModule(const Module& module) {
     for (const Function &f : module) {
         if (f.isIntrinsic()) continue;
@@ -43,14 +45,20 @@ void ControlFlowGraph::parseModule(const Module& module) {
                         const CallBase *call = dyn_cast<CallBase>(&instr);
                         assert(call != nullptr);
 
-                        if (!call->getCalledFunction()) break; // TODO
-                        if (call->getCalledFunction()->isIntrinsic() || call->isInlineAsm()) break;
-
                         Node *node = GraphManager::get()->getNode(call);
                         assert(node != nullptr);
 
                         Node *toNode = GraphManager::get()->getNode(call->getCalledFunction());
                         assert(toNode != nullptr);
+
+                        // TODO: see top TODO because this is shit
+                        if (ThreadNode *tNode = dynamic_cast<ThreadNode*>(node)) {
+                            _edges[node].push_back( CFGEdge { node, tNode->getRoutine(), CFGEdgeType::CALL } ); 
+                            break;
+                        }
+
+                        if (!call->getCalledFunction()) break; // TODO
+                        if (call->getCalledFunction()->isIntrinsic() || call->isInlineAsm()) break;
 
                         _edges[node].push_back( CFGEdge { node, toNode, CFGEdgeType::CALL } );
 
@@ -109,11 +117,15 @@ void ControlFlowGraph::parseModule(const Module& module) {
 
                 // If our previous node was a call, then we switch that to be the called function's terminators:
                 // TODO: the determination of function terminators should be delegated to FunctionNode and not here
-                if (CallNode *callNode = dynamic_cast<CallNode*>(prevNode)) {
-                    for (const BasicBlock& fbb : *callNode->getCalledFunction()) {
-                        // errs() << *(&*fbb.begin() + fbb.size()-2) << "\n";
-                        // I suppose the problem here is that there may not always be a Node instance of this instr because its non SSA.
-                        prevNode = GraphManager::get()->getNode(&*fbb.begin() + fbb.size()-2);
+                if (prevNode) {
+                    if (CallNode *callNode = dynamic_cast<CallNode*>(prevNode)) {
+                        if (callNode->getCalledFunction()) {
+                          for (const BasicBlock& fbb : *callNode->getCalledFunction()) {
+                              // errs() << *(&*fbb.begin() + fbb.size()-2) << "\n";
+                              // I suppose the problem here is that there may not always be a Node instance of this instr because its non SSA.
+                              prevNode = GraphManager::get()->getNode(&*fbb.begin() + fbb.size()-2);
+                          }
+                      }
                     }
                 }
 
