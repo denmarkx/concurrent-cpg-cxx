@@ -157,6 +157,16 @@ public:
         }
     }
 
+    Node* getCalledFunctionNode() const {
+        if (_functions.empty()) return nullptr;
+        return _functions[0];
+    }
+
+    const llvm::Function* getCalledFunction() const {
+        if (_functions.empty()) return nullptr;
+        return dyn_cast<Function>(_functions[0]->getValue());
+    }
+
 private:
     std::vector<Node*> _arguments;
     std::vector<Node*> _functions;

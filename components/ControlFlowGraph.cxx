@@ -1,4 +1,5 @@
 #include "components/ControlFlowGraph.h"
+#include "graph/CallNode.h"
 #include "graph/FunctionNode.h"
 #include "graph/GraphManager.h"
 #include "graph/Node.h"
@@ -106,6 +107,16 @@ void ControlFlowGraph::parseModule(const Module& module) {
                 if (GraphManager::isNonSSA(instr.getOpcode()))
                     continue;
 
+                // If our previous node was a call, then we switch that to be the called function's terminators:
+                // TODO: the determination of function terminators should be delegated to FunctionNode and not here
+                if (CallNode *callNode = dynamic_cast<CallNode*>(prevNode)) {
+                    for (const BasicBlock& fbb : *callNode->getCalledFunction()) {
+                        // errs() << *(&*fbb.begin() + fbb.size()-2) << "\n";
+                        // I suppose the problem here is that there may not always be a Node instance of this instr because its non SSA.
+                        prevNode = GraphManager::get()->getNode(&*fbb.begin() + fbb.size()-2);
+                    }
+                }
+
                 Node *node = GraphManager::get()->getNode(&instr);
 
                 if (prevNode && node)
@@ -138,7 +149,8 @@ EdgeInfo ControlFlowGraph::getProcessedEdges() const {
 }
 
 /*
- * Returns a 
+ * Interprocedural DFG from parameter to end of CFG.
+ * TODO: will probably loop for a cycle
 */
 std::vector<Node*> ControlFlowGraph::traverse(Node* start) {
     std::vector<Node*> s{start};
@@ -152,10 +164,6 @@ std::vector<Node*> ControlFlowGraph::traverse(Node* start) {
             s.push_back(edge.end);
             q.push(edge.end);
         }
-    }
-
-    for (auto &v : s) {
-        errs() << v->getName() << "\n";
     }
     return s;
 }
