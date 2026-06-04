@@ -2,9 +2,9 @@
 #include "components/ControlFlowGraph.h"
 #include "components/HappensBeforeGraph.h"
 #include "concurrency/ConcurrencyPass.h"
-#include "graph/AtomicRMWNode.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/Support/AtomicOrdering.h"
 
 bool GraphBuilderProcessPass::runOnModule(Module &M) {
     ConcurrencyPass *pass = new ConcurrencyPass();
@@ -39,8 +39,13 @@ bool GraphBuilderProcessPass::runOnModule(Module &M) {
 
     // ∀ release, ∀ acquire: mayalias(robj, aobj) -> r hb a
     // probably be better if we track these lazily
-    for (AtomicRMWNode *n : GraphManager::get()->getAllNodesOf<AtomicRMWNode>()) {
-        
+    errs() << "trying to get atomic stores for: " << (int)(AtomicOrdering::Release) << "\n";
+    for (const auto &x : GraphManager::get()->getAtomicStores(AtomicOrdering::Release)) {
+        errs() << "x = " << x.dst->getName() << "\n";
+        for (const auto &y : GraphManager::get()->getAtomicLoads(AtomicOrdering::Acquire, x.dst)) {
+            errs() << "y = " << y->getName() << "\n";
+            errs() << GraphManager::get()->getAliasResult()->alias(x.dst->getValue(), y->getValue()) << "\n";
+        }
     }
     return false;
 }

@@ -5,6 +5,7 @@
 
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/AtomicOrdering.h"
+#include <atomic>
 
 class LoadNode : public Node {
 public:
@@ -18,7 +19,8 @@ public:
 
         Node* srcNode = GraphManager::get()->getNode(src);
         if (srcNode == nullptr) return node;
-        
+        node->_src = srcNode;
+
         if (I->isAtomic()) {
             node->registerLoadEdge(srcNode);
             node->handleAtomicInstruction(I);
@@ -36,5 +38,9 @@ public:
     void handleAtomicInstruction(const LoadInst *instr) {
         addProperty("isAtomic", "true");
         addProperty("ordering", toIRString(instr->getOrdering()));
+        atomicType = instr->getOrdering();
     }
+
+    AtomicOrdering atomicType = AtomicOrdering::NotAtomic;
+    Node *_src = nullptr;
 };

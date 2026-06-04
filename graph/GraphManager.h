@@ -16,6 +16,12 @@
 using namespace std;
 using namespace llvm;
 
+struct StoreInfo {
+    Node *src;
+    Node *dst;
+    AtomicOrdering atomicType;
+};
+
 class GraphManager {
     using MSSAGet = std::function<MemorySSA &(Function &)>;
 
@@ -52,6 +58,10 @@ public:
 
     bool alias(const Value* v1, const Value* v2);
 
+    void insertStore(Node *src, Node *dst, AtomicOrdering atomicType = AtomicOrdering::NotAtomic);
+    std::vector<StoreInfo> getAtomicStores(AtomicOrdering atomicType);
+    std::vector<Node*> getAtomicLoads(AtomicOrdering atomicType, Node *node);
+
     void setAliasResult(Andersen &AA);
     Andersen* getAliasResult() const;
 
@@ -81,6 +91,7 @@ public:
 private:
     std::vector<Node*> _nodes;
     std::unordered_map<const Value*, Node*> _valueNodeMap;
+    std::vector<StoreInfo> _stores;
     // std::unordered_map<const Function*, MemorySSA*> _memorySSAMap;
 
     Andersen* _AA;

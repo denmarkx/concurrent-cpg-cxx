@@ -7,6 +7,7 @@
 #include "NullNode.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/MemoryLocation.h"
+#include "llvm/Support/AtomicOrdering.h"
 
 GraphManager::GraphManager() {}
 
@@ -76,6 +77,27 @@ bool GraphManager::alias(const Value* v1, const Value* v2) {
     return false;
 }
 
+void GraphManager::insertStore(Node *src, Node *dst, AtomicOrdering atomicType) {
+    _stores.push_back({src, dst, atomicType});
+}
+
+std::vector<StoreInfo> GraphManager::getAtomicStores(AtomicOrdering atomicType) {
+    std::vector<StoreInfo> s;
+    for (const auto &x : _stores) {
+        if (x.atomicType == atomicType)
+            s.push_back(x);
+    }
+    return s;
+}
+
+std::vector<Node*> GraphManager::getAtomicLoads(AtomicOrdering atomicType, Node *node) {
+    std::vector<Node*> s;
+    for (const auto &x : getAllNodesOf<LoadNode>()) {
+        if (x->atomicType == atomicType && x->_src == node) 
+            s.push_back(x->_src);
+    }
+    return s;
+}
 
 void GraphManager::setMemorySSACall(MSSAGet getter) { 
     _mssaGetter = std::move(getter);

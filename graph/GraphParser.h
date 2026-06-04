@@ -86,9 +86,11 @@ namespace GraphParser {
         if (srcNode && destNode) {
             if (instr->isAtomic()) {
                 srcNode->registerAtomicStoreEdge(destNode, store);
+                GraphManager::get()->insertStore(srcNode, destNode, store->getOrdering());
                 return nullptr;
             }
             srcNode->registerStoreEdge(destNode);
+            GraphManager::get()->insertStore(srcNode, destNode);
         }
         return nullptr;
     }
