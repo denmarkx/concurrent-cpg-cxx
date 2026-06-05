@@ -43,4 +43,7 @@ public:
 
     AtomicOrdering atomicType = AtomicOrdering::NotAtomic;
     Node *_src = nullptr;
+
+private:
+    NodeType _type = NodeType::LOAD;
 };

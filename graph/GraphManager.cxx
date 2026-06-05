@@ -126,4 +126,28 @@ LTOLibCManager* GraphManager::getLTOMgr() {
     return _ltoMgr;
 }
 
+const llvm::Value* GraphManager::getMemoryObj(const llvm::Value *ptr) {
+    const llvm::Value *obj = llvm::getUnderlyingObject(ptr, 8);
+
+    if (llvm::isa<llvm::GlobalValue>(obj) || llvm::isa<llvm::AllocaInst>(obj))
+        return obj;
+
+    if (auto *callInst = dyn_cast<CallInst>(obj)) {
+        if (isHeapAllocator(callInst->getCalledFunction()))
+            return callInst;
+    }
+
+    // TODO: need to go through AA
+    return nullptr;
+}
+
+bool GraphManager::isHeapAllocator(llvm::Function *func) {
+    if (!func) return false;
+    StringRef name = func->getName();
+    return name == "malloc" || name == "calloc" || name == "realloc" || name == "__rust_alloc" \
+        || name == "exchange_malloc" || name == "_Znwm" || name == "_Znam" || func->hasFnAttribute(Attribute::AllocSize);
+}
+
+
+
 GraphManager* GraphManager::_graph = nullptr;

@@ -18,6 +18,16 @@ using namespace llvm;
 struct AccessPath;
 struct Edge;
 
+enum NodeType {
+    STORE,
+    LOAD,
+    ATOMIC_STORE,
+    ATOMIC_LOAD,
+    ATOMIC_RMW,
+    ATOMIC_CMPXCHG,
+    DEFAULT_TYPE,
+};
+
 class Node {
 public:
     Node(const Value* value, const std::string label);
@@ -55,6 +65,8 @@ public:
     void addEdge(std::string name, Node* end, std::unordered_map<std::string, std::string> properties);
     bool hasEdge(std::string name, Node* end);
 
+    NodeType getType();
+
 private:
     void setDefaultProperties(const Value *value);
     void handleDebugInfo(const Instruction *instr);
@@ -63,6 +75,8 @@ private:
 
     unsigned int _id;
     std::string _label = "Node";
+
+    NodeType _type = NodeType::DEFAULT_TYPE;
 
     const Value* _value;
 

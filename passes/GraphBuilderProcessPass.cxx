@@ -35,6 +35,28 @@ bool GraphBuilderProcessPass::runOnModule(Module &M) {
             }
         }
     }
+
+    // this is sort of illogical, but just testing the transitive closure i guess
+    const Function *f = M.getFunction("secondary");
+    for (const auto &bb : *f) {
+        for (const auto &i : bb) {
+            if (i.getOpcode() == Instruction::Load) {
+                errs() << "hb = " << HappensBeforeGraph::get()->happensBefore(
+                    GraphManager::get()->getNode(f),
+                    GraphManager::get()->getNode(&i)
+                ) << "\n";
+            }
+        }
+    }
+
+    const Function *f2 = M.getFunction("routine");
+
+    errs() << "hb xxx = " << HappensBeforeGraph::get()->happensBefore(
+        GraphManager::get()->getNode(f),
+        GraphManager::get()->getNode(f2)
+    ) << "\n";
+
+
     // cfg->traverse(GraphManager::get()->getNode(n));
 
     // ∀ release, ∀ acquire: mayalias(robj, aobj) -> r hb a

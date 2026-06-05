@@ -143,3 +143,7 @@ const std::unordered_map<std::string, std::string>& Node::getProperties() const 
 const Value* Node::getValue() const {
     return _value;
 }
+
+NodeType Node::getType() {
+    return _type;
+}

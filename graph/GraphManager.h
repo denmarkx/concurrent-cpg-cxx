@@ -53,6 +53,10 @@ public:
         return singles;
     }
 
+    std::vector<Node*> getNodes() {
+        return _nodes;
+    }
+
     bool hasNode(const Value* value);
     Node* getNodeOrNull(const Value *value);
 
@@ -76,6 +80,9 @@ public:
 
     static GraphManager* get();
     static GraphManager* _graph;
+
+    const llvm::Value* getMemoryObj(const llvm::Value *ptr);
+    bool isHeapAllocator(llvm::Function *func);
 
 public:
     static constexpr std::array<uint8_t, 3> NonSSACodes = {
