@@ -6,36 +6,41 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/AtomicOrdering.h"
 
-class LoadNode : public Node {
+class StoreNode : public Node {
 public:
-    LoadNode(const LoadInst *I) : Node(I, "LoadInst") {}
+    StoreNode(const StoreInst *I) : Node(I, "StoreInst") {}
 
-    static LoadNode* make(const LoadInst *I) {
-        LoadNode *node = new LoadNode(I);
+    static StoreNode* make(const StoreInst *I) {
+        StoreNode *node = new StoreNode(I);
 
         Value* src = I->getOperand(0);
+        Value* dst = I->getOperand(1);
         if (src == nullptr) return nullptr;
+        if (dst == nullptr) return nullptr;
 
         Node* srcNode = GraphManager::get()->getNode(src);
         if (srcNode == nullptr) return node;
         node->_src = srcNode;
-        node->ptr = src;
+
+        Node* dstNode = GraphManager::get()->getNode(dst);
+        if (dstNode == nullptr) return node;
+        node->ptr = dst;
 
         if (I->isAtomic()) {
-            node->registerLoadEdge(srcNode);
+            // node->registerLoadEdge(srcNode);
             node->handleAtomicInstruction(I);
             return node;
         }
 
-        node->registerLoadEdge(srcNode);
+        // node->registerLoadEdge(srcNode);
         return node;
     }
 
-    void registerLoadEdge(Node* source) {
-        addEdge("DEREFERENCES", source);
-    }
+    // void registerStoreEdge(Node* source) {
+    //     addEdge("STORE", source);
+    // }
 
-    void handleAtomicInstruction(const LoadInst *instr) {
+    void handleAtomicInstruction(const StoreInst *instr) {
         addProperty("isAtomic", "true");
         addProperty("ordering", toIRString(instr->getOrdering()));
         atomicType = instr->getOrdering();
@@ -44,8 +49,8 @@ public:
     AtomicOrdering atomicType = AtomicOrdering::NotAtomic;
     Node *_src = nullptr;
 
-    NodeType getType() { return NodeType::LOAD; }
+    NodeType getType() { return NodeType::STORE; }
 
 private:
-    NodeType _type = NodeType::LOAD;
+    NodeType _type = NodeType::STORE;
 };

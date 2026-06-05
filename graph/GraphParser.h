@@ -37,6 +37,7 @@
 #include "graph/LiteralNode.h"
 #include "graph/MutexNode.h"
 #include "graph/PhiNode.h"
+#include "graph/StoreNode.h"
 #include "graph/SwitchNode.h"
 #include "llvm/Pass.h"
 #include <stdexcept>
@@ -87,12 +88,12 @@ namespace GraphParser {
             if (instr->isAtomic()) {
                 srcNode->registerAtomicStoreEdge(destNode, store);
                 GraphManager::get()->insertStore(srcNode, destNode, store->getOrdering());
-                return nullptr;
+            } else {
+                srcNode->registerStoreEdge(destNode);
+                GraphManager::get()->insertStore(srcNode, destNode);
             }
-            srcNode->registerStoreEdge(destNode);
-            GraphManager::get()->insertStore(srcNode, destNode);
         }
-        return nullptr;
+        return handleNode<StoreNode, StoreInst>(instr);
     }
 
     inline Node* handleReturn(const Instruction *instr) {

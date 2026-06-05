@@ -49,6 +49,7 @@ public:
     void registerCopyEdge(Node* node);
     void registerGEPEdge(Node* node);
     void registerFieldEdge(Node* node);
+    llvm::Value *ptr = nullptr;
 
     // TODO: i also disagree with this being in here since
     // cfg is not necessarily per-instruction..
@@ -65,7 +66,7 @@ public:
     void addEdge(std::string name, Node* end, std::unordered_map<std::string, std::string> properties);
     bool hasEdge(std::string name, Node* end);
 
-    NodeType getType();
+    virtual NodeType getType();
 
 private:
     void setDefaultProperties(const Value *value);
