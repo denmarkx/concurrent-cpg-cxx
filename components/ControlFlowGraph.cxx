@@ -173,9 +173,11 @@ std::vector<Node*> ControlFlowGraph::traverse(Node* start) {
         Node *n = q.front();
         q.pop();
         for (auto edge : _edges[n]) {
-            if (ThreadNode *tn = dynamic_cast<ThreadNode*>(n)) {
+
+            // TODO: this doesnt belong in the primary trav func:
+            // Thread routines are done separately.
+            if (ThreadNode *tn = dynamic_cast<ThreadNode*>(n))
                 if (edge.end == tn->getRoutine()) continue;
-            }
 
             s.push_back(edge.end);
             q.push(edge.end);
