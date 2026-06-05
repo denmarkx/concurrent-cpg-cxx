@@ -71,6 +71,10 @@ void RFGraph::add(Node *a, Node *b) {
     _pairs.push_back({a, b});
 }
 
+RFGraphType& RFGraph::pairs() {
+    return _pairs;
+}
+
 RFGraph::RFGraph() { _instance = this; }
 RFGraph* RFGraph::get() { return _instance; }
 RFGraph* RFGraph::_instance = nullptr;

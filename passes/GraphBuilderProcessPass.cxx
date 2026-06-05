@@ -73,6 +73,13 @@ bool GraphBuilderProcessPass::runOnModule(Module &M) {
 
     RFGraph *rfg = new RFGraph();
     rfg->build();
+
+    // better alternative to the shit from above
+    for (auto &[w, r] : rfg->pairs()) {
+        // TODO: need to keep track of thread context on node
+        // for atomics.ll, w is a release and r is an acquire, but that needs to be a cond
+        HappensBeforeGraph::get()->addEdge(w, r);
+    }
     return false;
 }
 
