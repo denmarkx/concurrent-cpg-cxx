@@ -15,6 +15,11 @@ public:
     static RFGraph* _instance;
 
 private:
+    void add(Node*, Node*);
+    bool isValid(Node*, Node*);
+
+private:
     std::unordered_map<const Value*, std::vector<Node*>> _writes;
     std::unordered_map<const Value*, std::vector<Node*>> _reads;
+    std::vector<std::pair<Node*, Node*>> _pairs;
 };

@@ -1,6 +1,7 @@
 #include "passes/GraphBuilderProcessPass.h"
 #include "components/ControlFlowGraph.h"
 #include "components/HappensBeforeGraph.h"
+#include "components/RFGraph.h"
 #include "concurrency/ConcurrencyPass.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
@@ -69,6 +70,9 @@ bool GraphBuilderProcessPass::runOnModule(Module &M) {
             errs() << GraphManager::get()->getAliasResult()->alias(x.dst->getValue(), y->getValue()) << "\n";
         }
     }
+
+    RFGraph *rfg = new RFGraph();
+    rfg->build();
     return false;
 }
 
