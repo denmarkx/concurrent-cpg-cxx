@@ -86,7 +86,7 @@ public:
 
 public:
     static constexpr std::array<uint8_t, 3> NonSSACodes = {
-        Instruction::Store,
+        // Instruction::Store,
         Instruction::Ret,
         Instruction::Br,
     };

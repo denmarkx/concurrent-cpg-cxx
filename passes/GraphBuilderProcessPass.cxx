@@ -28,34 +28,37 @@ bool GraphBuilderProcessPass::runOnModule(Module &M) {
     HappensBeforeGraph *hbg = new HappensBeforeGraph();
 
     const Function *n = M.getFunction("main");
+    hbg->build(GraphManager::get()->getNode<FunctionNode>(n));
     for (const auto &bb : *n) {
         for (const auto &i : bb) {
             if (i.getOpcode() == Instruction::Call) {
                 ThreadNode *x = GraphManager::get()->getNode<ThreadNode>(&i);
-                HappensBeforeGraph::get()->build(x);
+                HappensBeforeGraph::get()->build(dynamic_cast<FunctionNode*>(x->getRoutine()));
             }
         }
     }
+
+    hbg->buildTransitive();
 
     // this is sort of illogical, but just testing the transitive closure i guess
     const Function *f = M.getFunction("secondary");
     for (const auto &bb : *f) {
         for (const auto &i : bb) {
             if (i.getOpcode() == Instruction::Load) {
-                errs() << "hb = " << HappensBeforeGraph::get()->happensBefore(
-                    GraphManager::get()->getNode(f),
-                    GraphManager::get()->getNode(&i)
-                ) << "\n";
+                // errs() << "hb = " << HappensBeforeGraph::get()->happensBefore(
+                    // GraphManager::get()->getNode(f),
+                    // GraphManager::get()->getNode(&i)
+                // ) << "\n";
             }
         }
     }
 
     const Function *f2 = M.getFunction("routine");
 
-    errs() << "hb xxx = " << HappensBeforeGraph::get()->happensBefore(
-        GraphManager::get()->getNode(f),
-        GraphManager::get()->getNode(f2)
-    ) << "\n";
+    // errs() << "hb xxx = " << HappensBeforeGraph::get()->happensBefore(
+    //     GraphManager::get()->getNode(f),
+    //     GraphManager::get()->getNode(f2)
+    // ) << "\n";
 
 
     // cfg->traverse(GraphManager::get()->getNode(n));

@@ -25,6 +25,7 @@ define dso_local i32 @main() #0 {
   store i32 0, ptr %1, align 4
   %4 = call i32 @pthread_create(ptr noundef %2, ptr noundef null, ptr noundef @routine, ptr noundef null) #2
   %5 = call i32 @pthread_create(ptr noundef %3, ptr noundef null, ptr noundef @secondary, ptr noundef null) #2
+  %fin = alloca ptr
   ret i32 0
 }
 

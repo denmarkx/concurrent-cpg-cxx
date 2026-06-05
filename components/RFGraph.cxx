@@ -3,16 +3,16 @@
 #include "graph/GraphManager.h"
 
 void RFGraph::build() {
-    for (Node *n : GraphManager::get()->getNodes()) {
-        switch (n->getType()) {
+    for (HBNode *n : HappensBeforeGraph::get()->getNodes()) {
+        switch (n->node->getType()) {
             case NodeType::STORE: {
-                errs() << "writes for k = " << *GraphManager::get()->getMemoryObj(n->ptr) << "\n";
-                _writes[GraphManager::get()->getMemoryObj(n->ptr)].push_back(n);
+                errs() << "writes for k = " << *GraphManager::get()->getMemoryObj(n->node->ptr) << "\n";
+                _writes[GraphManager::get()->getMemoryObj(n->node->ptr)].push_back(n);
                 break;
             }
             case NodeType::LOAD: {
-                errs() << "reads for k = " << *GraphManager::get()->getMemoryObj(n->ptr) << "\n";
-                _reads[GraphManager::get()->getMemoryObj(n->ptr)].push_back(n);
+                errs() << "reads for k = " << *GraphManager::get()->getMemoryObj(n->node->ptr) << "\n";
+                _reads[GraphManager::get()->getMemoryObj(n->node->ptr)].push_back(n);
                 break;
             }
             default: break;
@@ -21,11 +21,11 @@ void RFGraph::build() {
 
     for (auto &[obj, reads] : _reads) {
         if (auto it = _writes.find(obj); it != _writes.end()) {
-            for (Node *r : reads) {
-                for (Node *w : it->second) {
+            for (HBNode *r : reads) {
+                for (HBNode *w : it->second) {
                     errs() << "rf graph:\n";
-                    errs() << "  w = " << *w->getValue() << "\n";
-                    errs() << "  r = " << *r->getValue() << "\n";
+                    errs() << "  w = " << *w->node->getValue() << "\n";
+                    errs() << "  r = " << *r->node->getValue() << "\n";
                     add(w, r);
                 }
             }
@@ -35,19 +35,19 @@ void RFGraph::build() {
     }
 }
 
-bool RFGraph::isValid(Node *w, Node *r) {
-    auto check = [&](const std::vector<Node*>& ws) -> bool {
-        for (Node *wp : ws) {
+bool RFGraph::isValid(HBNode *w, HBNode *r) {
+    auto check = [&](const std::vector<HBNode*>& ws) -> bool {
+        for (HBNode *wp : ws) {
             if (wp == w || wp == r) continue;
             if (GraphManager::get()->getAliasResult()->alias(
-               w->ptr, r->ptr) == AliasResult::NoAlias) continue;
+               w->node->ptr, r->node->ptr) == AliasResult::NoAlias) continue;
             if (HappensBeforeGraph::get()->happensBefore(w, wp) &&
                 HappensBeforeGraph::get()->happensBefore(wp, r)) return false;
         }
         return true;
     };
 
-    const Value *rObj = GraphManager::get()->getMemoryObj(r->ptr);
+    const Value *rObj = GraphManager::get()->getMemoryObj(r->node->ptr);
     if (rObj) {
         if (auto it=_writes.find(rObj); it != _writes.end())
             if (!check(it->second)) return false;
@@ -60,12 +60,12 @@ bool RFGraph::isValid(Node *w, Node *r) {
     return true;
 }
 
-void RFGraph::add(Node *a, Node *b) {
+void RFGraph::add(HBNode *a, HBNode *b) {
     if (a == b) return;
 
     // TODO: need to fix graphmanager::alias
     if (GraphManager::get()->getAliasResult()->alias(
-        a->ptr, b->ptr) == AliasResult::NoAlias) return;
+        a->node->ptr, b->node->ptr) == AliasResult::NoAlias) return;
 
     if (HappensBeforeGraph::get()->happensBefore(b, a)) return;
     _pairs.push_back({a, b});

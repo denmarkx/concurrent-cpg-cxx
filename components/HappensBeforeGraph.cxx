@@ -1,11 +1,15 @@
 #include "components/HappensBeforeGraph.h"
 #include "components/ControlFlowGraph.h"
+#include "graph/FunctionNode.h"
 #include <queue>
 #include <unordered_set>
 
-void HappensBeforeGraph::build(ThreadNode *entry) {
+void HappensBeforeGraph::build(FunctionNode *entry) {
+    uint32_t threadId = _registrar.getOrCreate(dyn_cast<Function>(entry->getValue()));
+
     Node *prev = nullptr;
-    for (auto &x : ControlFlowGraph::get()->traverse(entry->getRoutine())) {
+    for (auto &x : ControlFlowGraph::get()->traverse(entry)) {
+        errs() << "next = " << *x->getValue() << "\n";
         if (isa<Function>(x->getValue()))
             errs() << "  --> [F] " << x->getName() << "\n";
         else if (isa<BasicBlock>(x->getValue()))
@@ -13,29 +17,38 @@ void HappensBeforeGraph::build(ThreadNode *entry) {
         else
             errs() << "  --> " << *x->getValue() << "\n";
         if (prev)
-            _graph[prev].push_back(x);
+            addEdge(new HBNode(prev, threadId), new HBNode(x, threadId));
         prev = x;
     }
+}
 
+void HappensBeforeGraph::buildTransitive() {
     computeSCC();
     computeDAG();
     computeReachability();
 }
 
-void HappensBeforeGraph::addEdge(Node *start, Node *end) {
+void HappensBeforeGraph::addEdge(HBNode *start, HBNode *end) {
     _graph[start].push_back(end);
+}
+
+std::vector<HBNode*> HappensBeforeGraph::getNodes() {
+    std::vector<HBNode*> r;
+    for (const auto &[n, c] : _graph)
+        r.push_back(n);
+    return r;
 }
 
 EdgeInfo HappensBeforeGraph::getProcessedEdges() const {
     EdgeInfo info;
 
     for (auto &[root, children] : _graph) {
-        for (const Node *n : children) {
+        for (const HBNode *n : children) {
             info.push_back({
-                std::to_string(root->getId()),
+                std::to_string(root->node->getId()),
                 "HAPPENS_BEFORE",
-                std::to_string(n->getId()),
-                {},
+                std::to_string(n->node->getId()),
+                {{"threadId", std::to_string(n->threadId)}},
             });
         }
     }
@@ -54,7 +67,7 @@ void HappensBeforeGraph::computeSCC() {
     }
 }
 
-void HappensBeforeGraph::connectSCC(Node *n) {
+void HappensBeforeGraph::connectSCC(HBNode *n) {
     _index[n] = _nextIdx;
     _link[n] = _nextIdx;
     _nextIdx++;
@@ -62,7 +75,7 @@ void HappensBeforeGraph::connectSCC(Node *n) {
     _stack.push(n);
     _state[n] = true;
 
-    for (Node *c : _graph[n]) {
+    for (HBNode *c : _graph[n]) {
         if (!_index.contains(c)) {
             connectSCC(c);
             _link[n] = min(_link[n], _link[c]);
@@ -74,9 +87,9 @@ void HappensBeforeGraph::connectSCC(Node *n) {
     if (_link[n] == _index[n]) {
         int sccIdx = _scc.size();
         
-        std::vector<Node*> localScc;
+        std::vector<HBNode*> localScc;
         while(true) {
-            Node *c = _stack.top();
+            HBNode *c = _stack.top();
             _stack.pop();
             _state[c] = false;
             _sccIds[c] = sccIdx;
@@ -93,7 +106,7 @@ void HappensBeforeGraph::computeDAG() {
 
     for (auto &[n, children] : _graph) {
         int idx = _sccIds[n];
-        for (Node *c : children) {
+        for (HBNode *c : children) {
             int cIdx = _sccIds[c];
             if (idx != cIdx)
                 local[idx].insert(cIdx);
@@ -155,7 +168,7 @@ void HappensBeforeGraph::computeReachability() {
     }
 }
 
-bool HappensBeforeGraph::happensBefore(Node *a, Node *b) {
+bool HappensBeforeGraph::happensBefore(HBNode *a, HBNode *b) {
     return _reach[_sccIds[a]].test(_sccIds[b]);
 }
 

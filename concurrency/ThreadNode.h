@@ -44,6 +44,8 @@ public:
         return node;
     }
 
+    const Function *getRoutineFunc() { return dyn_cast<Function>(_routine->getValue()); }
+
     Node* getDataNode() { return _argNode; }
     Node* getRoutine() { return _routine; }
     Node* getHandle() { return _handle; }
