@@ -15,6 +15,7 @@ public:
     void build();
 
     RFGraphType& pairs();
+    std::vector<HBNode*>& getNodes();
 
     static RFGraph* get();
     static RFGraph* _instance;
@@ -26,5 +27,6 @@ private:
 private:
     std::unordered_map<const Value*, std::vector<HBNode*>> _writes;
     std::unordered_map<const Value*, std::vector<HBNode*>> _reads;
+    std::vector<HBNode*> _nodes;
     RFGraphType _pairs;
 };

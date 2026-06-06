@@ -69,6 +69,15 @@ void RFGraph::add(HBNode *a, HBNode *b) {
 
     if (HappensBeforeGraph::get()->happensBefore(b, a)) return;
     _pairs.push_back({a, b});
+
+    if (std::find(_nodes.begin(), _nodes.end(), a) == _nodes.end())
+        _nodes.push_back(a);
+    if (std::find(_nodes.begin(), _nodes.end(), b) == _nodes.end())
+        _nodes.push_back(b);
+}
+
+std::vector<HBNode*>& RFGraph::getNodes() {
+    return _nodes;
 }
 
 RFGraphType& RFGraph::pairs() {

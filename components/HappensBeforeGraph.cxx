@@ -13,15 +13,16 @@ void HappensBeforeGraph::build(FunctionNode *entry) {
         // without knowing about a possible join call.
         if (dynamic_cast<ThreadNode*>(x)) continue;
 
-        errs() << "next = " << *x->getValue() << "\n";
         if (isa<Function>(x->getValue()))
             errs() << "  --> [F] " << x->getName() << "\n";
         else if (isa<BasicBlock>(x->getValue()))
             errs() << "  --> [B] " << x->getName() << "\n";
         else
             errs() << "  --> " << *x->getValue() << "\n";
-        if (prev)
+        if (prev) {
+            errs() << "new HBNode (tId = " << threadId << "\n";
             addEdge(new HBNode(prev, threadId), new HBNode(x, threadId));
+        }
         prev = x;
     }
 }
@@ -52,7 +53,7 @@ EdgeInfo HappensBeforeGraph::getProcessedEdges() const {
                 std::to_string(root->node->getId()),
                 "HAPPENS_BEFORE",
                 std::to_string(n->node->getId()),
-                {{"threadId", std::to_string(n->threadId)}},
+                {{"threadId", std::to_string(root->threadId)}},
             });
         }
     }

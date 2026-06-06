@@ -3,6 +3,7 @@
 #include "components/HappensBeforeGraph.h"
 #include "components/RFGraph.h"
 #include "concurrency/ConcurrencyPass.h"
+#include "graph/GraphManager.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/AtomicOrdering.h"
@@ -79,10 +80,30 @@ bool GraphBuilderProcessPass::runOnModule(Module &M) {
 
     // better alternative to the shit from above
     for (auto &[w, r] : rfg->pairs()) {
-        // TODO: need to keep track of thread context on node
         // for atomics.ll, w is a release and r is an acquire, but that needs to be a cond
-        HappensBeforeGraph::get()->addEdge(w, r);
+        if (w->threadId == r->threadId) continue;
+
+        bool testW = 0; // TODO: needs to check for ordering >= release
+        bool testR = 1; // TODO: check for ordering >= acq
+        if (testW && testR)
+            HappensBeforeGraph::get()->addEdge(w, r);
     }
+    hbg->buildTransitive();
+
+    for (HBNode *a : rfg->getNodes()) {
+        for (HBNode *b : rfg->getNodes()) {
+            if (a->threadId == b->threadId) continue;
+            if (GraphManager::get()->getAliasResult()->alias(a->node->ptr, b->node->ptr) == AliasResult::NoAlias) continue;
+            if (!hbg->happensBefore(a, b) && !hbg->happensBefore(b, a)) {
+                errs() << " === XX ===\n";
+                errs() << "  A (T: " << a->threadId << "): " << *a->node->getValue() << "\n";
+                errs() << "  B (T: " << b->threadId << "): " << *b->node->getValue() << "\n";
+                errs() << "  A <<= B : " << hbg->happensBefore(a, b) << "\n";
+                errs() << "  B <<= A : " << hbg->happensBefore(b, a) << "\n";
+            }
+        }
+    }
+
     return false;
 }
 

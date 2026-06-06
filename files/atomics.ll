@@ -7,7 +7,8 @@ target triple = "x86_64-pc-linux-gnu"
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define dso_local ptr @routine(ptr noundef %0) #0 {
-  store atomic i32 100, ptr @count release, align 4
+  ; store atomic i32 100, ptr @count release, align 4
+  store i32 100, ptr @count, align 4
   ret ptr null
 }
 
