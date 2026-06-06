@@ -45,12 +45,8 @@ void ControlFlowGraph::parseModule(const Module& module) {
                         const CallBase *call = dyn_cast<CallBase>(&instr);
                         assert(call != nullptr);
 
-                        if (call->isInlineAsm()) break;
-
                         Node *node = GraphManager::get()->getNode(call);
-                        if (node == nullptr)
-                            errs() << *call << "\n";
-                        assert(node != nullptr);
+                        if (!node || !call->getCalledFunction()) break;
 
                         Node *toNode = GraphManager::get()->getNode(call->getCalledFunction());
                         assert(toNode != nullptr);
