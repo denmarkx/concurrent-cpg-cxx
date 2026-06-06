@@ -9,9 +9,17 @@ void HappensBeforeGraph::build(FunctionNode *entry) {
 
     Node *prev = nullptr;
     for (auto &x : ControlFlowGraph::get()->traverse(entry)) {
-        // I suppose if we encounter a thread node, we can't reliably add a HB edge
-        // without knowing about a possible join call.
-        if (dynamic_cast<ThreadNode*>(x)) continue;
+        // There exists a HB edge between the spawn call and the first node of the thread
+        // the HB edge will have a threadId of the threadNode's routine.
+        if (ThreadNode *tn = dynamic_cast<ThreadNode*>(x)) {
+            uint32_t childThreadId = _registrar.getOrCreate(tn->getRoutineFunc());
+            addEdge(
+                new HBNode(tn, childThreadId),
+                new HBNode(tn->getRoutine(), childThreadId)
+            );
+        }
+
+        // TODO: thread exit ->_hb corresponding joinnode
 
         if (isa<Function>(x->getValue()))
             errs() << "  --> [F] " << x->getName() << "\n";

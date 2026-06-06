@@ -44,7 +44,11 @@ public:
     AtomicOrdering atomicType = AtomicOrdering::NotAtomic;
     Node *_src = nullptr;
 
-    NodeType getType() { return NodeType::LOAD; }
+    NodeType getType() {
+        if (atomicType != llvm::AtomicOrdering::NotAtomic)
+            return NodeType::ATOMIC_LOAD;
+        return NodeType::LOAD;
+    }
 
 private:
     NodeType _type = NodeType::LOAD;

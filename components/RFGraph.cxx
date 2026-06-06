@@ -5,11 +5,13 @@
 void RFGraph::build() {
     for (HBNode *n : HappensBeforeGraph::get()->getNodes()) {
         switch (n->node->getType()) {
+            case NodeType::ATOMIC_STORE:
             case NodeType::STORE: {
                 errs() << "writes for k = " << *GraphManager::get()->getMemoryObj(n->node->ptr) << "\n";
                 _writes[GraphManager::get()->getMemoryObj(n->node->ptr)].push_back(n);
                 break;
             }
+            case NodeType::ATOMIC_LOAD:
             case NodeType::LOAD: {
                 errs() << "reads for k = " << *GraphManager::get()->getMemoryObj(n->node->ptr) << "\n";
                 _reads[GraphManager::get()->getMemoryObj(n->node->ptr)].push_back(n);

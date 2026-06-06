@@ -45,7 +45,11 @@ void ControlFlowGraph::parseModule(const Module& module) {
                         const CallBase *call = dyn_cast<CallBase>(&instr);
                         assert(call != nullptr);
 
+                        if (call->isInlineAsm()) break;
+
                         Node *node = GraphManager::get()->getNode(call);
+                        if (node == nullptr)
+                            errs() << *call << "\n";
                         assert(node != nullptr);
 
                         Node *toNode = GraphManager::get()->getNode(call->getCalledFunction());
@@ -178,6 +182,7 @@ std::vector<Node*> ControlFlowGraph::traverse(Node* start) {
             // Thread routines are done separately.
             if (ThreadNode *tn = dynamic_cast<ThreadNode*>(n))
                 if (edge.end == tn->getRoutine()) continue;
+            if (edge.type == CALL) continue;
 
             s.push_back(edge.end);
             q.push(edge.end);
