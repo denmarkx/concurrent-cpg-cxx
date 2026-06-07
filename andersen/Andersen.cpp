@@ -26,7 +26,7 @@ llvm::AliasResult Andersen::alias(const Value *valueA, const Value *valueB, unsi
     // We may be requesting a specific ctx, but we require both if one is given.
     if (ctxIdA != GenericContextID && ctxIdB != GenericContextID) {
         const Context* ctxA = nodeFactory.getContextByID(ctxIdA);
-        const Context* ctxB = nodeFactory.getContextByID(ctxIdA);
+        const Context* ctxB = nodeFactory.getContextByID(ctxIdB);
         assert(ctxA != nullptr || ctxB != nullptr && "Andersen::alias - ctxIdA/B invalid.");
 
         NodeIndex n1 = nodeFactory.getMergeTarget(nodeFactory.getValueNodeFor(ctxA, valueA));

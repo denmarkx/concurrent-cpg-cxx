@@ -3,18 +3,25 @@
 #include "graph/GraphManager.h"
 
 void RFGraph::build() {
+    GraphManager *graph = GraphManager::get();
     for (HBNode *n : HappensBeforeGraph::get()->getNodes()) {
         switch (n->node->getType()) {
             case NodeType::ATOMIC_STORE:
             case NodeType::STORE: {
-                errs() << "writes for k = " << *GraphManager::get()->getMemoryObj(n->node->ptr) << "\n";
-                _writes[GraphManager::get()->getMemoryObj(n->node->ptr)].push_back(n);
+                const Value *memObj = graph->getMemoryObj(n->node->ptr);
+                if (memObj)
+                    _writes[memObj].push_back(n);
+                else
+                    _unknownWrites.push_back(n);
                 break;
             }
             case NodeType::ATOMIC_LOAD:
             case NodeType::LOAD: {
-                errs() << "reads for k = " << *GraphManager::get()->getMemoryObj(n->node->ptr) << "\n";
-                _reads[GraphManager::get()->getMemoryObj(n->node->ptr)].push_back(n);
+                const Value *memObj = graph->getMemoryObj(n->node->ptr);
+                if (memObj)
+                    _reads[memObj].push_back(n);
+                else
+                    _unknownReads.push_back(n);
                 break;
             }
             default: break;
@@ -32,8 +39,19 @@ void RFGraph::build() {
                 }
             }
         }
+        for (HBNode *r : reads) {
+            for (HBNode *w : _unknownWrites)
+                add(w, r);
+        }
+    }
 
-        // TODO: unknown read and writes??
+    for (HBNode *r : _unknownReads) {
+        for (auto& [obj, writes] : _writes) {
+            for (HBNode *w : writes)
+                add(w, r);
+        }
+        for (HBNode *w : _unknownWrites)
+            add(w, r);
     }
 }
 
@@ -58,8 +76,7 @@ bool RFGraph::isValid(HBNode *w, HBNode *r) {
             if (!check(writes)) return false;
     }
 
-    // TODO: unknowns not handled.
-    return true;
+    return check(_unknownWrites);
 }
 
 void RFGraph::add(HBNode *a, HBNode *b) {
