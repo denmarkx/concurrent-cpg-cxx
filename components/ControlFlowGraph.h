@@ -11,6 +11,7 @@ enum CFGEdgeType {
     UNWIND,
     SWITCH,
     CALL,
+    PHI_CANDIDATE,
     DEFAULT,
 };
 
@@ -21,6 +22,7 @@ inline const char* to_string(CFGEdgeType edgeType) {
         "UNWIND",
         "SWITCH",
         "CALL",
+        "PHI_CANDIDATE",
         "DEFAULT",
     };
     static_assert(edgeTypes.size() == (size_t)CFGEdgeType::DEFAULT + 1);

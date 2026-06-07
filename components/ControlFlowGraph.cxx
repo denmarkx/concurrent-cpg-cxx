@@ -4,6 +4,7 @@
 #include "graph/FunctionNode.h"
 #include "graph/GraphManager.h"
 #include "graph/Node.h"
+#include "graph/PhiNode.h"
 
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Instruction.h"
@@ -109,6 +110,16 @@ void ControlFlowGraph::parseModule(const Module& module) {
                         }
                         break;
                     }
+
+                    case Instruction::PHI: {
+                        const PHINode *phi = dyn_cast<PHINode>(&instr);
+                        PhiNode *node = GraphManager::get()->getNode<PhiNode>(&instr);
+                        if (node == nullptr) break;
+
+                        for (Node *candidateNode : node->getCandidateBlocks())
+                            _edges[node].push_back( CFGEdge { node, candidateNode, CFGEdgeType::PHI_CANDIDATE });
+                        break;
+                    }
                 }
 
                 // Connect prev -> this node.
@@ -177,6 +188,8 @@ std::vector<Node*> ControlFlowGraph::traverse(Node* start, bool followCalls) {
             if (ThreadNode *tn = dynamic_cast<ThreadNode*>(n))
                 if (edge.end == tn->getRoutine()) continue;
             if (!followCalls && edge.type == CALL) continue;
+
+            if (std::find(s.begin(), s.end(), edge.end) != s.end()) continue;
 
             s.push_back(edge.end);
             q.push(edge.end);

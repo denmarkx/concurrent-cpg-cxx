@@ -18,6 +18,12 @@ public:
             const Value *incomingVal = I->getIncomingValue(i);
             const BasicBlock *incomingBlock = I->getIncomingBlock(i);
 
+            if (incomingBlock != I->getParent()) {
+                Node *blockNode = GraphManager::get()->getNode(incomingBlock);
+                if (blockNode)
+                    node->_candidates.push_back(blockNode);
+            }
+
             Node *incomingNode = GraphManager::get()->getNode(incomingVal);
             if (incomingNode)
                 node->createCandidateEdge(incomingNode);
@@ -33,5 +39,12 @@ public:
     void createCandidateEdge(Node *node) {
         addEdge("CANDIDATE", node);
     }
+
+    std::vector<Node*>& getCandidateBlocks() {
+        return _candidates;
+    }
+
+private:
+    std::vector<Node*> _candidates;
 
 };
