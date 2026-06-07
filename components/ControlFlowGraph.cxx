@@ -120,12 +120,10 @@ void ControlFlowGraph::parseModule(const Module& module) {
                 if (prevNode) {
                     if (CallNode *callNode = dynamic_cast<CallNode*>(prevNode)) {
                         if (callNode->getCalledFunction()) {
-                          for (const BasicBlock& fbb : *callNode->getCalledFunction()) {
-                              // errs() << *(&*fbb.begin() + fbb.size()-2) << "\n";
-                              // I suppose the problem here is that there may not always be a Node instance of this instr because its non SSA.
-                              prevNode = GraphManager::get()->getNode(&*fbb.begin() + fbb.size()-2);
-                          }
-                      }
+                            FunctionNode *fNode = dynamic_cast<FunctionNode*>(callNode->getCalledFunctionNode());
+                            if (fNode && fNode->getTerminator())
+                                prevNode = fNode->getTerminator();
+                        }
                     }
                 }
 

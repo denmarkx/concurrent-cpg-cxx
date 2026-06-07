@@ -39,24 +39,28 @@ public:
             i++;
         }
 
-        const CallBase *a = nullptr;
-        const CallBase *b = nullptr;
-        if (F->getName().str() == "main") {
-            for (auto &bb : *F) {
-                for (auto &i : bb) {
-                    if (const CallBase *c = dyn_cast<CallBase>(&i)) {
-                        if (a == nullptr) {
-                            a = const_cast<CallBase*>(c);
-                        } else {
-                            b = const_cast<CallBase*>(c);
-                        }
-                    }
-                }
-            }
-
-            // errs() << GraphManager::get()->getAliasResult()->alias(a, b) << "\n";
-        }
+        node->identifyTerminators(F);
         return node;
+    }
+
+    void identifyTerminators(const Function *F) {
+        for (const BasicBlock &bb : *F) {
+            const Instruction *terminator = bb.getTerminator();
+            if (isa<ReturnInst>(terminator)) {
+                Node *termNode = GraphManager::get()->getNode(terminator);
+                if (termNode)
+                    _terminators.push_back(termNode);
+            }
+        }
+    }
+
+    Node* getTerminator() {
+        if (_terminators.empty()) return nullptr;
+        return _terminators[0];
+    }
+
+    std::vector<Node*>& getTerminators() {
+        return _terminators;
     }
 
     void setProperties(const Function *F) {
@@ -90,8 +94,6 @@ public:
     }
 
     void addReturn(Node* node) {
-        assert(_returnNode == nullptr);
-
         _returnNode = node;
         addEdge("RETURNS", node);
     }
@@ -107,4 +109,5 @@ private:
 
     std::vector<BasicBlockNode*> _blocks;
     std::vector<ParamNode*> _params;
+    std::vector<Node*> _terminators;
 };

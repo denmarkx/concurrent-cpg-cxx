@@ -37,6 +37,7 @@
 #include "graph/LiteralNode.h"
 #include "graph/MutexNode.h"
 #include "graph/PhiNode.h"
+#include "graph/ReturnNode.h"
 #include "graph/StoreNode.h"
 #include "graph/SwitchNode.h"
 #include "llvm/Pass.h"
@@ -101,13 +102,16 @@ namespace GraphParser {
         const ReturnInst *ret = dyn_cast<ReturnInst>(instr);
         Value *retValue = ret->getReturnValue();
 
-        if (retValue == nullptr) return nullptr; // ret void
-        Node *retNode = GraphManager::get()->getNode(retValue);
+        if (retValue == nullptr) return handleNode<ReturnNode, ReturnInst>(instr); // ret void
+        Node *retItem = GraphManager::get()->getNode(retValue);
+
+        ReturnNode *retNode = new ReturnNode(ret);
 
         const Function *f = instr->getFunction();
         FunctionNode *funcNode = dynamic_cast<FunctionNode*>(
             GraphManager::get()->getNode(f));
         funcNode->addReturn(retNode);
+        retNode->registerEdge(retItem);
         return nullptr;
     }
     

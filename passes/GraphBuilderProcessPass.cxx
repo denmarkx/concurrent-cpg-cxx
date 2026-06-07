@@ -19,14 +19,10 @@ bool GraphBuilderProcessPass::runOnModule(Module &M) {
 
     const Function *n = M.getFunction("main");
     hbg->build(GraphManager::get()->getNode<FunctionNode>(n));
-    for (const auto &bb : *n) {
-        for (const auto &i : bb) {
-            if (i.getOpcode() == Instruction::Call && !i.hasName()) {
-                ThreadNode *x = GraphManager::get()->getNode<ThreadNode>(&i);
-                HappensBeforeGraph::get()->build(dynamic_cast<FunctionNode*>(x->getRoutine()));
-            }
-        }
-    }
+
+    std::vector<ThreadNode*> threads = ConcurrencyManager::get()->getConcurrencyNodes<ThreadNode>();
+    for (ThreadNode *node : threads)
+        HappensBeforeGraph::get()->build(dynamic_cast<FunctionNode*>(node->getRoutine()));
 
     hbg->buildTransitive();
 
