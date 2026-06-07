@@ -45,7 +45,7 @@ public:
     void parseModule(const Module& module);
     EdgeInfo getProcessedEdges() const;
 
-    std::vector<Node*> traverse(Node*);
+    std::vector<Node*> traverse(Node*, bool followCalls=true);
 
     static ControlFlowGraph* get();
     static ControlFlowGraph* _graph;

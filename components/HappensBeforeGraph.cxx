@@ -8,7 +8,7 @@ void HappensBeforeGraph::build(FunctionNode *entry) {
     uint32_t threadId = _registrar.getOrCreate(dyn_cast<Function>(entry->getValue()));
 
     Node *prev = nullptr;
-    for (auto &x : ControlFlowGraph::get()->traverse(entry)) {
+    for (auto &x : ControlFlowGraph::get()->traverse(entry, threadId > 0)) {
         // There exists a HB edge between the spawn call and the first node of the thread
         // the HB edge will have a threadId of the threadNode's routine.
         if (ThreadNode *tn = dynamic_cast<ThreadNode*>(x)) {

@@ -162,7 +162,7 @@ EdgeInfo ControlFlowGraph::getProcessedEdges() const {
  * Interprocedural DFG from parameter to end of CFG.
  * TODO: will probably loop for a cycle
 */
-std::vector<Node*> ControlFlowGraph::traverse(Node* start) {
+std::vector<Node*> ControlFlowGraph::traverse(Node* start, bool followCalls) {
     std::vector<Node*> s{start};
     std::queue<Node*> q;
     q.push(start);
@@ -176,7 +176,7 @@ std::vector<Node*> ControlFlowGraph::traverse(Node* start) {
             // Thread routines are done separately.
             if (ThreadNode *tn = dynamic_cast<ThreadNode*>(n))
                 if (edge.end == tn->getRoutine()) continue;
-            if (edge.type == CALL) continue;
+            if (!followCalls && edge.type == CALL) continue;
 
             s.push_back(edge.end);
             q.push(edge.end);
