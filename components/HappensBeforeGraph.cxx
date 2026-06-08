@@ -4,6 +4,7 @@
 #include <queue>
 #include <unordered_set>
 
+bool wantDebug = false;
 void HappensBeforeGraph::build(FunctionNode *entry) {
     uint32_t threadId = _registrar.getOrCreate(dyn_cast<Function>(entry->getValue()));
 
@@ -21,14 +22,17 @@ void HappensBeforeGraph::build(FunctionNode *entry) {
 
         // TODO: thread exit ->_hb corresponding joinnode
 
-        if (isa<Function>(x->getValue()))
-            errs() << "  --> [F] " << x->getName() << "\n";
-        else if (isa<BasicBlock>(x->getValue()))
-            errs() << "  --> [B] " << x->getName() << "\n";
-        else
-            errs() << "  --> " << *x->getValue() << "\n";
+        if (wantDebug) {
+            if (isa<Function>(x->getValue()))
+                errs() << "  --> [F] " << x->getName() << "\n";
+            else if (isa<BasicBlock>(x->getValue()))
+                errs() << "  --> [B] " << x->getName() << "\n";
+            else
+                errs() << "  --> " << *x->getValue() << "\n";
+        }
         if (prev) {
-            errs() << "new HBNode (tId = " << threadId << "\n";
+            if (wantDebug)
+                errs() << "new HBNode (tId = " << threadId << "\n";
             addEdge(new HBNode(prev, threadId), new HBNode(x, threadId));
         }
         prev = x;

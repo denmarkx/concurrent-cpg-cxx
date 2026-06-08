@@ -5,6 +5,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
 #include <llvm/IR/Function.h>
+#include <queue>
 #include <stdexcept>
 #include <unordered_map>
 #include <utility>
@@ -67,6 +68,10 @@ public:
         _concurrencyNodes.push_back(node);
     }
 
+    void unregisterNode(Node *node) {
+        std::erase(_concurrencyNodes, node);
+    }
+
     void discoverSyncFunctions(const Function *func) {
         ThreadOperation opCode = getConcurrencyOperation(func);
         if (isSyncOperation(opCode)) propagateLockCall(func, opCode);
@@ -100,11 +105,54 @@ public:
      * through the LTOLibCManager (ie: std::sys::thread::Thread::new -> .. -> pthread_create).
      * 
      * This assumes that the call's function was already confirmed to be a concurrency operation.
+     * NOTE: this function should be renamed. this only gets the DIRECT "high-level call" and not the HIGHEST level.
     */
     bool isHigherLevelCall(const CallBase *call) {
         const Function *f = call->getCalledFunction();
         if (!f) return false;
         return _operationMap.find(f->getName().str()) == _operationMap.end();
+    }
+
+    /*
+     * Given a low-level call (ie: pthread_create), walk backwards through the CFG to
+     * identify a function from within _highLevelOperationMap.
+    */
+    std::vector<const CallBase*> getHighestLevelCall(const CallBase *call) {
+        std::queue<const Function*> work;
+        std::vector<Function*> seen;
+        work.push(call->getParent()->getParent());
+
+        const Function *final = nullptr;
+
+        while (!work.empty()) {
+            const Function *f = work.front();
+            work.pop();
+
+            if (std::find(seen.begin(), seen.end(), f) != seen.end()) continue;
+
+            for (const User *user : f->users()) {
+                if (const CallBase *cb = dyn_cast<CallInst>(user)) {
+                    const Function *calledFunc = cb->getParent()->getParent();
+                    if (calledFunc) {
+                        auto it = _highLevelOperationMap.find(calledFunc->getName().str());
+                        if (it != _highLevelOperationMap.end() && it->second.checkFunction(calledFunc)) {
+                            final = calledFunc;
+                            break;
+                        }
+                        work.push(calledFunc);
+                    }
+                }
+            }
+        }
+
+        std::vector<const CallBase*> candidates;
+        if (final) {
+            for (const User *user : final->users()) {
+                if (const CallBase *cb = dyn_cast<CallBase>(user))
+                    candidates.push_back(cb);
+            }
+        }
+        return candidates;
     }
 
     static inline ConcurrencyManager* get();
@@ -131,6 +179,7 @@ private:
 
     static inline ConcurrencyManager* _concurrencyMgr = nullptr;
     static const OperationMapType _operationMap;
+    static const OperationMapType _highLevelOperationMap;
 };
 
 inline ConcurrencyManager* ConcurrencyManager::get() {
@@ -198,6 +247,37 @@ const inline OperationMapType ConcurrencyManager::_operationMap{
         OperationInfo(
             ThreadOperation::UNLOCK,
             Type::IntegerTyID,
+            Type::PointerTyID
+        )
+    },
+};
+
+/*
+ * If we can identify a lower-level operation (IE: pthread_create), it would also
+ * be beneficial to identify the higher-level operation (IE: std::thread::spawn).
+ * This is done by backtracking the CFG and stopping at a function in this map.
+*/
+const inline OperationMapType ConcurrencyManager::_highLevelOperationMap{
+    // TODO: I forgot I need to start compiling with the new Rust mangling scheme
+    // but this should generally be std::thread::spawn.
+    {"_ZN3std6thread5spawn17h64ebb1dd1991f81fE",
+        OperationInfo(
+            ThreadOperation::CREATE,
+            Type::VoidTyID,
+            Type::PointerTyID
+        )
+    },
+    {"_ZN3std6thread5spawn17h75261b6b5937bc6aE",
+        OperationInfo(
+            ThreadOperation::CREATE,
+            Type::VoidTyID,
+            Type::PointerTyID
+        )
+    },
+    {"_ZN3std6thread19JoinHandle$LT$T$GT$4join17hcea5719e14ef9744E",
+        OperationInfo(
+            ThreadOperation::JOIN,
+            Type::StructTyID,
             Type::PointerTyID
         )
     },

@@ -169,5 +169,6 @@ public:
 
 private:
     std::vector<Node*> _arguments;
+    std::vector<Node*> _parameters;
     std::vector<Node*> _functions;
 };

@@ -30,6 +30,8 @@ public:
     GraphManager(const GraphManager& other) = delete;
 
     void addNode(const Value* value, Node* node);
+    void removeNode(const Node* node);
+
     std::vector<Node*> getNodes() const;
 
     template <typename T>

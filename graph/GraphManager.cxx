@@ -18,6 +18,11 @@ void GraphManager::addNode(const Value* value, Node* node) {
     _valueNodeMap[value] = node;
 }
 
+void GraphManager::removeNode(const Node* node) {
+    std::erase(_nodes, node);
+    _valueNodeMap.erase(node->getValue());
+}
+
 std::vector<Node*> GraphManager::getNodes() const {
     return _nodes;
 }
@@ -129,7 +134,7 @@ LTOLibCManager* GraphManager::getLTOMgr() {
 const llvm::Value* GraphManager::getMemoryObj(const llvm::Value *ptr) {
     const llvm::Value *obj = llvm::getUnderlyingObject(ptr, 8);
 
-    if (llvm::isa<llvm::GlobalValue>(obj) || llvm::isa<llvm::AllocaInst>(obj))
+    if (llvm::isa<llvm::GlobalValue>(obj) || llvm::isa<llvm::AllocaInst>(obj) || llvm::isa<llvm::Argument>(obj))
         return obj;
 
     if (auto *callInst = dyn_cast<CallInst>(obj)) {

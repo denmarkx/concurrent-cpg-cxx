@@ -117,13 +117,38 @@ namespace GraphParser {
     
     inline Node* handleCallInvoke(const Instruction* instr) {
         const CallBase *callBase = dyn_cast<CallBase>(instr);
+
         if (auto cOp = ConcurrencyManager::get()->getConcurrencyOperation(callBase->getCalledFunction())) {
+            Node *concurrencyNode = nullptr;
             switch (cOp) {
-                case ThreadOperation::CREATE: return handleNode<ThreadNode, CallBase>(callBase);
-                case ThreadOperation::JOIN: return handleNode<JoinNode, CallBase>(callBase);
-                case ThreadOperation::LOCK: return handleNode<MutexNode, CallBase>(callBase);
-                case ThreadOperation::UNLOCK: return handleNode<MutexNode, CallBase>(callBase);
+                case ThreadOperation::CREATE: { concurrencyNode = handleNode<ThreadNode, CallBase>(callBase); break; }
+                case ThreadOperation::JOIN: { concurrencyNode = handleNode<JoinNode, CallBase>(callBase); break; }
+                case ThreadOperation::LOCK: { concurrencyNode = handleNode<MutexNode, CallBase>(callBase); break; }
+                case ThreadOperation::UNLOCK: { concurrencyNode = handleNode<MutexNode, CallBase>(callBase); break; }
                 default: return handleNode<CallNode, CallInst>(callBase);
+            }
+
+            // It's possible that this might have a higher level caller:
+            // I suppose just for now, this can be reserved for joins.
+            if (cOp == JOIN) {
+                std::vector<const CallBase*> higherCalls = ConcurrencyManager::get()->getHighestLevelCall(callBase);
+
+                // If there exists a higher call, we'll treat that as the join instead of the lower one.
+                // ..but it's already registered, so de-reg it:
+                if (!higherCalls.empty()) {
+                    ConcurrencyManager::get()->unregisterNode(concurrencyNode);
+                    GraphManager::get()->removeNode(concurrencyNode);
+                }
+
+                for (const auto &x : higherCalls) {
+                    // These may actually already exist:
+                    Node *candidate = GraphManager::get()->getNode(x);
+                    if (candidate)
+                        GraphManager::get()->removeNode(candidate);
+
+                    // Then register these new ones in its place:
+                    handleNode<JoinNode, CallBase>(x);
+                }
             }
         }
         return handleNode<CallNode, CallBase>(instr);

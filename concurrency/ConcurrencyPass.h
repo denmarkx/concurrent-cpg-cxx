@@ -3,6 +3,7 @@
 #include "andersen/Andersen.h"
 #include "andersen/Constraint.h"
 #include "concurrency/ConcurrencyManager.h"
+#include "concurrency/JoinNode.h"
 #include "concurrency/ThreadNode.h"
 #include "graph/GraphManager.h"
 
@@ -17,6 +18,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include <algorithm>
+#include <thread>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -87,6 +89,11 @@ public:
             handleThreadNode(node);
         GraphManager::get()->getAliasResult()->resolveConstraints();
         computeThreadSummaries();
+
+        std::vector<JoinNode*> joins = 
+            ConcurrencyManager::get()->getConcurrencyNodes<JoinNode>();
+        for (auto *node : joins)
+            handleJoinNode(node);
         // printSummaries();
         // printSharedMap();
 
@@ -133,21 +140,50 @@ public:
 private:
     void handleThreadNode(ThreadNode *node) {
         // The routine is not connected to the context of the data node (unless -Clto=fat)
-        const Instruction* instr = dyn_cast<Instruction>(node->getDataNode()->getValue());
-        const Function *parent = instr->getFunction();
+        Node *dataNode = node->getDataNode();
         const Function *routine = dyn_cast<Function>(node->getRoutine()->getValue());
 
-        // While we're here, we need to connect the routine's parameter to its data.
-        Node *paramNode = GraphManager::get()->getNode(routine->getArg(0));
-        paramNode->registerCopyEdge(node->getDataNode());
+        if (dataNode) {
+            const Instruction* instr = dyn_cast<Instruction>(dataNode->getValue());
+            const Function *parent = instr->getFunction();
 
-        GraphManager::get()->getAliasResult()->connectContexts(parent, routine);
-        GraphManager::get()->getAliasResult()->addConstraint(AndersConstraint::COPY, 
-            dyn_cast<Function>(node->getRoutine()->getValue())->getArg(0),node->getDataNode()->getValue(), 1);
+            // While we're here, we need to connect the routine's parameter to its data.
+            Node *paramNode = GraphManager::get()->getNode(routine->getArg(0));
+            paramNode->registerCopyEdge(node->getDataNode());
+
+            GraphManager::get()->getAliasResult()->connectContexts(parent, routine);
+            GraphManager::get()->getAliasResult()->addConstraint(AndersConstraint::COPY, 
+                dyn_cast<Function>(node->getRoutine()->getValue())->getArg(0),node->getDataNode()->getValue(), 1);
+        }
 
         Node* routineNode = node->getRoutine();
         if (routine && !doesSummaryExist(routineNode)) {
-            _summaries.push_back(new ThreadSummary{routineNode, node});
+            // _summaries.push_back(new ThreadSummary{routineNode, node});
+        }
+    }
+
+    void handleJoinNode(JoinNode *node) {
+        const Value *threadId = node->getThreadId()->getValue();
+        if (isa<ConstantInt>(threadId)) return;
+
+        if (const LoadInst *load = dyn_cast<LoadInst>(threadId))
+            threadId = GraphManager::get()->getMemoryObj(load->getPointerOperand());
+
+        PtsSetType ptsSet;
+        GraphManager::get()->getAliasResult()->getPointsToSet(threadId, ptsSet);
+
+        for (ThreadNode *threadNode : ConcurrencyManager::get()->getConcurrencyNodes<ThreadNode>()) {
+            Node *handle = threadNode->getHandle();
+            if (handle && handle->getValue() == threadId) {
+                threadNode->addHandleEdge(handle);
+                return;
+            }
+
+            if (std::find(ptsSet.begin(), ptsSet.end(), handle->getValue()) != ptsSet.end()) {
+                node->setThreadId(threadNode);
+                threadNode->addHandleEdge(node);
+                return;
+            }
         }
     }
 

@@ -1,6 +1,8 @@
 #pragma once
 
+#include "andersen/Andersen.h"
 #include "concurrency/ConcurrencyManager.h"
+#include "concurrency/ThreadNode.h"
 #include "graph/CallNode.h"
 #include "graph/FunctionNode.h"
 #include "graph/GraphManager.h"
@@ -8,6 +10,7 @@
 #include "llvm/Analysis/MemorySSA.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Instructions.h"
 
 #include <utility>
 #include <vector>
@@ -27,43 +30,15 @@ public:
         ConcurrencyManager::get()->registerNode(node);
 
         node->_threadID = GraphManager::get()->getNodeFromOperand(I, 0);
-        // node->_edges.push_back(pair("THREAD_ID", node->_threadID));
-        // node->resolveThreadID();
         return node;
     }
 
-    /**
-     * Attempts to resolve the threadID. It is important to note that pthread_join
-     * allows for a copy of pthread_t (which is a typedef of an i64). Meaning we
-     * need to find a pointer to the original location for the ID.
-     * 
-     * If, for some reason, the user provides an integer literal to this function,
-     * we don't really make an attempt to resolve it. Though, this should be listed
-     * as a TODO: to figure out what to do with these types of joins.
-     * 
-     * TODO: Currently intraprocedural
-    */
-    void resolveThreadID() {
-        const Instruction *threadId = dyn_cast<Instruction>(_threadID->getValue());
-        if (isa<ConstantInt>(threadId)) return;
+    void setThreadId(Node *handle) {
+        _threadID = handle;
+    }
 
-        MemorySSA &MSSA = GraphManager::get()->getMemorySSAResult(threadId->getFunction());
-        MemoryAccess *access = MSSA.getWalker()->getClobberingMemoryAccess(threadId);
-        MemoryDef *memoryDef = dyn_cast<MemoryDef>(access);
-        if (!memoryDef) return; // TODO: What do we do with this join then?
-
-        const Instruction *defInstr = memoryDef->getMemoryInst();
-
-        const CallInst *callInstr = dyn_cast<CallInst>(defInstr);
-        if (!callInstr) return; // TODO: What do we do with this join then?
-
-        ThreadOperation threadOpCode = ConcurrencyManager::get()->
-            getConcurrencyOperation(callInstr->getCalledFunction());
-
-        if (threadOpCode == ThreadOperation::CREATE) {
-            Node *createNode = GraphManager::get()->getNode(callInstr);
-            // _edges.push_back(pair("JOIN", createNode));
-        }
+    Node *getThreadId() {
+        return _threadID;
     }
 
 private:

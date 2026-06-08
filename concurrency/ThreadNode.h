@@ -5,6 +5,7 @@
 #include "graph/FunctionNode.h"
 #include "graph/GraphManager.h"
 #include "graph/Node.h"
+#include "llvm/IR/Attributes.h"
 #include <stdexcept>
 #include <unordered_set>
 #include <utility>
@@ -44,6 +45,10 @@ public:
         return node;
     }
 
+    void addHandleEdge(Node *handle) {
+        addEdge("JOIN", handle);
+    }
+
     const Function *getRoutineFunc() { return dyn_cast<Function>(_routine->getValue()); }
 
     Node* getDataNode() { return _argNode; }
@@ -52,20 +57,31 @@ public:
 
 private:
     void identifyArgumentSequence(const CallBase *call) {
-        // This is a seriously sparse determination effort and it is all done by inference.
-        // TODO: there is a possible way to do this via pointer alias and def-use, but that's reserved for now.
+        // If we can identify the highest level:
+        const CallBase *highestCall = ConcurrencyManager::get()->getHighestLevelCall(call)[0];
+        if (highestCall) {
+            // ..and identify that it either returns a ptr or contains at least 1 sret ptr,
+            // we can infer that the ptr is the thread handle.
+            int numSrets = 0;
+            const Value *sret = nullptr;
+            for (int i = 0; i < highestCall->arg_size(); i++) {
+                if (highestCall->paramHasAttr(i, Attribute::StructRet)) {
+                    numSrets++;
+                    sret = highestCall->getArgOperand(i);
+                }
+            }
+
+            if (numSrets == 1) {
+                _handle = GraphManager::get()->getNode(sret);
+            } 
+        }
 
         for (int i = 0; i < call->arg_size(); i++) {
             const Value *v = call->getOperand(i);
             if (!v->getType()->isPointerTy()) continue;
 
-            // TODO:
-            // rust will inline the vtable at the final arg here.
-            // i dont know about c++
-            // ..and c is trivial
-
-            // for now, i'm going to force this:
-            _handle = GraphManager::get()->getNodeFromOperand(call, 0);
+            if (!_handle)
+                _handle = GraphManager::get()->getNodeFromOperand(call, 0);
             _argNode = GraphManager::get()->getNodeFromOperand(call, 2);
 
             if (const GlobalVariable *global = dyn_cast<GlobalVariable>(v)) {
