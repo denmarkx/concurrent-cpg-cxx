@@ -13,10 +13,10 @@ define dso_local ptr @routine(ptr noundef %0) #0 {
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local ptr @secondary(ptr noundef %0) #0 {
-  %v = load atomic i32, ptr @count acquire, align 4
-  ret ptr null
-}
+; define dso_local ptr @secondary(ptr noundef %0) #0 {
+;   %v = load atomic i32, ptr @count acquire, align 4
+;   ret ptr null
+; }
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define dso_local i32 @main() #0 {
@@ -29,10 +29,10 @@ define dso_local i32 @main() #0 {
   %pidA = load i64, ptr %2
   %joinA = call i32 @pthread_join(i64 %pidA, ptr null)
 
-  %5 = call i32 @pthread_create(ptr noundef %3, ptr noundef null, ptr noundef @secondary, ptr noundef null) #2
-  %pidB = load i64, ptr %3
-  %joinB = call i32 @pthread_join(i64 %pidB, ptr null)
-  %fin = alloca ptr
+  ; %5 = call i32 @pthread_create(ptr noundef %3, ptr noundef null, ptr noundef @secondary, ptr noundef null) #2
+  ; %pidB = load i64, ptr %3
+  ; %joinB = call i32 @pthread_join(i64 %pidB, ptr null)
+  ; %fin = alloca ptr
   ret i32 0
 }
 

@@ -175,7 +175,7 @@ private:
         for (ThreadNode *threadNode : ConcurrencyManager::get()->getConcurrencyNodes<ThreadNode>()) {
             Node *handle = threadNode->getHandle();
             if (handle && handle->getValue() == threadId) {
-                threadNode->addHandleEdge(handle);
+                threadNode->addHandleEdge(node);
                 return;
             }
 
