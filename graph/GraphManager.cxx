@@ -132,6 +132,8 @@ LTOLibCManager* GraphManager::getLTOMgr() {
 }
 
 const llvm::Value* GraphManager::getMemoryObj(const llvm::Value *ptr) {
+    if (!ptr) return nullptr;
+
     const llvm::Value *obj = llvm::getUnderlyingObject(ptr, 8);
 
     if (llvm::isa<llvm::GlobalValue>(obj) || llvm::isa<llvm::AllocaInst>(obj) || llvm::isa<llvm::Argument>(obj))

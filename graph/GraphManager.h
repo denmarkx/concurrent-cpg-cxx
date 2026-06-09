@@ -86,22 +86,10 @@ public:
     const llvm::Value* getMemoryObj(const llvm::Value *ptr);
     bool isHeapAllocator(llvm::Function *func);
 
-public:
-    static constexpr std::array<uint8_t, 3> NonSSACodes = {
-        // Instruction::Store,
-        Instruction::Ret,
-        Instruction::Br,
-    };
-    
-    inline static bool isNonSSA(uint8_t opCode) {
-        return std::find(NonSSACodes.begin(), NonSSACodes.end(), opCode) != NonSSACodes.end();
-    };
-
 private:
     std::vector<Node*> _nodes;
     std::unordered_map<const Value*, Node*> _valueNodeMap;
     std::vector<StoreInfo> _stores;
-    // std::unordered_map<const Function*, MemorySSA*> _memorySSAMap;
 
     Andersen* _AA;
     BidirectionalCallGraph* _callGraph;

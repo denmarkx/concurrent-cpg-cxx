@@ -122,10 +122,6 @@ void ControlFlowGraph::parseModule(const Module& module) {
                     }
                 }
 
-                // Connect prev -> this node.
-                if (GraphManager::isNonSSA(instr.getOpcode()))
-                    continue;
-
                 // If our previous node was a call, then we switch that to be the called function's terminators:
                 // TODO: the determination of function terminators should be delegated to FunctionNode and not here
                 if (prevNode) {
@@ -145,7 +141,8 @@ void ControlFlowGraph::parseModule(const Module& module) {
 
                 // This may sometimes be set to null because we deliberately don't have nodes
                 // for every single instruction (IE: unconditional brs).
-                prevNode = node;
+                if (node)
+                    prevNode = node;
             }
         }
     }
