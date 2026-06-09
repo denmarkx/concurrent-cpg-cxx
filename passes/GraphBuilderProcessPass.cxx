@@ -29,17 +29,7 @@ bool GraphBuilderProcessPass::runOnModule(Module &M) {
     RFGraph *rfg = new RFGraph();
     rfg->build();
 
-    // HB edges for atomics (need to move elsewhere)
-    for (auto &[w, r] : rfg->pairs()) {
-        // for atomics.ll, w is a release and r is an acquire, but that needs to be a cond
-        if (w->threadId == r->threadId) continue;
-
-        bool testW = 1; // TODO: needs to check for ordering >= release
-        bool testR = 1; // TODO: check for ordering >= acq
-        if (testW && testR)
-            HappensBeforeGraph::get()->addEdge(w, r);
-    }
-
+    hbg->buildAtomics();
     hbg->buildTransitive();
 
     for (HBNode *a : rfg->getNodes()) {

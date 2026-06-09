@@ -147,3 +147,11 @@ const Value* Node::getValue() const {
 NodeType Node::getType() {
     return _type;
 }
+
+void Node::setAtomicOrder(AtomicOrdering order) {
+    _atomicType = order;
+}
+
+AtomicOrdering Node::getAtomicOrder() {
+    return _atomicType;
+}

@@ -43,14 +43,13 @@ public:
     void handleAtomicInstruction(const StoreInst *instr) {
         addProperty("isAtomic", "true");
         addProperty("ordering", toIRString(instr->getOrdering()));
-        atomicType = instr->getOrdering();
+        setAtomicOrder(instr->getOrdering());
     }
 
-    AtomicOrdering atomicType = AtomicOrdering::NotAtomic;
     Node *_src = nullptr;
 
     NodeType getType() {
-        if (atomicType != llvm::AtomicOrdering::NotAtomic)
+        if (getAtomicOrder() != llvm::AtomicOrdering::NotAtomic)
             return NodeType::ATOMIC_STORE;
         return NodeType::STORE;
     }

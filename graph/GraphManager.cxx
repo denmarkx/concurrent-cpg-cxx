@@ -98,7 +98,7 @@ std::vector<StoreInfo> GraphManager::getAtomicStores(AtomicOrdering atomicType) 
 std::vector<Node*> GraphManager::getAtomicLoads(AtomicOrdering atomicType, Node *node) {
     std::vector<Node*> s;
     for (const auto &x : getAllNodesOf<LoadNode>()) {
-        if (x->atomicType == atomicType && x->_src == node) 
+        if (x->getAtomicOrder() == atomicType && x->_src == node) 
             s.push_back(x->_src);
     }
     return s;

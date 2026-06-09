@@ -24,6 +24,12 @@ public:
 
         node->addEdge("LHS", lhs);
         node->addEdge("RHS", rhs);
+        node->setAtomicOrder(I->getOrdering());
         return node;
     }
+
+    NodeType getType() { return NodeType::ATOMIC_RMW; }
+
+private:
+    NodeType _type = NodeType::ATOMIC_RMW;
 };

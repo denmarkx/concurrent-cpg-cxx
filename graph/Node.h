@@ -3,6 +3,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
+#include "llvm/Support/AtomicOrdering.h"
 #include "utility/Debug.h"
 #include "utility/APIHelper.h"
 
@@ -68,6 +69,9 @@ public:
 
     virtual NodeType getType();
 
+    void setAtomicOrder(AtomicOrdering order);
+    AtomicOrdering getAtomicOrder();
+
 private:
     void setDefaultProperties(const Value *value);
     void handleDebugInfo(const Instruction *instr);
@@ -78,6 +82,7 @@ private:
     std::string _label = "Node";
 
     NodeType _type = NodeType::DEFAULT_TYPE;
+    AtomicOrdering _atomicType = AtomicOrdering::NotAtomic;
 
     const Value* _value;
 

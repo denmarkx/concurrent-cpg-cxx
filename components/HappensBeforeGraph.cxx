@@ -1,8 +1,10 @@
 #include "components/HappensBeforeGraph.h"
 #include "components/ControlFlowGraph.h"
+#include "components/RFGraph.h"
 #include "concurrency/JoinNode.h"
 #include "graph/FunctionNode.h"
-#include "graph/GraphManager.h"
+#include "graph/Node.h"
+#include "llvm/Support/AtomicOrdering.h"
 #include <queue>
 #include <unordered_set>
 
@@ -47,6 +49,29 @@ void HappensBeforeGraph::build(FunctionNode *entry) {
             addEdge(new HBNode(prev, threadId), new HBNode(x, threadId));
         }
         prev = x;
+    }
+}
+
+void HappensBeforeGraph::buildAtomics() {
+    // HB edges for atomics (need to move elsewhere)
+    for (auto &[w, r] : RFGraph::get()->pairs()) {
+        // for atomics.ll, w is a release and r is an acquire, but that needs to be a cond
+        if (w->threadId == r->threadId) continue;
+
+        bool testW = (
+            w->node->getType() == NodeType::ATOMIC_STORE ||
+            w->node->getType() == NodeType::ATOMIC_CMPXCHG ||
+            w->node->getType() == NodeType::ATOMIC_RMW
+        ) && (isAtLeastOrStrongerThan(w->node->getAtomicOrder(), AtomicOrdering::Release));
+        
+        bool testR = (
+            w->node->getType() == NodeType::ATOMIC_LOAD ||
+            w->node->getType() == NodeType::ATOMIC_CMPXCHG ||
+            w->node->getType() == NodeType::ATOMIC_RMW
+        ) && (isAtLeastOrStrongerThan(w->node->getAtomicOrder(), AtomicOrdering::Acquire));
+
+        if (testW && testR)
+            HappensBeforeGraph::get()->addEdge(w, r);
     }
 }
 

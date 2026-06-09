@@ -38,7 +38,13 @@ public:
         node->addEdge("COMPARISON", cmp);
         node->addEdge("LHS", ptr);
         node->addEdge("RHS", newValue);
+        node->setAtomicOrder(I->getSuccessOrdering());
         return node;
     }
+
+    NodeType getType() { return NodeType::ATOMIC_CMPXCHG; }
+
+private:
+    NodeType _type = NodeType::ATOMIC_CMPXCHG;
 
 };

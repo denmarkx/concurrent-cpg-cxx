@@ -28,7 +28,9 @@ class HappensBeforeGraph {
 public:
     HappensBeforeGraph();
     void build(FunctionNode *entry);
+    void buildAtomics();
     void buildTransitive();
+
     void addEdge(HBNode* start, HBNode *end);
     EdgeInfo getProcessedEdges() const;
 
