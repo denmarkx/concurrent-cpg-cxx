@@ -65,10 +65,10 @@ void HappensBeforeGraph::buildAtomics() {
         ) && (isAtLeastOrStrongerThan(w->node->getAtomicOrder(), AtomicOrdering::Release));
         
         bool testR = (
-            w->node->getType() == NodeType::ATOMIC_LOAD ||
-            w->node->getType() == NodeType::ATOMIC_CMPXCHG ||
-            w->node->getType() == NodeType::ATOMIC_RMW
-        ) && (isAtLeastOrStrongerThan(w->node->getAtomicOrder(), AtomicOrdering::Acquire));
+            r->node->getType() == NodeType::ATOMIC_LOAD ||
+            r->node->getType() == NodeType::ATOMIC_CMPXCHG ||
+            r->node->getType() == NodeType::ATOMIC_RMW
+        ) && (isAtLeastOrStrongerThan(r->node->getAtomicOrder(), AtomicOrdering::Acquire));
 
         if (testW && testR)
             HappensBeforeGraph::get()->addEdge(w, r);
@@ -82,7 +82,14 @@ void HappensBeforeGraph::buildTransitive() {
 }
 
 void HappensBeforeGraph::addEdge(HBNode *start, HBNode *end) {
-    _graph[start].push_back(end);
+    if (!hasEdge(start, end))
+        _graph[start].push_back(end);
+}
+
+bool HappensBeforeGraph::hasEdge(HBNode *start, HBNode *end) {
+    if (!_graph.contains(start)) return false;
+    auto itr = _graph[start];
+    return std::find(itr.begin(), itr.end(), end) != itr.end();
 }
 
 std::vector<HBNode*> HappensBeforeGraph::getNodes() {
@@ -128,11 +135,14 @@ void HappensBeforeGraph::connectSCC(HBNode *n) {
     _stack.push(n);
     _state[n] = true;
 
-    for (HBNode *c : _graph[n]) {
+    auto it = _graph.find(n);
+    if (it == _graph.end()) return;
+
+    for (HBNode *c : it->second) {
         if (!_index.contains(c)) {
             connectSCC(c);
             _link[n] = min(_link[n], _link[c]);
-        } else if (_state[n]) {
+        } else if (_state[c]) {
             _link[n] = min(_link[n], _index[c]);
         }
     }

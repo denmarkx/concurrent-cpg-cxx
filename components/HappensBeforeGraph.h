@@ -11,6 +11,10 @@
 struct HBNode {
     Node *node;
     uint32_t threadId;
+
+    bool operator==(HBNode *other) {
+        return other->node == node && other->threadId == threadId;
+    }
 };
 
 struct ThreadRegistrar {
@@ -32,6 +36,8 @@ public:
     void buildTransitive();
 
     void addEdge(HBNode* start, HBNode *end);
+    bool hasEdge(HBNode *start, HBNode *end);
+
     EdgeInfo getProcessedEdges() const;
 
     std::vector<HBNode*> getNodes();

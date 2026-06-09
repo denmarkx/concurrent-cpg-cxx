@@ -25,6 +25,7 @@ void RFGraph::build() {
                 break;
             }
             // cmpxchg and rmw are atomically read and write.
+            case NodeType::ATOMIC_RMW:
             case NodeType::ATOMIC_CMPXCHG: {
                 const Value *memObj = graph->getMemoryObj(n->node->ptr);
                 if (memObj) {
