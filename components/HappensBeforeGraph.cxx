@@ -1,6 +1,8 @@
 #include "components/HappensBeforeGraph.h"
 #include "components/ControlFlowGraph.h"
+#include "concurrency/JoinNode.h"
 #include "graph/FunctionNode.h"
+#include "graph/GraphManager.h"
 #include <queue>
 #include <unordered_set>
 
@@ -18,9 +20,18 @@ void HappensBeforeGraph::build(FunctionNode *entry) {
                 new HBNode(tn, childThreadId),
                 new HBNode(tn->getRoutine(), childThreadId)
             );
-        }
 
-        // TODO: thread exit ->_hb corresponding joinnode
+            if(JoinNode *join = dynamic_cast<JoinNode*>(tn->getHandle())) {
+                // for all exits: exit -> Join(t)
+                FunctionNode *routine = dynamic_cast<FunctionNode*>(tn->getRoutine());
+                for (auto &exit : routine->getTerminators()) {
+                    addEdge(
+                        new HBNode(exit, childThreadId),
+                        new HBNode(join, childThreadId)
+                    );
+                }
+            }
+        }
 
         if (wantDebug) {
             if (isa<Function>(x->getValue()))

@@ -102,17 +102,20 @@ namespace GraphParser {
         const ReturnInst *ret = dyn_cast<ReturnInst>(instr);
         Value *retValue = ret->getReturnValue();
 
-        if (retValue == nullptr) return handleNode<ReturnNode, ReturnInst>(instr); // ret void
-        Node *retItem = GraphManager::get()->getNode(retValue);
-
-        ReturnNode *retNode = new ReturnNode(ret);
-
         const Function *f = instr->getFunction();
         FunctionNode *funcNode = dynamic_cast<FunctionNode*>(
             GraphManager::get()->getNode(f));
+
+        ReturnNode *retNode = new ReturnNode(ret);
+        if (retValue == nullptr) { // ret void or null or const
+            retNode = handleNode<ReturnNode, ReturnInst>(instr);
+        } else {
+            Node *retItem = GraphManager::get()->getNode(retValue);
+            retNode->registerEdge(retItem);
+        }
+
         funcNode->addReturn(retNode);
-        retNode->registerEdge(retItem);
-        return nullptr;
+        return retNode;
     }
     
     inline Node* handleCallInvoke(const Instruction* instr) {

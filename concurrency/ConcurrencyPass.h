@@ -176,6 +176,7 @@ private:
             Node *handle = threadNode->getHandle();
             if (handle && handle->getValue() == threadId) {
                 threadNode->addHandleEdge(node);
+                node->setThreadId(threadNode);
                 return;
             }
 

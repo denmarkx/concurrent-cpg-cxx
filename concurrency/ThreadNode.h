@@ -47,6 +47,7 @@ public:
 
     void addHandleEdge(Node *handle) {
         addEdge("JOIN", handle);
+        _handle = handle;
     }
 
     const Function *getRoutineFunc() { return dyn_cast<Function>(_routine->getValue()); }
