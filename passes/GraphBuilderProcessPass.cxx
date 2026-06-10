@@ -16,21 +16,12 @@ bool GraphBuilderProcessPass::runOnModule(Module &M) {
     cfg->parseModule(M);
 
     HappensBeforeGraph *hbg = new HappensBeforeGraph();
-
-    const Function *n = M.getFunction("main");
-    hbg->build(GraphManager::get()->getNode<FunctionNode>(n));
-
-    std::vector<ThreadNode*> threads = ConcurrencyManager::get()->getConcurrencyNodes<ThreadNode>();
-    for (ThreadNode *node : threads)
-        HappensBeforeGraph::get()->build(dynamic_cast<FunctionNode*>(node->getRoutine()));
-
-    hbg->buildTransitive();
+    hbg->build(M);
 
     RFGraph *rfg = new RFGraph();
-    rfg->build();
+    rfg->buildIndex();
 
-    hbg->buildAtomics();
-    hbg->buildTransitive();
+    hbg->buildFixedPointClosure();
 
     for (HBNode *a : rfg->getNodes()) {
         for (HBNode *b : rfg->getNodes()) {

@@ -10,7 +10,7 @@
 */
 class MutexNode : public CallNode {
 public:
-    MutexNode(const CallBase* I) : CallNode(I, "ThreadOperation") {}
+    MutexNode(const CallBase* I) : CallNode(I, "MutexNode") {}
 
     static MutexNode* make(const CallBase *I) {
         auto cOp = ConcurrencyManager::get()->
@@ -19,18 +19,20 @@ public:
         MutexNode *node = new MutexNode(I);
 
         node->addProperty("operation", "LOCK");
-        if (cOp == ThreadOperation::UNLOCK) {
+        if (cOp == ThreadOperation::UNLOCK)
             node->addProperty("operation", "UNLOCK");
-        }
         ConcurrencyManager::get()->registerNode(node);
 
-        // node->_handle = GraphManager::get()->getNodeFromOperand(I, 0);
-        // node->_edges.push_back(pair("HANDLE", node->_handle));
+        const Value *obj = GraphManager::get()->getMemoryObj(I->getOperand(0));
+        if (obj) {
+            node->_handle = GraphManager::get()->getNodeFromOperand(I, 0);
+            node->addEdge("HANDLE", node->_handle);
+        }
         return node;
     }
 
-    // Node* getHandle() { return _handle; }
+    Node* getHandle() { return _handle; }
 
 private:
-    // Node* _handle = nullptr;
+    Node* _handle = nullptr;
 };

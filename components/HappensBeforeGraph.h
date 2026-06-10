@@ -28,12 +28,29 @@ struct ThreadRegistrar {
     }
 };
 
+struct HBPairHash {
+    std::size_t operator()(const std::pair<HBNode*, HBNode*>& p) const {
+        auto h1 = std::hash<HBNode*>{}(p.first);
+        auto h2 = std::hash<HBNode*>{}(p.second);
+
+        // from boost::hash_combine
+        return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
+    }
+};
+
+typedef std::unordered_set<std::pair<HBNode*, HBNode*>, HBPairHash> DeltaType;
+
 class HappensBeforeGraph {
 public:
     HappensBeforeGraph();
-    void build(FunctionNode *entry);
-    void buildAtomics();
+
+    void build(const Module &M);
+    void buildFixedPointClosure();
     void buildTransitive();
+
+    void buildThread(FunctionNode *entry);
+    void buildAtomics(DeltaType& delta);
+    void buildLocks(DeltaType& delta);
 
     void addEdge(HBNode* start, HBNode *end);
     bool hasEdge(HBNode *start, HBNode *end);

@@ -12,7 +12,10 @@ typedef std::vector<std::pair<HBNode*, HBNode*>> RFGraphType;
 class RFGraph {
 public:
     RFGraph();
-    void build();
+
+    void buildIndex();
+    void buildCandidates();
+    void filter();
 
     RFGraphType& pairs();
     std::vector<HBNode*>& getNodes();

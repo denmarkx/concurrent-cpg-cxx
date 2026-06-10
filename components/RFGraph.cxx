@@ -2,7 +2,7 @@
 #include "components/HappensBeforeGraph.h"
 #include "graph/GraphManager.h"
 
-void RFGraph::build() {
+void RFGraph::buildIndex() {
     GraphManager *graph = GraphManager::get();
     for (HBNode *n : HappensBeforeGraph::get()->getNodes()) {
         switch (n->node->getType()) {
@@ -41,6 +41,10 @@ void RFGraph::build() {
             default: break;
         }
     }
+}
+
+void RFGraph::buildCandidates() {
+    _pairs.clear();
 
     for (auto &[obj, reads] : _reads) {
         if (auto it = _writes.find(obj); it != _writes.end()) {
@@ -67,6 +71,15 @@ void RFGraph::build() {
         for (HBNode *w : _unknownWrites)
             add(w, r);
     }
+}
+
+/*
+ * Filters according to isValid(w, r).
+*/
+void RFGraph::filter() {
+    std::erase_if(_pairs, [this](auto &pair) {
+        return !isValid(pair.first, pair.second);
+    });
 }
 
 bool RFGraph::isValid(HBNode *w, HBNode *r) {

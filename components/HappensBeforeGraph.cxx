@@ -9,7 +9,48 @@
 #include <unordered_set>
 
 bool wantDebug = false;
-void HappensBeforeGraph::build(FunctionNode *entry) {
+
+void HappensBeforeGraph::build(const Module &M) {
+    const Function *n = M.getFunction("main");
+    buildThread(GraphManager::get()->getNode<FunctionNode>(n));
+
+    std::vector<ThreadNode*> threads = ConcurrencyManager::get()->getConcurrencyNodes<ThreadNode>();
+    for (ThreadNode *node : threads)
+        buildThread(dynamic_cast<FunctionNode*>(node->getRoutine()));
+
+    buildTransitive();
+}
+
+/*
+ * Computes the least fixed point of (HB, RF) pair.
+ * It is required to build transitively before calling this!!
+*/
+void HappensBeforeGraph::buildFixedPointClosure() {
+    DeltaType delta;
+    RFGraph *rfg = RFGraph::get();
+
+    while (true) {
+        delta = {};
+        rfg->buildCandidates();
+        rfg->filter();
+
+        buildAtomics(delta);
+        buildLocks(delta);
+        buildTransitive();
+
+        if (wantDebug) {
+            errs() << "delta = " << delta.size() << "\n";
+            for (const auto &p : delta) {
+                errs() << "    1: " << *p.first->node->getValue() << "\n";
+                errs() << "    2: " << *p.second->node->getValue() << "\n";
+            }
+        }
+
+        if (delta.empty()) break;
+    }
+}
+
+void HappensBeforeGraph::buildThread(FunctionNode *entry) {
     uint32_t threadId = _registrar.getOrCreate(dyn_cast<Function>(entry->getValue()));
 
     Node *prev = nullptr;
@@ -52,7 +93,7 @@ void HappensBeforeGraph::build(FunctionNode *entry) {
     }
 }
 
-void HappensBeforeGraph::buildAtomics() {
+void HappensBeforeGraph::buildAtomics(DeltaType& delta) {
     // HB edges for atomics (need to move elsewhere)
     for (auto &[w, r] : RFGraph::get()->pairs()) {
         // for atomics.ll, w is a release and r is an acquire, but that needs to be a cond
@@ -70,9 +111,15 @@ void HappensBeforeGraph::buildAtomics() {
             r->node->getType() == NodeType::ATOMIC_RMW
         ) && (isAtLeastOrStrongerThan(r->node->getAtomicOrder(), AtomicOrdering::Acquire));
 
-        if (testW && testR)
-            HappensBeforeGraph::get()->addEdge(w, r);
+        if (testW && testR && !hasEdge(w, r)) {
+            addEdge(w, r);
+            delta.insert({w, r});
+        }
     }
+}
+
+void HappensBeforeGraph::buildLocks(DeltaType& delta) {
+
 }
 
 void HappensBeforeGraph::buildTransitive() {
