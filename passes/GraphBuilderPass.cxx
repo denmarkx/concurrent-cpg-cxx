@@ -1,5 +1,3 @@
-#include <llvm/Analysis/MemorySSA.h>
-
 #include "components/BidirectionalCallGraph.h"
 #include "passes/GraphBuilderPass.h"
 
@@ -15,17 +13,12 @@ bool GraphBuilderPass::runOnModule(Module &M) {
     BidirectionalCallGraph *callGraph = new BidirectionalCallGraph(M);
     GraphManager::get()->setCallGraph(callGraph);
 
-    // GraphManager::get()->setMemorySSACall(
-        // [this](Function &F) -> MemorySSA& {
-            // return this->getAnalysis<MemorySSAWrapperPass>(F).getMSSA();
-        // });    
 
     GraphParser::handleGraph(M);
     return false;
 }
 
 void GraphBuilderPass::getAnalysisUsage(AnalysisUsage &AU) const {
-    // AU.addRequired<MemorySSAWrapperPass>();
     AU.addRequired<AndersenAAWrapperPass>();
     AU.setPreservesAll();
 }

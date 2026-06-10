@@ -12,13 +12,16 @@
 
 #include "graph/GraphBuilder.h"
 #include "passes/GraphBuilderPass.h"
-#include "passes/GraphBuilderFuncPass.h"
 #include "passes/GraphBuilderProcessPass.h"
 #include "graph/GraphManager.h"
+
+#include <include/argparse.hpp>
 
 using namespace llvm;
 
 int main() {
+    argparse::ArgumentParser parser("ccpg");
+
     LLVMContext ctx;
     SMDiagnostic error;
 
@@ -34,13 +37,9 @@ int main() {
 
     legacy::PassManager PM;
     PM.add(new AndersenAAWrapperPass());
-    // PM.add(new MemorySSAWrapperPass());
     PM.add(new GraphBuilderPass());
-    PM.add(new GraphBuilderFuncPass());
     PM.add(new GraphBuilderProcessPass());
     PM.run(*module);
     builder.persistAll();
     return 0;
 }
-
-
