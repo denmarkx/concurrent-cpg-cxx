@@ -19,8 +19,10 @@ public:
         MutexNode *node = new MutexNode(I);
 
         node->addProperty("operation", "LOCK");
-        if (cOp == ThreadOperation::UNLOCK)
+        if (cOp == ThreadOperation::UNLOCK) {
             node->addProperty("operation", "UNLOCK");
+            node->_type = NodeType::MUTEX_UNLOCK;
+        }
         ConcurrencyManager::get()->registerNode(node);
 
         const Value *obj = GraphManager::get()->getMemoryObj(I->getOperand(0));
@@ -32,6 +34,10 @@ public:
     }
 
     Node* getHandle() { return _handle; }
+    NodeType getType() { return _type; }
+
+private:
+    NodeType _type = NodeType::MUTEX_LOCK;
 
 private:
     Node* _handle = nullptr;

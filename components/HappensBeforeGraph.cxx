@@ -119,7 +119,36 @@ void HappensBeforeGraph::buildAtomics(DeltaType& delta) {
 }
 
 void HappensBeforeGraph::buildLocks(DeltaType& delta) {
+    RFGraph *rfg = RFGraph::get();
+    auto add = [&](HBNode *w, HBNode *r) {
+        if (w->threadId == r->threadId) return;
+        if (happensBefore(r, w)) return;
+        if (hasEdge(w, r)) return;
+        addEdge(w, r);
+        delta.insert({w, r});
+    };
 
+    for (auto &[obj, rels] : rfg->getWritesLock()) {
+        if (auto it = rfg->getReadsLock().find(obj); it != rfg->getReadsLock().end()) {
+            for (HBNode *rel : rels) {
+                for (HBNode *acq : it->second)
+                    add(rel, acq);
+            }
+        }
+        for (HBNode *rel : rels) {
+            for (HBNode *acq : rfg->getUnknownReads()) 
+                add(rel, acq);
+        }
+    }
+
+    for (HBNode *rel : rfg->getUnknownWrites()) {
+        for (auto &[obj, acqs] : rfg->getReadsLock()) {
+            for (HBNode *acq : acqs)
+                add(rel, acq);
+        }
+        for (HBNode *acq : rfg->getUnknownReads())
+            add(rel, acq);
+    }
 }
 
 void HappensBeforeGraph::buildTransitive() {

@@ -5,10 +5,10 @@
 void RFGraph::buildIndex() {
     GraphManager *graph = GraphManager::get();
     for (HBNode *n : HappensBeforeGraph::get()->getNodes()) {
+        const Value *memObj = graph->getMemoryObj(n->node->ptr);
         switch (n->node->getType()) {
             case NodeType::ATOMIC_STORE:
             case NodeType::STORE: {
-                const Value *memObj = graph->getMemoryObj(n->node->ptr);
                 if (memObj)
                     _writes[memObj].push_back(n);
                 else
@@ -17,7 +17,6 @@ void RFGraph::buildIndex() {
             }
             case NodeType::ATOMIC_LOAD:
             case NodeType::LOAD: {
-                const Value *memObj = graph->getMemoryObj(n->node->ptr);
                 if (memObj)
                     _reads[memObj].push_back(n);
                 else
@@ -27,7 +26,6 @@ void RFGraph::buildIndex() {
             // cmpxchg and rmw are atomically read and write.
             case NodeType::ATOMIC_RMW:
             case NodeType::ATOMIC_CMPXCHG: {
-                const Value *memObj = graph->getMemoryObj(n->node->ptr);
                 if (memObj) {
                     _reads[memObj].push_back(n);
                     _writes[memObj].push_back(n);
@@ -36,6 +34,20 @@ void RFGraph::buildIndex() {
                     _unknownReads.push_back(n);
                     _unknownWrites.push_back(n);
                 }
+                break;
+            }
+            case NodeType::MUTEX_LOCK: {
+                if (memObj)
+                    _writesLock[memObj].push_back(n);
+                else
+                    _unknownWrites.push_back(n);
+                break;
+            }
+            case NodeType::MUTEX_UNLOCK: {
+                if (memObj)
+                    _readsLock[memObj].push_back(n);
+                else
+                    _unknownReads.push_back(n);
                 break;
             }
             default: break;
@@ -49,12 +61,8 @@ void RFGraph::buildCandidates() {
     for (auto &[obj, reads] : _reads) {
         if (auto it = _writes.find(obj); it != _writes.end()) {
             for (HBNode *r : reads) {
-                for (HBNode *w : it->second) {
-                    errs() << "rf graph:\n";
-                    errs() << "  w = " << *w->node->getValue() << "\n";
-                    errs() << "  r = " << *r->node->getValue() << "\n";
+                for (HBNode *w : it->second)
                     add(w, r);
-                }
             }
         }
         for (HBNode *r : reads) {
@@ -129,6 +137,13 @@ std::vector<HBNode*>& RFGraph::getNodes() {
 RFGraphType& RFGraph::pairs() {
     return _pairs;
 }
+
+
+RFCandidateType& RFGraph::getWritesLock() { return _writesLock; }
+RFCandidateType& RFGraph::getReadsLock() { return _readsLock; }
+
+std::vector<HBNode*>& RFGraph::getUnknownWrites() { return _unknownWrites; }
+std::vector<HBNode*>& RFGraph::getUnknownReads() { return _unknownReads; }
 
 RFGraph::RFGraph() { _instance = this; }
 RFGraph* RFGraph::get() { return _instance; }

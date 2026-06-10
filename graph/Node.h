@@ -26,6 +26,8 @@ enum NodeType {
     ATOMIC_LOAD,
     ATOMIC_RMW,
     ATOMIC_CMPXCHG,
+    MUTEX_LOCK,
+    MUTEX_UNLOCK,
     DEFAULT_TYPE,
 };
 

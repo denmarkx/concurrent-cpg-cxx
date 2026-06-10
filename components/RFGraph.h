@@ -8,6 +8,7 @@
 #include <vector>
 
 typedef std::vector<std::pair<HBNode*, HBNode*>> RFGraphType;
+typedef std::unordered_map<const Value*, std::vector<HBNode*>> RFCandidateType;
 
 class RFGraph {
 public:
@@ -17,19 +18,27 @@ public:
     void buildCandidates();
     void filter();
 
+    void add(HBNode*, HBNode*);
     RFGraphType& pairs();
     std::vector<HBNode*>& getNodes();
+
+    RFCandidateType& getWritesLock();
+    RFCandidateType& getReadsLock();
+    std::vector<HBNode*>& getUnknownWrites();
+    std::vector<HBNode*>& getUnknownReads();
 
     static RFGraph* get();
     static RFGraph* _instance;
 
 private:
-    void add(HBNode*, HBNode*);
     bool isValid(HBNode*, HBNode*);
 
 private:
-    std::unordered_map<const Value*, std::vector<HBNode*>> _writes;
-    std::unordered_map<const Value*, std::vector<HBNode*>> _reads;
+    RFCandidateType _writes;
+    RFCandidateType _reads;
+
+    RFCandidateType _writesLock;
+    RFCandidateType _readsLock;
 
     std::vector<HBNode*> _unknownWrites;
     std::vector<HBNode*> _unknownReads;
