@@ -12,27 +12,17 @@ target triple = "x86_64-pc-linux-gnu"
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define dso_local ptr @routine(ptr noundef %0) #0 {
-  %2 = alloca ptr, align 8
-  store ptr %0, ptr %2, align 8
-  %3 = call i32 @pthread_mutex_lock(ptr noundef @lock) #2
+  %T1L = call i32 @pthread_mutex_lock(ptr noundef @lock) #2
   store i32 40, ptr @count, align 4
-  %4 = call i32 @pthread_mutex_unlock(ptr noundef @lock) #2
+  %T1R = call i32 @pthread_mutex_unlock(ptr noundef @lock) #2
   ret ptr null
 }
 
-; Function Attrs: nounwind
-declare i32 @pthread_mutex_lock(ptr noundef) #1
-
-; Function Attrs: nounwind
-declare i32 @pthread_mutex_unlock(ptr noundef) #1
-
 ; Function Attrs: noinline nounwind optnone uwtable
 define dso_local ptr @secondary(ptr noundef %0) #0 {
-  %2 = alloca ptr, align 8
-  store ptr %0, ptr %2, align 8
-  %3 = call i32 @pthread_mutex_lock(ptr noundef @lock) #2
-  store i32 120, ptr @count, align 4
-  %4 = call i32 @pthread_mutex_unlock(ptr noundef @lock) #2
+  %T2L = call i32 @pthread_mutex_lock(ptr noundef @lock) #2
+  %R = load i32, ptr @count, align 4
+  %T2R = call i32 @pthread_mutex_unlock(ptr noundef @lock) #2
   ret ptr null
 }
 
@@ -49,6 +39,9 @@ define dso_local i32 @main() #0 {
 
 ; Function Attrs: nounwind
 declare i32 @pthread_create(ptr noundef, ptr noundef, ptr noundef, ptr noundef) #1
+declare i32 @pthread_join(i64, ptr) #1
+declare i32 @pthread_mutex_lock(ptr noundef) #1
+declare i32 @pthread_mutex_unlock(ptr noundef) #1
 
 attributes #0 = { noinline nounwind optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { nounwind "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }

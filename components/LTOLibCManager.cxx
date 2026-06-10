@@ -10,7 +10,7 @@
 LTOLibCManager::LTOLibCManager(const Module& mainModule) {
     LLVMContext ctx;
     SMDiagnostic error;
-    _module = llvm::parseIRFile("files/std_rs_lto.bc", error, ctx);
+    _module = llvm::parseIRFile("files/mutex_rs_lto.bc", error, ctx);
 
     if (!_module) {
         error.print("", errs());
@@ -24,7 +24,7 @@ LTOLibCManager::LTOLibCManager(const Module& mainModule) {
         if (func.isDeclaration() && !func.isIntrinsic()) {
             std::vector<const Function*> visited;
             for (const User *user : func.users()) {
-                handleUser(mainModule, visited, user, func);
+                handleUser(mainModule, visited, user, user, func);
             }
         }
     }
@@ -33,7 +33,7 @@ LTOLibCManager::LTOLibCManager(const Module& mainModule) {
 }
 
 void LTOLibCManager::handleUser(const Module& module, std::vector<const Function*> &visited,
-        const User *user, const Function& func) {
+        const User *user, const User *baseUser, const Function& func) {
 
     // If this appears in a global, we're gonna say this is unhandled.
     // Though, I suppose that's a TODO given that there may be a
@@ -51,13 +51,17 @@ void LTOLibCManager::handleUser(const Module& module, std::vector<const Function
     // If the function calling us is non-LTO-exclusive, we can add to the map.
     if (!isLTOExclusiveFunc(module, *parentFunc)) {
         if (containsLibCFunc(parentFunc, &func)) return;
+        if (func.getName() == "syscall") {
+            const CallBase *call = dyn_cast<CallBase>(baseUser);
+            _funcSysCallMap[parentFunc->getName().str()].push_back(UnixSystemCall::fromCall(call));
+        }
         _funcLibCMap[parentFunc->getName().str()].push_back(LightFunction::fromFunction(func));
         return;
     }
 
     // If we're LTO-exclusive, we need to go up.
     for (const User *higherUser : parentFunc->users()) {
-        handleUser(module, visited, higherUser, func);
+        handleUser(module, visited, higherUser, baseUser, func);
     }
 }
 
@@ -88,6 +92,14 @@ bool LTOLibCManager::isLTOExclusiveFunc(const Module &module, const Function& fu
 const std::vector<const LightFunction*> LTOLibCManager::getLibCFunctions(const Function *f) {
     if (!_funcLibCMap.contains(f->getName().str())) return {};
     return _funcLibCMap[f->getName().str()];
+}
+
+/*
+ * Returns a vector of UnixSystemCalls that are possibly called by f.
+*/
+const std::vector<const UnixSystemCall*> LTOLibCManager::getSysCallFunctions(const Function *f) {
+    if (!_funcSysCallMap.contains(f->getName().str())) return {};
+    return _funcSysCallMap[f->getName().str()];
 }
 
 bool LTOLibCManager::isEnabled() {
@@ -121,6 +133,19 @@ raw_fd_ostream& operator<<(raw_fd_ostream& out, const LightFunction& lightFunc) 
     return out;
 }
 
+bool operator==(const CallBase& call, const UnixSystemCall& sysCall) {
+    const Function *f = call.getCalledFunction();
+    if (!f) return false;
+    if (f->getName() != "syscall") return false;
+    if (call.getNumOperands() < 2) return false;
+
+    // Operand 0 and 2 must be constant ints.
+    const ConstantInt *o1 = dyn_cast<ConstantInt>(call.getOperand(0));
+    const ConstantInt *o2 = dyn_cast<ConstantInt>(call.getOperand(2));
+
+    if (!o1 || !o2) return false;
+    return (sysCall.sysCode == o1->getZExtValue()) && (sysCall.flags == o2->getZExtValue());
+}
 
 LTOLibCManager* LTOLibCManager::get() {
     if (!_manager)

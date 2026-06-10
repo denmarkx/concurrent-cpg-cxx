@@ -60,7 +60,32 @@ struct OperationInfo {
     }
 };
 
+struct SysCallOperationInfo : OperationInfo {
+    unsigned int sysCode = 0;
+    unsigned int flags = 0;
+
+    SysCallOperationInfo(ThreadOperation code, unsigned int _sysCode, unsigned int _opCode) : 
+        OperationInfo(code, Type::IntegerTyID,
+            Type::IntegerTyID, Type::PointerTyID, Type::IntegerTyID, Type::IntegerTyID),
+        sysCode(_sysCode),
+        flags(_opCode)
+    {}
+
+    bool checkCall(const CallBase *call) const {
+        if (call->getNumOperands() < 3) return false;
+        const ConstantInt *o1 = dyn_cast<ConstantInt>(call->getOperand(0));
+        const ConstantInt *o2 = dyn_cast<ConstantInt>(call->getOperand(2));
+        if (!o1 || !o2) return false;
+        return (sysCode == o1->getZExtValue()) && (flags == o2->getZExtValue());
+    }
+
+    bool checkCall(const UnixSystemCall *call) const {
+        return (sysCode == call->sysCode) && (flags == call->flags);
+    }
+};
+
 typedef std::unordered_map<std::string, OperationInfo> OperationMapType;
+typedef std::vector<SysCallOperationInfo> SCOperationMapType;
 
 class ConcurrencyManager {
 public:
@@ -157,6 +182,7 @@ public:
 
     static inline ConcurrencyManager* get();
     static inline ThreadOperation getConcurrencyOperation(const Function *F);
+    static inline ThreadOperation getConcurrencyOperation(const CallBase *C);
     static inline ThreadOperation getConcurrencyOperation(std::string &name);
 
 private:
@@ -178,6 +204,7 @@ private:
     unordered_map<const Function*, pair<ThreadOperation, const CallInst*>> _syncFunctions;
 
     static inline ConcurrencyManager* _concurrencyMgr = nullptr;
+    static const SCOperationMapType _operationSysCalls;
     static const OperationMapType _operationMap;
     static const OperationMapType _highLevelOperationMap;
 };
@@ -211,6 +238,31 @@ inline ThreadOperation ConcurrencyManager::getConcurrencyOperation(const Functio
             }
     }
 
+    return ThreadOperation::NONE;
+}
+
+inline ThreadOperation ConcurrencyManager::getConcurrencyOperation(const CallBase *C) {
+    if (!C) return ThreadOperation::NONE;
+
+    const Function *F = C->getCalledFunction();
+    if (!F) return ThreadOperation::NONE;
+
+    // The only other option to try is syscall, check if direct:
+    auto it = std::find_if(_operationSysCalls.begin(), _operationSysCalls.end(), [&C, &F](const SysCallOperationInfo &info) {
+        return info.checkFunction(F) && info.checkCall(C);
+    });
+    if (it != _operationSysCalls.end()) return it->opCode;
+
+
+    // Then check if underlying LTO:
+    if (!LTOLibCManager::isEnabled()) return ThreadOperation::NONE;
+    std::vector<const UnixSystemCall*> calls = LTOLibCManager::get()->getSysCallFunctions(F);
+    for (const UnixSystemCall* sysCall : calls) {
+        auto it = std::find_if(_operationSysCalls.begin(), _operationSysCalls.end(), [&sysCall, &F](const SysCallOperationInfo &info) {
+            return info.checkCall(sysCall);
+        });
+        if (it != _operationSysCalls.end()) return it->opCode;
+    }
     return ThreadOperation::NONE;
 }
 
@@ -250,6 +302,11 @@ const inline OperationMapType ConcurrencyManager::_operationMap{
             Type::PointerTyID
         )
     },
+};
+
+const inline SCOperationMapType ConcurrencyManager::_operationSysCalls{
+    SysCallOperationInfo(ThreadOperation::UNLOCK, 202, 129),
+    SysCallOperationInfo(ThreadOperation::LOCK, 202, 137),
 };
 
 /*

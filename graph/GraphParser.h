@@ -121,7 +121,11 @@ namespace GraphParser {
     inline Node* handleCallInvoke(const Instruction* instr) {
         const CallBase *callBase = dyn_cast<CallBase>(instr);
 
-        if (auto cOp = ConcurrencyManager::get()->getConcurrencyOperation(callBase->getCalledFunction())) {
+        auto cOp = ConcurrencyManager::get()->getConcurrencyOperation(callBase->getCalledFunction());
+        if (cOp == ThreadOperation::NONE)
+            cOp = ConcurrencyManager::get()->getConcurrencyOperation(callBase);
+
+        if (cOp != ThreadOperation::NONE) {
             Node *concurrencyNode = nullptr;
             switch (cOp) {
                 case ThreadOperation::CREATE: { concurrencyNode = handleNode<ThreadNode, CallBase>(callBase); break; }
