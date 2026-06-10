@@ -17,6 +17,7 @@ public:
     void buildIndex();
     void buildCandidates();
     void filter();
+    void debug();
 
     void add(HBNode*, HBNode*);
     RFGraphType& pairs();

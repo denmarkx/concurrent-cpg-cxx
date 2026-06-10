@@ -36,14 +36,14 @@ void RFGraph::buildIndex() {
                 }
                 break;
             }
-            case NodeType::MUTEX_LOCK: {
+            case NodeType::MUTEX_UNLOCK: {
                 if (memObj)
                     _writesLock[memObj].push_back(n);
                 else
                     _unknownWrites.push_back(n);
                 break;
             }
-            case NodeType::MUTEX_UNLOCK: {
+            case NodeType::MUTEX_LOCK: {
                 if (memObj)
                     _readsLock[memObj].push_back(n);
                 else
@@ -124,10 +124,30 @@ void RFGraph::add(HBNode *a, HBNode *b) {
     if (HappensBeforeGraph::get()->happensBefore(b, a)) return;
     _pairs.push_back({a, b});
 
-    if (std::find(_nodes.begin(), _nodes.end(), a) == _nodes.end())
-        _nodes.push_back(a);
-    if (std::find(_nodes.begin(), _nodes.end(), b) == _nodes.end())
-        _nodes.push_back(b);
+    HBNode *ia = HappensBeforeGraph::get()->getOrCreateNode(a->node, a->threadId);
+    HBNode *ib = HappensBeforeGraph::get()->getOrCreateNode(b->node, b->threadId);
+
+    if (std::find(_nodes.begin(), _nodes.end(), ia) == _nodes.end())
+        _nodes.push_back(ia);
+    if (std::find(_nodes.begin(), _nodes.end(), ib) == _nodes.end())
+        _nodes.push_back(ib);
+}
+
+void RFGraph::debug() {
+    errs() << "reads = " << _reads.size() << "\n";
+    errs() << "writes = " << _writes.size() << "\n";
+    errs() << "_unknownReads = " << _unknownReads.size() << "\n";
+    errs() << "_unknownWrites = " << _unknownWrites.size() << "\n";
+
+    if (!_unknownReads.empty())
+        errs() << "Unknown Reads:\n";
+    for (const auto &x : _unknownReads)
+        errs() << "    " << *x->node->getValue() << "\n";
+
+    if (!_unknownWrites.empty())
+        errs() << "Unknown Writes:\n";
+    for (const auto &x : _unknownWrites)
+        errs() << "    " << *x->node->getValue() << "\n";
 }
 
 std::vector<HBNode*>& RFGraph::getNodes() {
@@ -137,7 +157,6 @@ std::vector<HBNode*>& RFGraph::getNodes() {
 RFGraphType& RFGraph::pairs() {
     return _pairs;
 }
-
 
 RFCandidateType& RFGraph::getWritesLock() { return _writesLock; }
 RFCandidateType& RFGraph::getReadsLock() { return _readsLock; }

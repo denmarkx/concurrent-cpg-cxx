@@ -38,6 +38,14 @@ struct HBPairHash {
     }
 };
 
+struct CacheHash {
+    size_t operator()(const std::pair<Node*, uint32_t> &p) const {
+        size_t h1 = std::hash<Node*>()(p.first);
+        size_t h2 = std::hash<uint32_t>()(p.second);
+        return h1 ^ (h2 << 32 | h2 >> 32);
+    }
+};
+
 typedef std::unordered_set<std::pair<HBNode*, HBNode*>, HBPairHash> DeltaType;
 
 class HappensBeforeGraph {
@@ -55,9 +63,10 @@ public:
     void addEdge(HBNode* start, HBNode *end);
     bool hasEdge(HBNode *start, HBNode *end);
 
-    EdgeInfo getProcessedEdges() const;
+    HBNode* getOrCreateNode(Node *n, uint32_t tid);
 
     std::vector<HBNode*> getNodes();
+    EdgeInfo getProcessedEdges() const;
 
     bool happensBefore(HBNode *a, HBNode *b);
 
@@ -72,6 +81,7 @@ private:
     void computeReachability();
 
 private:
+    std::unordered_map<std::pair<Node*, uint32_t>, HBNode*, CacheHash> _nodeCache;
     std::unordered_map<HBNode*, std::vector<HBNode*>> _graph;
     std::vector<std::vector<HBNode*>> _scc;
     std::unordered_map<HBNode*, int> _sccIds;

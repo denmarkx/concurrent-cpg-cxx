@@ -3,7 +3,9 @@
 #include "components/RFGraph.h"
 #include "concurrency/JoinNode.h"
 #include "graph/FunctionNode.h"
+#include "graph/GraphManager.h"
 #include "graph/Node.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Support/AtomicOrdering.h"
 #include <queue>
 #include <unordered_set>
@@ -37,15 +39,6 @@ void HappensBeforeGraph::buildFixedPointClosure() {
         buildAtomics(delta);
         buildLocks(delta);
         buildTransitive();
-
-        if (wantDebug) {
-            errs() << "delta = " << delta.size() << "\n";
-            for (const auto &p : delta) {
-                errs() << "    1: " << *p.first->node->getValue() << "\n";
-                errs() << "    2: " << *p.second->node->getValue() << "\n";
-            }
-        }
-
         if (delta.empty()) break;
     }
 }
@@ -60,8 +53,8 @@ void HappensBeforeGraph::buildThread(FunctionNode *entry) {
         if (ThreadNode *tn = dynamic_cast<ThreadNode*>(x)) {
             uint32_t childThreadId = _registrar.getOrCreate(tn->getRoutineFunc());
             addEdge(
-                new HBNode(tn, childThreadId),
-                new HBNode(tn->getRoutine(), childThreadId)
+                getOrCreateNode(tn, childThreadId),
+                getOrCreateNode(tn->getRoutine(), childThreadId)
             );
 
             if(JoinNode *join = dynamic_cast<JoinNode*>(tn->getHandle())) {
@@ -69,8 +62,8 @@ void HappensBeforeGraph::buildThread(FunctionNode *entry) {
                 FunctionNode *routine = dynamic_cast<FunctionNode*>(tn->getRoutine());
                 for (auto &exit : routine->getTerminators()) {
                     addEdge(
-                        new HBNode(exit, childThreadId),
-                        new HBNode(join, childThreadId)
+                        getOrCreateNode(exit, childThreadId),
+                        getOrCreateNode(join, childThreadId)
                     );
                 }
             }
@@ -87,7 +80,7 @@ void HappensBeforeGraph::buildThread(FunctionNode *entry) {
         if (prev) {
             if (wantDebug)
                 errs() << "new HBNode (tId = " << threadId << "\n";
-            addEdge(new HBNode(prev, threadId), new HBNode(x, threadId));
+            addEdge(getOrCreateNode(prev, threadId), getOrCreateNode(x, threadId));
         }
         prev = x;
     }
@@ -122,6 +115,37 @@ void HappensBeforeGraph::buildLocks(DeltaType& delta) {
     RFGraph *rfg = RFGraph::get();
     auto add = [&](HBNode *w, HBNode *r) {
         if (w->threadId == r->threadId) return;
+
+        // Check if same lock:
+        const Value *lockA = GraphManager::get()->getMemoryObj(w->node->ptr);
+        lockA = lockA ? lockA : w->node->ptr;
+
+        const Value *lockB = GraphManager::get()->getMemoryObj(r->node->ptr);
+        lockB = lockB ? lockB : r->node->ptr;
+
+        if (lockA != lockB) {
+            errs() << "lockA != lockB\n";
+            return;
+        };
+        errs() << "w = " << *w->node->getValue() << "\n";
+        errs() << "r = " << *r->node->getValue() << "\n";
+        if (GraphManager::get()->getAliasResult()->alias(w->node->ptr, r->node->ptr) == AliasResult::NoAlias) {
+            errs() << "noalias\n";
+            if (w->node->ptr) {
+                errs() << "w ptr = " << *w->node->ptr << "\n";
+            }
+            if (r->node->ptr) {
+                errs() << "r ptr = " << *r->node->ptr << "\n";
+            }
+
+            return;
+        };
+            if (w->node->ptr) {
+                errs() << "w ptr = " << *w->node->ptr << "\n";
+            }
+            if (r->node->ptr) {
+                errs() << "r ptr = " << *r->node->ptr << "\n";
+            }
         if (happensBefore(r, w)) return;
         if (hasEdge(w, r)) return;
         addEdge(w, r);
@@ -152,6 +176,17 @@ void HappensBeforeGraph::buildLocks(DeltaType& delta) {
 }
 
 void HappensBeforeGraph::buildTransitive() {
+    _index.clear();
+    _link.clear();
+    _state.clear();
+    _sccIds.clear();
+    _scc.clear();
+    _dag.clear();
+    _reach.clear();
+    _nextIdx = 0;
+    while (!_stack.empty())
+        _stack.pop();
+
     computeSCC();
     computeDAG();
     computeReachability();
@@ -169,10 +204,13 @@ bool HappensBeforeGraph::hasEdge(HBNode *start, HBNode *end) {
 }
 
 std::vector<HBNode*> HappensBeforeGraph::getNodes() {
-    std::vector<HBNode*> r;
-    for (const auto &[n, c] : _graph)
-        r.push_back(n);
-    return r;
+    std::unordered_set<HBNode*> seen;
+    for (const auto &[n, children] : _graph) {
+        seen.insert(n);
+        for (HBNode *c : children)
+            seen.insert(c);
+    }
+    return std::vector<HBNode*>(seen.begin(), seen.end());
 }
 
 EdgeInfo HappensBeforeGraph::getProcessedEdges() const {
@@ -191,13 +229,27 @@ EdgeInfo HappensBeforeGraph::getProcessedEdges() const {
     return info;
 }
 
+HBNode* HappensBeforeGraph::getOrCreateNode(Node *n, uint32_t tid) {
+    auto key = std::make_pair(n, tid);
+    auto [it, inserted] = _nodeCache.emplace(key, nullptr);
+    if (inserted)
+        it->second = new HBNode(n, tid);
+    return it->second;
+}
+
 /*
  * Tarjan's Strongly Connected Components algorithm.
  *   The only cycle really expected is seq_cst..anything else
  *   should be marked properly for rq1.
 */
 void HappensBeforeGraph::computeSCC() {
+    std::unordered_set<HBNode*> all;
     for (auto &[n, children] : _graph) {
+        all.insert(n);
+        for (HBNode *c : children)
+            all.insert(c);
+    }
+    for (HBNode *n : all) {
         if (!_index.contains(n))
             connectSCC(n);
     }

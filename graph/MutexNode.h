@@ -29,6 +29,7 @@ public:
         if (obj) {
             node->_handle = GraphManager::get()->getNodeFromOperand(I, 0);
             node->addEdge("HANDLE", node->_handle);
+            node->ptr = I->getOperand(0);
         }
         return node;
     }
