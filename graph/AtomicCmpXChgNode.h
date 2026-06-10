@@ -31,7 +31,6 @@ public:
         Node *cmp = GraphManager::get()->getNode(I->getOperand(1));
         Node *newValue = GraphManager::get()->getNode(I->getOperand(2));
 
-        // TODO: there's ->getMergedOrdering but i have no idea what the fuck that is.
         node->addProperty("failedOrdering", toIRString(I->getFailureOrdering()));
         node->addProperty("successOrdering", toIRString(I->getSuccessOrdering()));
 

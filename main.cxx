@@ -16,6 +16,7 @@
 #include "graph/GraphManager.h"
 
 #include <include/argparse.hpp>
+#include <chrono>
 
 using namespace llvm;
 
@@ -32,14 +33,37 @@ int main() {
         return 0;
     }
 
+    auto start = std::chrono::high_resolution_clock::now();
     GraphManager::get()->setupLTOManager(*module);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    errs() << "[LTO Manager]: Setup executed in: " << 
+        std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count() << "ms\n";
+
     GraphBuilder builder("neo4j", "00000000");
+
+    auto startAll = std::chrono::high_resolution_clock::now();
 
     legacy::PassManager PM;
     PM.add(new AndersenAAWrapperPass());
     PM.add(new GraphBuilderPass());
     PM.add(new GraphBuilderProcessPass());
     PM.run(*module);
+
+    auto endPasses = std::chrono::high_resolution_clock::now();
+    errs() << "[Passes]: Overall Time: " << 
+        std::chrono::duration_cast<std::chrono::milliseconds>(endPasses-start).count() << "ms\n";
+
     builder.persistAll();
+
+    auto endAll = std::chrono::high_resolution_clock::now();
+
+    auto elapsedOverall = std::chrono::duration_cast<std::chrono::seconds>(endAll-startAll).count();
+    if (elapsedOverall == 0)
+        errs() << "[CCPG]: Overall Time: " << 
+            std::chrono::duration_cast<std::chrono::milliseconds>(endAll-startAll).count() << "ms\n";
+    else
+        errs() << "[CCPG]: Overall Time: " << 
+            std::chrono::duration_cast<std::chrono::seconds>(endAll-startAll).count() << "s\n";
     return 0;
 }

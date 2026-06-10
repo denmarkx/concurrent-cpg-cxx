@@ -103,12 +103,9 @@ private:
         std::vector<const Value *> ptsSet;
         GraphManager::get()->getAliasResult()->getPointsToSet(v, ptsSet);
 
-        // TODO: this sort of draws back to a CFG / domtree
         // if there exists more than 1 function within ours ptsSet.
         for (const Value *v : ptsSet) {
-            // this is a bit insane. i cant get the underlying type?
             if (v->getType()->isFunctionTy()) {
-                // TODO: for now, we'll accept the first one i guess.
                 return dyn_cast<Function>(v);
             }
 
@@ -140,9 +137,6 @@ private:
             const StructType *strct = dyn_cast<StructType>(ty);
             for (int i = 0; i < ty->getStructNumElements(); i++) {
                 if (i == 2) {
-                    // TODO: i personally can't find anything that will differentiate between the routine
-                    // from the 2 funcs present in the vtable. for rust, its guaranteed that the routine
-                    // will be the last element in the vtable. for c++, it depends on ABI.
                     errs() << "returning f\n";
                     return dyn_cast<Function>(value->getAggregateElement(i));
                 }

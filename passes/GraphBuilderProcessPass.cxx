@@ -8,20 +8,43 @@
 #include "llvm/IR/Instructions.h"
 
 bool GraphBuilderProcessPass::runOnModule(Module &M) {
+    auto start = std::chrono::high_resolution_clock::now();
     ConcurrencyPass *pass = new ConcurrencyPass();
     pass->handleGlobals(M.globals());
     pass->run();
+    auto end = std::chrono::high_resolution_clock::now();
+    printElapsed("[ConcurrencyPass]: Elapsed Time: ", start, end);
+
+    auto startCFG = std::chrono::high_resolution_clock::now();
 
     ControlFlowGraph *cfg = new ControlFlowGraph();
     cfg->parseModule(M);
 
+    auto endCFG = std::chrono::high_resolution_clock::now();
+    printElapsed("[ControlFlowGraph]: Elapsed Time: ", startCFG, endCFG);
+
+    auto startHB = std::chrono::high_resolution_clock::now();
+
     HappensBeforeGraph *hbg = new HappensBeforeGraph();
     hbg->build(M);
+
+    auto endHB = std::chrono::high_resolution_clock::now();
+    printElapsed("[HappensBeforeGraph]: Elapsed Time: ", startHB, endHB);
+
+    auto startRFG = std::chrono::high_resolution_clock::now();
 
     RFGraph *rfg = new RFGraph();
     rfg->buildIndex();
 
+    auto endRFG = std::chrono::high_resolution_clock::now();
+    printElapsed("[RF Candidates]: Elapsed Time: ", startHB, endHB);
+
+    auto startFPA = std::chrono::high_resolution_clock::now();
+
     hbg->buildFixedPointClosure();
+
+    auto endFPA = std::chrono::high_resolution_clock::now();
+    printElapsed("[FPA]: Elapsed Time: ", startHB, endHB);
 
     for (HBNode *a : rfg->getNodes()) {
         for (HBNode *b : rfg->getNodes()) {
@@ -38,6 +61,16 @@ bool GraphBuilderProcessPass::runOnModule(Module &M) {
     }
 
     return false;
+}
+
+void GraphBuilderProcessPass::printElapsed(std::string s,
+    std::chrono::time_point<chrono::system_clock> start, std::chrono::time_point<chrono::system_clock> end) {
+    auto e = std::chrono::duration_cast<std::chrono::seconds>(end-start).count();
+
+    if (e == 0)
+        errs() << s << std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count() << "ms\n";
+    else    
+        errs() << s << std::chrono::duration_cast<std::chrono::seconds>(end-start).count() << "s\n";
 }
 
 void GraphBuilderProcessPass::getAnalysisUsage(AnalysisUsage &AU) const {

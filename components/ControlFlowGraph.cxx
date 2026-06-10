@@ -14,7 +14,6 @@
 
 ControlFlowGraph::ControlFlowGraph() { _graph = this; };
 
-// TODO: i dont know why this doesnt flow through nodes instead of doing this raw instruction shit
 void ControlFlowGraph::parseModule(const Module& module) {
     for (const Function &f : module) {
         if (f.isIntrinsic()) continue;
@@ -33,7 +32,6 @@ void ControlFlowGraph::parseModule(const Module& module) {
         }
 
         for (const BasicBlock &bb : f) {
-            // TODO: need to read more into how atomic instrs actually work in llvm
             Node *prevNode = GraphManager::get()->getNode(&bb);
 
             for (const Instruction &instr : bb) {
@@ -52,7 +50,6 @@ void ControlFlowGraph::parseModule(const Module& module) {
                         Node *toNode = GraphManager::get()->getNode(call->getCalledFunction());
                         assert(toNode != nullptr);
 
-                        // TODO: see top TODO because this is shit
                         if (ThreadNode *tNode = dynamic_cast<ThreadNode*>(node)) {
                             _edges[node].push_back( CFGEdge { node, tNode->getRoutine(), CFGEdgeType::CALL } ); 
                             break;
