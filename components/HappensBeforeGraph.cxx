@@ -38,6 +38,7 @@ void HappensBeforeGraph::buildFixedPointClosure() {
 
         buildAtomics(delta);
         buildLocks(delta);
+        buildSeqCst(delta);
         buildTransitive();
         if (delta.empty()) break;
     }
@@ -172,6 +173,32 @@ void HappensBeforeGraph::buildLocks(DeltaType& delta) {
         }
         for (HBNode *acq : rfg->getUnknownReads())
             add(rel, acq);
+    }
+}
+
+void HappensBeforeGraph::buildSeqCst(DeltaType& delta) {
+    std::vector<HBNode*> seqCsts;
+    for (HBNode *n : getNodes()) {
+        if (n->node->getAtomicOrder() == AtomicOrdering::SequentiallyConsistent)
+            seqCsts.push_back(n);
+    }
+
+    for (unsigned int i=0; i < seqCsts.size(); i++) {
+        for (unsigned int j=i+1; j < seqCsts.size(); j++) {
+            HBNode *a = seqCsts[i];
+            HBNode *b = seqCsts[j];
+
+            if (a->threadId == b->threadId) continue;
+            if (GraphManager::get()->getAliasResult()->alias(a->node->ptr, b->node->ptr) == AliasResult::NoAlias) continue;
+            if (!hasEdge(a, b)) {
+                addEdge(a, b);
+                delta.insert({a, b});
+            }
+            if (!hasEdge(b, a)) {
+                addEdge(b, a);
+                delta.insert({b, a});
+            }
+        }
     }
 }
 

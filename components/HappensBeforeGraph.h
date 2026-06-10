@@ -59,6 +59,7 @@ public:
     void buildThread(FunctionNode *entry);
     void buildAtomics(DeltaType& delta);
     void buildLocks(DeltaType& delta);
+    void buildSeqCst(DeltaType& delta);
 
     void addEdge(HBNode* start, HBNode *end);
     bool hasEdge(HBNode *start, HBNode *end);
