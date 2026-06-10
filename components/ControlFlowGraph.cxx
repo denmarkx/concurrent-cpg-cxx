@@ -59,7 +59,9 @@ void ControlFlowGraph::parseModule(const Module& module) {
                         }
 
                         if (!call->getCalledFunction()) break; // TODO
-                        if (call->getCalledFunction()->isIntrinsic() || call->isInlineAsm()) break;
+                        if (call->getCalledFunction()->isIntrinsic() ||
+                            call->isInlineAsm() ||
+                            call->getCalledFunction()->isDeclaration()) break;
 
                         _edges[node].push_back( CFGEdge { node, toNode, CFGEdgeType::CALL } );
 
