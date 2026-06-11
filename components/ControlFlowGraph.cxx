@@ -57,16 +57,19 @@ void ControlFlowGraph::parseModule(const Module& module) {
 
                         if (!call->getCalledFunction()) break; // TODO
                         if (call->getCalledFunction()->isIntrinsic() ||
-                            call->isInlineAsm() ||
-                            call->getCalledFunction()->isDeclaration()) break;
+                            call->isInlineAsm()) break;
 
-                        _edges[node].push_back( CFGEdge { node, toNode, CFGEdgeType::CALL } );
+                        if (!call->getCalledFunction()->isDeclaration())
+                            _edges[node].push_back( CFGEdge { node, toNode, CFGEdgeType::CALL } );
 
                         // Handle unwind path:
                         if (const InvokeInst *invoke = dyn_cast<InvokeInst>(&instr)) {
                             Node *unwindNode = GraphManager::get()->getNode(invoke->getUnwindDest());
                             if (unwindNode)
                                 _edges[node].push_back( CFGEdge { node, unwindNode, CFGEdgeType::UNWIND } );
+
+                            Node *normalDestNode = GraphManager::get()->getNode(invoke->getNormalDest());
+                            _edges[node].push_back( CFGEdge { node, normalDestNode, CFGEdgeType::DEFAULT });
                         }
                         break;
                     }
