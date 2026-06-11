@@ -13,8 +13,9 @@ public:
     MutexNode(const CallBase* I) : CallNode(I, "MutexNode") {}
 
     static MutexNode* make(const CallBase *I) {
-        auto cOp = ConcurrencyManager::get()->
-            getConcurrencyOperation(I->getCalledFunction());
+        auto cOp = ConcurrencyManager::get()->getConcurrencyOperation(I->getCalledFunction());
+        if (cOp == ThreadOperation::NONE)
+            cOp = ConcurrencyManager::get()->getConcurrencyOperation(I);
 
         MutexNode *node = new MutexNode(I);
 
@@ -27,9 +28,9 @@ public:
 
         const Value *obj = GraphManager::get()->getMemoryObj(I->getOperand(0));
         if (obj) {
-            node->_handle = GraphManager::get()->getNodeFromOperand(I, 0);
+            node->_handle = GraphManager::get()->getNode(obj);
             node->addEdge("HANDLE", node->_handle);
-            node->ptr = I->getOperand(0);
+            node->ptr = const_cast<Value*>(obj);
         }
         return node;
     }

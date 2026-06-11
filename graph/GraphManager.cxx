@@ -1,4 +1,5 @@
 #include "GraphManager.h"
+#include "andersen/Andersen.h"
 #include "components/LTOLibCManager.h"
 #include "utility/APIHelper.h"
 
@@ -136,7 +137,7 @@ const llvm::Value* GraphManager::getMemoryObj(const llvm::Value *ptr) {
 
     const llvm::Value *obj = llvm::getUnderlyingObject(ptr, 8);
 
-    if (llvm::isa<llvm::GlobalValue>(obj) || llvm::isa<llvm::AllocaInst>(obj) || llvm::isa<llvm::Argument>(obj))
+    if (llvm::isa<llvm::GlobalValue>(obj) || llvm::isa<llvm::AllocaInst>(obj))
         return obj;
 
     if (auto *callInst = dyn_cast<CallInst>(obj)) {
@@ -145,6 +146,10 @@ const llvm::Value* GraphManager::getMemoryObj(const llvm::Value *ptr) {
     }
 
     // TODO: need to go through AA
+    PtsSetType ptsSet;
+    getAliasResult()->getPointsToSet(ptr, ptsSet);
+    if (ptsSet.size() == 1)
+        return ptsSet[0];
     return nullptr;
 }
 
