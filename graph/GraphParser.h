@@ -229,19 +229,23 @@ namespace GraphParser {
         for (Function &F : M) {
             ConcurrencyManager::get()->discoverSyncFunctions(&F);
             FunctionNode* funcNode = handleNode<FunctionNode, Function>(&F);
+            if (!funcNode) continue;
 
             for (BasicBlock &B : F) {
                 BlockComplexity::get()->handleBlock(&B);
                 InstructionOrdering::get()->handleBasicBlock(&B);
 
                 BasicBlockNode* blockNode = handleNode<BasicBlockNode, BasicBlock>(&B);
+                if (!blockNode) continue;
                 blocks.push_back(blockNode);
                 funcNode->addBlock(blockNode);
     
                 for (Instruction &I : B) {
+                    Node* node = handleNode(&I);
+                    if (!node) continue;
+
                     BlockComplexity::get()->handleInstruction(&I);
                     InstructionOrdering::get()->handleInstruction(&I);
-                    Node* node = handleNode(&I);
                     blockNode->addNode(node);
                 }
             }
@@ -254,5 +258,9 @@ namespace GraphParser {
                     // block->registerCFGEdge(next);
             }
         }
+    }
+
+    inline bool requiresCloning(const Function *f) {
+        return (f->getName().str() == "__rust_try");
     }
 };

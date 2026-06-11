@@ -107,6 +107,11 @@ public:
         if (functions.size() > 0 && funcPtrV != nullptr) {
             node->addFunctionPointer(funcPtrV);
         }
+
+        if (const InvokeInst *invoke = dyn_cast<InvokeInst>(I)) {
+            node->_invokeDefault = GraphManager::get()->getNode(invoke->getNormalDest());
+            node->_invokeUnwind = GraphManager::get()->getNode(invoke->getUnwindDest());
+        }
         return node;
     }
 
@@ -138,6 +143,7 @@ public:
         // pointing to any number of functions.
         // ..though I haven't actually confirmed what LLVM does here.
         Node *funcNode = GraphManager::get()->getNode(function);
+        assert(funcNode != nullptr);
 
         addEdge("CALLS", funcNode);
         _functions.push_back(funcNode);
@@ -167,8 +173,28 @@ public:
         return dyn_cast<Function>(_functions[0]->getValue());
     }
 
+    std::vector<Node*>& getCalledFunctions() {
+        return _functions;
+    }
+
+    Node* getInvokeDefault() {
+        return _invokeDefault;
+    }
+
+    Node* getInvokeUnwind() {
+        return _invokeUnwind;
+    }
+
+    NodeType getType() { return NodeType::CALL_INVOKE; }
+
 private:
+    NodeType _type = NodeType::CALL_INVOKE;
+
     std::vector<Node*> _arguments;
     std::vector<Node*> _parameters;
     std::vector<Node*> _functions;
+
+    // TODO: should probably be delegated to a new child invokenode
+    Node* _invokeDefault = nullptr;
+    Node* _invokeUnwind = nullptr;
 };

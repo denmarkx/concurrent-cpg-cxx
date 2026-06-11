@@ -30,6 +30,7 @@ public:
         node->setDebugInfo(F);
 
         node->_name = demangle(F->getName().str());
+        node->_isDeclaration = F->isDeclaration();
 
         size_t i = 0;
         for (const Argument &arg : F->args()) {
@@ -86,6 +87,7 @@ public:
 
     void addBlock(BasicBlockNode* block) {
         // _blockGroup->storeEdge(block);
+        _blocks.push_back(block);
     }
     
     void addParam(ParamNode* param) {
@@ -102,10 +104,22 @@ public:
         return _returnNode;
     }
 
+    std::vector<BasicBlockNode*>& getBlocks() {
+        return _blocks;
+    }
+
+    BasicBlockNode* getStartBlock() {
+        return _blocks[0];
+    }
+
+    bool isDeclaration() {
+        return _isDeclaration;
+    }
 
 private:
     GroupNode *_blockGroup;
     Node *_returnNode = nullptr;
+    bool _isDeclaration = false;
 
     std::vector<BasicBlockNode*> _blocks;
     std::vector<ParamNode*> _params;

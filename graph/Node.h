@@ -28,6 +28,11 @@ enum NodeType {
     ATOMIC_CMPXCHG,
     MUTEX_LOCK,
     MUTEX_UNLOCK,
+    CALL_INVOKE,
+    BR,
+    RET,
+    PHI_NODE,
+    THREAD_SPAWN,
     DEFAULT_TYPE,
 };
 

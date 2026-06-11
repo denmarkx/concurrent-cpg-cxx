@@ -16,19 +16,46 @@ public:
     BranchNode(const BranchInst* I) : Node(I, "BranchNode") {}
 
     static BranchNode* make(const BranchInst *I) {
-        if (I->isUnconditional()) return nullptr;
-
         BranchNode *node = new BranchNode(I);
+        node->_conditional = I->isConditional();
 
-        Node *condNode = GraphManager::get()->getNode(I->getCondition());
+        if (I->isConditional()) {
+            Node *condNode = GraphManager::get()->getNode(I->getCondition());
 
-        // These operands are switched..?
-        Node *nodeT = GraphManager::get()->getNodeFromOperand(I, 2);
-        Node *nodeF = GraphManager::get()->getNodeFromOperand(I, 1);
+            // These operands are switched..?
+            node->_truePath = GraphManager::get()->getNodeFromOperand(I, 2);
+            node->_falsePath = GraphManager::get()->getNodeFromOperand(I, 1);
 
-        node->addEdge("CONDITION", condNode);
-        node->addEdge("TRUE", nodeT);
-        node->addEdge("FALSE", nodeF);
+            node->addEdge("CONDITION", condNode);
+        } else
+            node->_unconditionalPath = GraphManager::get()->getNode(I->getSuccessor(0));
         return node;
     }
+
+    NodeType getType() { return NodeType::BR; }
+
+    bool isConditional() {
+        return _conditional;
+    }
+
+    Node* getUnconditionalPath() {
+        return _unconditionalPath;
+    }
+
+    Node* getTruePath() {
+        return _truePath;
+    }
+
+    Node* getFalsePath() {
+        return _falsePath;
+    }
+
+private:
+    NodeType _type = NodeType::BR;
+    bool _conditional = false;
+
+    Node* _unconditionalPath = nullptr;
+    Node* _truePath = nullptr;
+    Node* _falsePath = nullptr;
+
 };

@@ -27,6 +27,7 @@ public:
         // While this is useful, it hurts. Perhaps we can
         // redefine this via cfg.
         // _edges.push_back(pair("BLOCK_CHILD", node));
+        _instructions.push_back(node);
     }
 
     void addDominator(const BasicBlockNode* block) {
@@ -50,7 +51,12 @@ public:
         return _dominatedBy.size();
     }
 
+    std::vector<Node*>& getInstructions() {
+        return _instructions;
+    }
+
 private:
+    std::vector<Node*> _instructions;
     std::vector<const BasicBlockNode*> _dominates;
     std::vector<const BasicBlockNode*> _dominatedBy;
 };

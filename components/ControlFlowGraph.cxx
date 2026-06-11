@@ -1,5 +1,6 @@
 #include "components/ControlFlowGraph.h"
 #include "concurrency/ThreadNode.h"
+#include "graph/BranchNode.h"
 #include "graph/CallNode.h"
 #include "graph/FunctionNode.h"
 #include "graph/GraphManager.h"
@@ -15,113 +16,86 @@
 ControlFlowGraph::ControlFlowGraph() { _graph = this; };
 
 void ControlFlowGraph::parseModule(const Module& module) {
-    for (const Function &f : module) {
-        if (f.isIntrinsic()) continue;
+    GraphManager *graph = GraphManager::get();
 
-        FunctionNode *funcNode = GraphManager::get()->getNode<FunctionNode>(&f);
-        assert(funcNode != nullptr);
+    for (FunctionNode *funcNode : graph->getAllNodesOf<FunctionNode>()) {
+        if (funcNode->isDeclaration()) continue;
 
         // Connect F -> start block:
-        auto startBlock = f.begin();
-        if (startBlock != f.end()) {
-            Node *startBlockNode = GraphManager::get()->getNode(&*startBlock);
-            assert (startBlockNode != nullptr);
+        BasicBlockNode *startBlockNode = funcNode->getStartBlock();
+        assert(startBlockNode != nullptr);
 
-            _edges[funcNode].push_back( CFGEdge { funcNode, startBlockNode, CFGEdgeType::DEFAULT } );
+        _edges[funcNode].push_back( CFGEdge { funcNode, startBlockNode, CFGEdgeType::DEFAULT } );
 
-        }
+        for (BasicBlockNode *bb : funcNode->getBlocks()) {
+            Node *prevNode = bb;
 
-        for (const BasicBlock &bb : f) {
-            Node *prevNode = GraphManager::get()->getNode(&bb);
-
-            for (const Instruction &instr : bb) {
-                switch (instr.getOpcode()) {
-
+            for (Node *instr : bb->getInstructions()) {
+                errs() << *instr->getValue() << "\n";
+                switch (instr->getType()) {
                     // Call / Invoke: handle regular call path
                     //  Invoke: also handles path to unwind block.
-                    case Instruction::Call:
-                    case Instruction::Invoke: {
-                        const CallBase *call = dyn_cast<CallBase>(&instr);
-                        assert(call != nullptr);
+                    case NodeType::CALL_INVOKE: {
+                        CallNode *node = dynamic_cast<CallNode*>(instr);
+                        assert(node != nullptr);
 
-                        Node *node = GraphManager::get()->getNode(call);
-                        if (!node || !call->getCalledFunction()) break;
-
-                        Node *toNode = GraphManager::get()->getNode(call->getCalledFunction());
-                        assert(toNode != nullptr);
-
-                        if (ThreadNode *tNode = dynamic_cast<ThreadNode*>(node)) {
-                            _edges[node].push_back( CFGEdge { node, tNode->getRoutine(), CFGEdgeType::CALL } ); 
-                            break;
+                        for (Node *candidateFunc : node->getCalledFunctions()) {
+                            if (candidateFunc)
+                                _edges[node].push_back( CFGEdge { node, candidateFunc, CFGEdgeType::CALL } );
                         }
 
-                        if (!call->getCalledFunction()) break; // TODO
-                        if (call->getCalledFunction()->isIntrinsic() ||
-                            call->isInlineAsm()) break;
-
-                        if (!call->getCalledFunction()->isDeclaration())
-                            _edges[node].push_back( CFGEdge { node, toNode, CFGEdgeType::CALL } );
+                        Node *invokeDefault = node->getInvokeDefault();
+                        if (invokeDefault)
+                            _edges[node].push_back( CFGEdge { node, invokeDefault, CFGEdgeType::DEFAULT });
 
                         // Handle unwind path:
-                        if (const InvokeInst *invoke = dyn_cast<InvokeInst>(&instr)) {
-                            Node *unwindNode = GraphManager::get()->getNode(invoke->getUnwindDest());
-                            if (unwindNode)
-                                _edges[node].push_back( CFGEdge { node, unwindNode, CFGEdgeType::UNWIND } );
+                        Node *invokeUnwind = node->getInvokeUnwind();
+                        if (invokeUnwind)
+                            _edges[node].push_back( CFGEdge { node, invokeUnwind, CFGEdgeType::UNWIND } );
+                        break;
+                    }
 
-                            Node *normalDestNode = GraphManager::get()->getNode(invoke->getNormalDest());
-                            _edges[node].push_back( CFGEdge { node, normalDestNode, CFGEdgeType::DEFAULT });
-                        }
+                    case NodeType::THREAD_SPAWN: {
+                        if (ThreadNode *tNode = dynamic_cast<ThreadNode*>(instr))
+                            _edges[instr].push_back( CFGEdge { instr, tNode->getRoutine(), CFGEdgeType::CALL } ); 
                         break;
                     }
 
                     // Conditional br instructions: handle path to true and false blocks.
-                    case Instruction::Br: {
-                        const BranchInst *br = dyn_cast<BranchInst>(&instr);
-                        Node *node = GraphManager::get()->getNode(br);
+                    case NodeType::BR: {
+                        BranchNode *node = dynamic_cast<BranchNode*>(instr);
+                        assert(node != nullptr);
 
-                        if (node == nullptr) break;
-                        if (br->isUnconditional()) break;
+                        if (node->isConditional()) {
+                            Node *trueNode = node->getTruePath();
+                            assert(trueNode != nullptr);
 
-                        Node *trueNode = GraphManager::get()->getNode(br->getOperand(1));
-                        assert(trueNode != nullptr);
+                            Node *falseNode = node->getFalsePath();
+                            assert(falseNode != nullptr);
 
-                        Node *falseNode = GraphManager::get()->getNode(br->getOperand(2));
-                        assert(falseNode != nullptr);
+                            // Connect to both nodes:
+                            _edges[node].push_back( CFGEdge { node, trueNode, CFGEdgeType::COND_TRUE } );
+                            _edges[node].push_back( CFGEdge { node, falseNode, CFGEdgeType::COND_FALSE } );
+                        } else {
+                            Node *uncondPath = node->getUnconditionalPath();
+                            assert(uncondPath != nullptr);
 
-                        // Connect to both nodes:
-                        _edges[node].push_back( CFGEdge { node, trueNode, CFGEdgeType::COND_TRUE } );
-                        _edges[node].push_back( CFGEdge { node, falseNode, CFGEdgeType::COND_FALSE } );
-                        break;
-                    }
-
-                    // TODO: this doesnt actually belong here anymore since its non-cfg
-                    case Instruction::Ret: {
-                        const ReturnInst *inst = dyn_cast<ReturnInst>(&instr);
-
-                        Node *node = funcNode->getReturnNode();
-                        if (!node || !inst->getReturnValue()) break;
-
-                        // Connects to each node who originally called.
-                        for (const User *user : f.users()) {
-                            if (const CallBase *callInst = dyn_cast<CallBase>(user)) {
-                                Node *callNode = GraphManager::get()->getNode(callInst);
-                                if (!callNode) continue;
-
-                                node->addEdge("RETURN_BIND", callNode);
-                            }
+                            _edges[node].push_back( CFGEdge { node, uncondPath, CFGEdgeType::DEFAULT } );
                         }
                         break;
                     }
 
-                    case Instruction::PHI: {
-                        const PHINode *phi = dyn_cast<PHINode>(&instr);
-                        PhiNode *node = GraphManager::get()->getNode<PhiNode>(&instr);
-                        if (node == nullptr) break;
+                    case NodeType::PHI_NODE: {
+                        PhiNode *node = dynamic_cast<PhiNode*>(instr);
+                        assert(node != nullptr);
 
-                        for (Node *candidateNode : node->getCandidateBlocks())
+                        for (Node *candidateNode : node->getCandidateBlocks()) {
+                            assert(candidateNode != nullptr);
                             _edges[node].push_back( CFGEdge { node, candidateNode, CFGEdgeType::PHI_CANDIDATE });
+                        }
                         break;
                     }
+                    default: break;
                 }
 
                 // If our previous node was a call, then we switch that to be the called function's terminators:
@@ -136,15 +110,11 @@ void ControlFlowGraph::parseModule(const Module& module) {
                     }
                 }
 
-                Node *node = GraphManager::get()->getNode(&instr);
+                if (prevNode && instr)
+                    _edges[prevNode].push_back( CFGEdge { prevNode, instr, CFGEdgeType::DEFAULT });
 
-                if (prevNode && node)
-                    _edges[prevNode].push_back( CFGEdge { prevNode, node, CFGEdgeType::DEFAULT });
-
-                // This may sometimes be set to null because we deliberately don't have nodes
-                // for every single instruction (IE: unconditional brs).
-                if (node)
-                    prevNode = node;
+                if (instr)
+                    prevNode = instr;
             }
         }
     }

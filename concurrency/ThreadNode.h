@@ -56,6 +56,8 @@ public:
     Node* getRoutine() { return _routine; }
     Node* getHandle() { return _handle; }
 
+    NodeType getType() { return NodeType::THREAD_SPAWN; }
+
 private:
     void identifyArgumentSequence(const CallBase *call) {
         // If we can identify the highest level:
@@ -153,6 +155,7 @@ private:
     }
 
 private:
+    NodeType _type = NodeType::THREAD_SPAWN;
     std::unordered_set<const Value*> seen;
 
     Node* _handle = nullptr;

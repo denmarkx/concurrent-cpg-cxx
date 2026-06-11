@@ -14,7 +14,7 @@ bool wantDebug = false;
 
 void HappensBeforeGraph::build(const Module &M) {
     const Function *n = M.getFunction("main");
-    buildThread(GraphManager::get()->getNode<FunctionNode>(n));
+    buildThread(GraphManager::get()->getNode<FunctionNode>(n)); 
 
     std::vector<ThreadNode*> threads = ConcurrencyManager::get()->getConcurrencyNodes<ThreadNode>();
     for (ThreadNode *node : threads)
@@ -257,6 +257,8 @@ EdgeInfo HappensBeforeGraph::getProcessedEdges() const {
 }
 
 HBNode* HappensBeforeGraph::getOrCreateNode(Node *n, uint32_t tid) {
+    assert(n != nullptr);
+
     auto key = std::make_pair(n, tid);
     auto [it, inserted] = _nodeCache.emplace(key, nullptr);
     if (inserted)

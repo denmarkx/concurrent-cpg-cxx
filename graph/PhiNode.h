@@ -44,7 +44,9 @@ public:
         return _candidates;
     }
 
-private:
-    std::vector<Node*> _candidates;
+    NodeType getType() { return NodeType::PHI_NODE; }
 
+private:
+    NodeType _type = NodeType::PHI_NODE;
+    std::vector<Node*> _candidates;
 };
