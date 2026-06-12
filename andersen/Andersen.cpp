@@ -91,7 +91,7 @@ llvm::AliasResult Andersen::alias(const Value *valueA, const Value *valueB, unsi
             prevResult = result;
         }
     }
-    return AliasResult::NoAlias;
+    return result;
 }
 
 /*
