@@ -9,6 +9,7 @@
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Instruction.h"
 #include <string>
+#include <utility>
 
 ControlFlowGraph::ControlFlowGraph() { _graph = this; };
 
@@ -140,8 +141,12 @@ void ControlFlowGraph::parseFunction(FunctionNode *funcNode, CallNode *callSite,
                                 fNode = candidate;
                         }
 
-                        if (fNode && fNode->getTerminator())
-                            prevNode = fNode->getTerminator();
+                        if (fNode && fNode->getTerminator()) {
+                            addEdge(fNode->getTerminator(), instr, CFGEdgeType::RETURN);
+                            if (instr)
+                                prevNode = instr;
+                            continue;
+                        }
                     }
                 }
             }
@@ -153,6 +158,15 @@ void ControlFlowGraph::parseFunction(FunctionNode *funcNode, CallNode *callSite,
                 prevNode = instr;
         }
     }
+}
+
+Node* ControlFlowGraph::getNextInBlock(Node *node) {
+    const Instruction *instr = dyn_cast<Instruction>(node->getValue());
+    if (!instr) return nullptr;
+
+    const Instruction *next = instr->getNextNonDebugInstruction();
+    if (!next) return nullptr;
+    return GraphManager::get()->getNode(next);
 }
 
 void ControlFlowGraph::addEdge(Node *start, Node *end, CFGEdgeType type) {
@@ -270,24 +284,43 @@ bool ControlFlowGraph::requiresCloning(FunctionNode *node) {
 */
 std::vector<Node*> ControlFlowGraph::traverse(Node* start, bool followCalls) {
     std::vector<Node*> s{start};
-    std::queue<Node*> q;
-    q.push(start);
+    std::queue<std::pair<Node*, std::vector<Node*>>> q;
+    q.push({start, {}});
 
     while (!q.empty()) {
-        Node *n = q.front();
+        auto [n, callStack] = q.front();
         q.pop();
         for (auto edge : _edges[n]) {
-
-            // TODO: this doesnt belong in the primary trav func:
-            // Thread routines are done separately.
             if (ThreadNode *tn = dynamic_cast<ThreadNode*>(n))
                 if (edge.end == tn->getRoutine()) continue;
             if (!followCalls && edge.type == CALL) continue;
 
+            if (edge.type == RETURN) {
+                if (callStack.empty()) continue;
+                if (edge.end != getNextInBlock(callStack.back())) continue;
+            }
+
+            if (edge.type == DEFAULT) {
+                Node *targetFunc = edge.end->getFunction();
+                Node *currentFunc = n->getFunction();
+
+                if (targetFunc && currentFunc && targetFunc != currentFunc) {
+                    bool onStack = std::find(callStack.begin(), callStack.end(), targetFunc) != callStack.end();
+                    if (!onStack)
+                        continue;
+                }
+            }
+
             if (std::find(s.begin(), s.end(), edge.end) != s.end()) continue;
 
             s.push_back(edge.end);
-            q.push(edge.end);
+
+            std::vector<Node*> newStack = callStack;
+            if (edge.type == CALL)
+                newStack.push_back(n->getFunction());
+            else if (edge.type == RETURN)
+                newStack.pop_back();
+            q.push({edge.end, newStack});
         }
     }
     return s;

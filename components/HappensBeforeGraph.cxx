@@ -2,9 +2,11 @@
 #include "components/ControlFlowGraph.h"
 #include "components/RFGraph.h"
 #include "concurrency/JoinNode.h"
+#include "graph/CallNode.h"
 #include "graph/FunctionNode.h"
 #include "graph/GraphManager.h"
 #include "graph/Node.h"
+#include "graph/ReturnNode.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Support/AtomicOrdering.h"
 #include <queue>
@@ -47,8 +49,34 @@ void HappensBeforeGraph::buildFixedPointClosure() {
 void HappensBeforeGraph::buildThread(FunctionNode *entry) {
     uint32_t threadId = _registrar.getOrCreate(dyn_cast<Function>(entry->getValue()));
 
+    std::unordered_map<FunctionNode*, Node*> callSiteStack;
+
     Node *prev = nullptr;
     for (auto &x : ControlFlowGraph::get()->traverse(entry, threadId > 0)) {
+        if (CallNode *call = dynamic_cast<CallNode*>(x)) {
+            FunctionNode *callee = dynamic_cast<FunctionNode*>(call->getCalledFunctionNode());
+            if (callee)
+                callSiteStack[callee] = call;
+        }
+
+        if (ReturnNode *ret = dynamic_cast<ReturnNode*>(x)) {
+            if (prev)
+                addEdge(getOrCreateNode(prev, threadId), getOrCreateNode(x, threadId));
+
+            FunctionNode *enclosing = dynamic_cast<FunctionNode*>(ret->getFunction());
+            if (callSiteStack.contains(enclosing)) {
+                Node *postCall = ControlFlowGraph::get()->getNextInBlock(callSiteStack[enclosing]);
+                if (postCall) {
+                    addEdge(
+                        getOrCreateNode(x, threadId),
+                        getOrCreateNode(postCall, threadId)
+                    );
+                }
+            }
+            prev = nullptr;
+            continue;
+        }
+
         // There exists a HB edge between the spawn call and the first node of the thread
         // the HB edge will have a threadId of the threadNode's routine.
         if (ThreadNode *tn = dynamic_cast<ThreadNode*>(x)) {

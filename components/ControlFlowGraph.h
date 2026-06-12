@@ -14,6 +14,7 @@ enum CFGEdgeType {
     SWITCH,
     CALL,
     PHI_CANDIDATE,
+    RETURN,
     DEFAULT,
 };
 
@@ -25,6 +26,7 @@ inline const char* to_string(CFGEdgeType edgeType) {
         "SWITCH",
         "CALL",
         "PHI_CANDIDATE",
+        "RETURN",
         "DEFAULT",
     };
     static_assert(edgeTypes.size() == (size_t)CFGEdgeType::DEFAULT + 1);
@@ -50,6 +52,7 @@ public:
     EdgeInfo getProcessedEdges() const;
 
     std::vector<Node*> traverse(Node*, bool followCalls=true);
+    Node* getNextInBlock(Node*);
 
     static ControlFlowGraph* get();
     static ControlFlowGraph* _graph;
