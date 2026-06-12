@@ -155,3 +155,11 @@ void Node::setAtomicOrder(AtomicOrdering order) {
 AtomicOrdering Node::getAtomicOrder() {
     return _atomicType;
 }
+
+void Node::setFunction(Node *function) {
+    _function = function;
+}
+
+Node* Node::getFunction() {
+    return _function;
+}

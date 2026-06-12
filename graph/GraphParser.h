@@ -51,10 +51,10 @@ namespace GraphParser {
 
     template <typename T, typename U>
     std::enable_if_t<std::is_base_of_v<Node, T>, T*>
-    inline handleNode(const Value* instruction) {
+    inline handleNode(const Value* instruction, bool cloning=false) {
         assert (instruction != nullptr);
         T* node = nullptr;
-        if (!GraphManager::get()->hasNode(instruction)) {
+        if (cloning || !GraphManager::get()->hasNode(instruction)) {
             node = T::make(dyn_cast<const U>(instruction));
         } else {
             Node* generic = GraphManager::get()->getNodeOrNull(instruction);
@@ -64,20 +64,20 @@ namespace GraphParser {
         return node;
     }
 
-    inline Node* handleNode(const Value* value) {
+    inline Node* handleNode(const Value* value, bool cloning=false) {
         assert (value != nullptr);
         
         Node *n = nullptr;
         TypeSwitch<const Value *>(value)
-            .Case<Function>([&](const Function *F) { n = handleNode<FunctionNode, Function>(F); })
-            .Case<BasicBlock>([&](const BasicBlock *B) { n = handleNode<BasicBlockNode, BasicBlock>(B); })
-            .Case<BinaryOperator>([&](const BinaryOperator *I) { n = handleNode<BinaryOperatorNode, BinaryOperator>(I); })
-            .Case<ConstantInt>([&](const ConstantInt *I) { n = handleNode<LiteralNode, Value>(I); })
+            .Case<Function>([&](const Function *F) { n = handleNode<FunctionNode, Function>(F, cloning); })
+            .Case<BasicBlock>([&](const BasicBlock *B) { n = handleNode<BasicBlockNode, BasicBlock>(B, cloning); })
+            .Case<BinaryOperator>([&](const BinaryOperator *I) { n = handleNode<BinaryOperatorNode, BinaryOperator>(I, cloning); })
+            .Case<ConstantInt>([&](const ConstantInt *I) { n = handleNode<LiteralNode, Value>(I, cloning); })
             .Default([](const Value* v) { return nullptr; });
         return n;
     }
 
-    inline Node* handleStore(const Instruction* instr) {
+    inline Node* handleStore(const Instruction* instr, bool cloning=false) {
         assert (instr != nullptr);
         const StoreInst *store = dyn_cast<StoreInst>(instr);
         Value* src = store->getOperand(0);
@@ -94,10 +94,10 @@ namespace GraphParser {
                 GraphManager::get()->insertStore(srcNode, destNode);
             }
         }
-        return handleNode<StoreNode, StoreInst>(instr);
+        return handleNode<StoreNode, StoreInst>(instr, cloning);
     }
 
-    inline Node* handleReturn(const Instruction *instr) {
+    inline Node* handleReturn(const Instruction *instr, bool cloning=false) {
         assert (instr != nullptr);
         const ReturnInst *ret = dyn_cast<ReturnInst>(instr);
         Value *retValue = ret->getReturnValue();
@@ -108,7 +108,7 @@ namespace GraphParser {
 
         ReturnNode *retNode = new ReturnNode(ret);
         if (retValue == nullptr) { // ret void or null or const
-            retNode = handleNode<ReturnNode, ReturnInst>(instr);
+            retNode = handleNode<ReturnNode, ReturnInst>(instr, cloning);
         } else {
             Node *retItem = GraphManager::get()->getNode(retValue);
             retNode->registerEdge(retItem);
@@ -118,7 +118,7 @@ namespace GraphParser {
         return retNode;
     }
     
-    inline Node* handleCallInvoke(const Instruction* instr) {
+    inline Node* handleCallInvoke(const Instruction* instr, bool cloning=false) {
         const CallBase *callBase = dyn_cast<CallBase>(instr);
 
         auto cOp = ConcurrencyManager::get()->getConcurrencyOperation(callBase->getCalledFunction());
@@ -128,11 +128,11 @@ namespace GraphParser {
         if (cOp != ThreadOperation::NONE) {
             Node *concurrencyNode = nullptr;
             switch (cOp) {
-                case ThreadOperation::CREATE: { concurrencyNode = handleNode<ThreadNode, CallBase>(callBase); break; }
-                case ThreadOperation::JOIN: { concurrencyNode = handleNode<JoinNode, CallBase>(callBase); break; }
-                case ThreadOperation::LOCK: { concurrencyNode = handleNode<MutexNode, CallBase>(callBase); break; }
-                case ThreadOperation::UNLOCK: { concurrencyNode = handleNode<MutexNode, CallBase>(callBase); break; }
-                default: return handleNode<CallNode, CallInst>(callBase);
+                case ThreadOperation::CREATE: { concurrencyNode = handleNode<ThreadNode, CallBase>(callBase, cloning); break; }
+                case ThreadOperation::JOIN: { concurrencyNode = handleNode<JoinNode, CallBase>(callBase, cloning); break; }
+                case ThreadOperation::LOCK: { concurrencyNode = handleNode<MutexNode, CallBase>(callBase, cloning); break; }
+                case ThreadOperation::UNLOCK: { concurrencyNode = handleNode<MutexNode, CallBase>(callBase, cloning); break; }
+                default: return handleNode<CallNode, CallInst>(callBase, cloning);
             }
 
             // It's possible that this might have a higher level caller:
@@ -154,38 +154,38 @@ namespace GraphParser {
                         GraphManager::get()->removeNode(candidate);
 
                     // Then register these new ones in its place:
-                    handleNode<JoinNode, CallBase>(x);
+                    handleNode<JoinNode, CallBase>(x, cloning);
                 }
             }
         }
-        return handleNode<CallNode, CallBase>(instr);
+        return handleNode<CallNode, CallBase>(instr, cloning);
     }
 
 
-    inline Node* handleNode(const Instruction* instr) {
+    inline Node* handleNode(const Instruction* instr, bool cloning=false) {
         assert (instr != nullptr);
         switch (instr->getOpcode()) {
-            case Instruction::Alloca: return handleNode<StackAllocation, AllocaInst>(instr);
-            case Instruction::Load: return handleNode<LoadNode, LoadInst>(instr);
+            case Instruction::Alloca: return handleNode<StackAllocation, AllocaInst>(instr, cloning);
+            case Instruction::Load: return handleNode<LoadNode, LoadInst>(instr, cloning);
 
-            case Instruction::GetElementPtr: return handleNode<GetElementPtrNode, GetElementPtrInst>(instr);
-            case Instruction::ExtractValue: return handleNode<ExtractValueNode, ExtractValueInst>(instr);
-            case Instruction::InsertValue: return handleNode<InsertValueNode, InsertValueInst>(instr);
+            case Instruction::GetElementPtr: return handleNode<GetElementPtrNode, GetElementPtrInst>(instr, cloning);
+            case Instruction::ExtractValue: return handleNode<ExtractValueNode, ExtractValueInst>(instr, cloning);
+            case Instruction::InsertValue: return handleNode<InsertValueNode, InsertValueInst>(instr, cloning);
 
             case Instruction::Call:
-            case Instruction::Invoke: return handleCallInvoke(instr);
+            case Instruction::Invoke: return handleCallInvoke(instr, cloning);
 
-            case Instruction::Store: return handleStore(instr);
-            case Instruction::Ret: return handleReturn(instr);
-            case Instruction::ICmp: return handleNode<ICompareNode, ICmpInst> (instr);
-            case Instruction::Br: return handleNode<BranchNode, BranchInst> (instr);
-            case Instruction::Switch: return handleNode<SwitchNode, SwitchInst> (instr);
+            case Instruction::Store: return handleStore(instr, cloning);
+            case Instruction::Ret: return handleReturn(instr, cloning);
+            case Instruction::ICmp: return handleNode<ICompareNode, ICmpInst> (instr, cloning);
+            case Instruction::Br: return handleNode<BranchNode, BranchInst> (instr, cloning);
+            case Instruction::Switch: return handleNode<SwitchNode, SwitchInst> (instr, cloning);
 
-            case Instruction::PHI: return handleNode<PhiNode, PHINode>(instr);
+            case Instruction::PHI: return handleNode<PhiNode, PHINode>(instr, cloning);
 
-            case Instruction::AtomicRMW: return handleNode<AtomicRMWNode, AtomicRMWInst>(instr);
-            case Instruction::AtomicCmpXchg: return handleNode<AtomicCmpXChgNode, AtomicCmpXchgInst>(instr);
-            case Instruction::Fence: return handleNode<FenceNode, FenceInst>(instr);
+            case Instruction::AtomicRMW: return handleNode<AtomicRMWNode, AtomicRMWInst>(instr, cloning);
+            case Instruction::AtomicCmpXchg: return handleNode<AtomicCmpXChgNode, AtomicCmpXchgInst>(instr, cloning);
+            case Instruction::Fence: return handleNode<FenceNode, FenceInst>(instr, cloning);
 
             case Instruction::Trunc:
             case Instruction::ZExt:
@@ -200,10 +200,10 @@ namespace GraphParser {
             case Instruction::IntToPtr:
             case Instruction::BitCast:
             case Instruction::AddrSpaceCast: {
-                return handleNode<CastNode, CastInst>(instr);
+                return handleNode<CastNode, CastInst>(instr, cloning);
             }
         }
-        Node *valueHandle = handleNode(dynamic_cast<const Value*>(instr));
+        Node *valueHandle = handleNode(dynamic_cast<const Value*>(instr), cloning);
 
         #ifdef CHECK_SKIPPED
             if (!valueHandle) {
@@ -213,6 +213,14 @@ namespace GraphParser {
         #endif
 
         return valueHandle;
+    }
+
+    inline void associateTerminators() {
+        for (Node *n : GraphManager::get()->getAllNodesOf<ReturnNode>()) {
+            FunctionNode *funcNode = dynamic_cast<FunctionNode*>(n->getFunction());
+            assert(funcNode != nullptr);
+            funcNode->addTerminator(n);
+        }
     }
 
     inline void handleGraph(Module &M) {
@@ -238,6 +246,7 @@ namespace GraphParser {
                 BasicBlockNode* blockNode = handleNode<BasicBlockNode, BasicBlock>(&B);
                 if (!blockNode) continue;
                 blocks.push_back(blockNode);
+                blockNode->setFunction(funcNode);
                 funcNode->addBlock(blockNode);
     
                 for (Instruction &I : B) {
@@ -247,6 +256,7 @@ namespace GraphParser {
                     BlockComplexity::get()->handleInstruction(&I);
                     InstructionOrdering::get()->handleInstruction(&I);
                     blockNode->addNode(node);
+                    node->setFunction(funcNode);
                 }
             }
         }
@@ -258,9 +268,44 @@ namespace GraphParser {
                     // block->registerCFGEdge(next);
             }
         }
+
+        associateTerminators();
     }
 
-    inline bool requiresCloning(const Function *f) {
-        return (f->getName().str() == "__rust_try");
+    /*
+     * Cloning a function, as-is, is destructive if not used properly.
+     * This will clone all nodes under the function intraprocedurally.
+     *
+     * Currently, this is used just to handle the case of function pointers
+     * when we can reasonably prove the caller from the callsite.
+    */
+    inline FunctionNode* cloneFunction(FunctionNode *root) {
+        std::vector<Node*> newNodes;
+
+        const Function *f = dyn_cast<Function>(root->getValue());
+        assert(f != nullptr);
+
+        FunctionNode *newFuncNode = handleNode<FunctionNode, Function>(f, true);
+        assert(newFuncNode != nullptr);
+
+        for (const BasicBlock &block : *f) {
+            BasicBlockNode *newBlock = handleNode<BasicBlockNode, BasicBlock>(&block, true);
+            if (!newBlock) continue;
+
+            newFuncNode->addBlock(newBlock);
+            newBlock->setFunction(newFuncNode);
+
+            for (const Instruction &instr : block) {
+                Node *newNode = handleNode(&instr, true);
+                if (!newNode) continue;
+
+                newBlock->addNode(newNode);
+                newNode->setFunction(newFuncNode);
+
+                if (instr.getOpcode() == Instruction::Ret)
+                    newFuncNode->addTerminator(newNode);
+            }
+        }
+        return newFuncNode;
     }
 };

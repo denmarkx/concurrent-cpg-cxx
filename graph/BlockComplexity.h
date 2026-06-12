@@ -22,7 +22,7 @@ using namespace std;
 
 enum Complexity : uint8_t {
     BASIC = 1 << 0,
-    CALL = 2 << 0,
+    CALL_X = 2 << 0,
     PHI = 3 << 0,
     ATOMICS = 4 << 0,
 };
@@ -51,7 +51,7 @@ public:
         switch(value->getOpcode()) {
             case Instruction::Invoke: 
             case Instruction::Call:
-                _complexityMap[currentBlock] |= Complexity::CALL;
+                _complexityMap[currentBlock] |= Complexity::CALL_X;
                 break;
             case Instruction::PHI:
                 _complexityMap[currentBlock] |= Complexity::PHI;

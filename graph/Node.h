@@ -79,6 +79,9 @@ public:
     void setAtomicOrder(AtomicOrdering order);
     AtomicOrdering getAtomicOrder();
 
+    void setFunction(Node*);
+    Node* getFunction();
+
 private:
     void setDefaultProperties(const Value *value);
     void handleDebugInfo(const Instruction *instr);
@@ -92,6 +95,8 @@ private:
     AtomicOrdering _atomicType = AtomicOrdering::NotAtomic;
 
     const Value* _value;
+
+    Node* _function = nullptr;
 
 protected:
     std::vector<std::string> _labels;

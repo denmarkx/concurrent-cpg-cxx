@@ -1,6 +1,7 @@
 #pragma once
 #include "GraphManager.h"
 #include "Node.h"
+#include "andersen/Andersen.h"
 #include "graph/IntrinsicHandler.h"
 #include "utility/Debug.h"
 
@@ -42,30 +43,31 @@ public:
             }
         }
 
+        std::unordered_map<const CallBase*, std::vector<const Function*>> candidates;
+
         if (!calledFunc) {
             // This always (maybe?) is a function pointer. We'll try to resolve it..
             funcPtrV = I->getCalledOperand();
             if (x) {
                 LoadInst *load = dyn_cast<LoadInst>(funcPtrV);
             }
-            std::vector<const llvm::Value *> ptsSet{};
+            ContextPtsSetType ptsSet{};
             Andersen *AA = GraphManager::get()->getAliasResult();
-            AA->getPointsToSet(funcPtrV, ptsSet); // TODO
+            AA->getPointsToSet(funcPtrV, ptsSet);
 
             functions.reserve(ptsSet.size());
-            for (auto &v : ptsSet) {
-                if (const Function* f = dyn_cast<Function>(v)) {
-                    // an additional litmus test is to check the arg count
-                    if (f->arg_size() != I->arg_size()) continue;
-                    if (f->getReturnType() != I->getType()) continue;
-                    functions.push_back(f);
+            for (auto &[k, vals] : ptsSet) {
+                for (const auto &v : vals) {
+                    if (const Function *c = dyn_cast<Function>(v)) {
+                        candidates[k].push_back(c);
+                    }
                 }
             }
 
             // If functions len is 0, we sort of don't have a possible path towards
             // any sort of function (which would actually be an oddity)
             // TODO: though, I wouldn't return null here..
-            if (functions.size() == 0) return nullptr;
+            if (candidates.size() == 0) return nullptr;
         }
         if (Node::isIgnoredIntrinsic(calledFunc)) return nullptr;
         if (calledFunc && calledFunc->getIntrinsicID() > 0) {
@@ -75,6 +77,9 @@ public:
 
         CallNode *node = new CallNode(I);
 
+        if (!candidates.empty())
+            node->_call2Candidates = std::move(candidates);
+
         size_t index = 0;
         for (const Use &arg : I->args()) {
             node->addArgument(&arg, index);
@@ -83,16 +88,18 @@ public:
 
         // If functions len is 0 and we got to this point, then
         // we can just use I->getCalledFunction
-        if (functions.size() == 0) {
+        if (functions.size() == 0 && calledFunc) {
             LOG_DEBUG("Direct function call to " + Util::getName(I->getCalledFunction()));
             node->addCalledFunction(calledFunc);
         } else if (functions.size() == 1) {
             // If it's 1, we can technically say that this funcptr goes here.
             LOG_DEBUG("Indirect call to " + Util::getName(functions[0]));
             node->addCalledFunction(functions[0]);
+            node->_isDirectCall = false;
         } else {
             // > 1 is a bit of an assumption as we don't know where this will go.
             // ..but we can say that we may call any of these.
+            node->_isDirectCall = false;
             for (const Function* f : functions) {
                 // TODO: though, we can probably add an edge property.
                 LOG_DEBUG("Indirect call to " + Util::getName(f));
@@ -145,7 +152,6 @@ public:
         Node *funcNode = GraphManager::get()->getNode(function);
         assert(funcNode != nullptr);
 
-        addEdge("CALLS", funcNode);
         _functions.push_back(funcNode);
 
         for (int i = 0; i < _arguments.size(); i++) {
@@ -185,7 +191,16 @@ public:
         return _invokeUnwind;
     }
 
+    std::vector<const Function*>& getCandidatesByCall(const CallBase* cs) {
+        return _call2Candidates[cs];
+    }
+
+    bool isDirectCall() {
+        return _isDirectCall;
+    }
+
     NodeType getType() { return NodeType::CALL_INVOKE; }
+
 
 private:
     NodeType _type = NodeType::CALL_INVOKE;
@@ -193,8 +208,11 @@ private:
     std::vector<Node*> _arguments;
     std::vector<Node*> _parameters;
     std::vector<Node*> _functions;
+    std::unordered_map<const CallBase*, std::vector<const Function*>> _call2Candidates;
 
     // TODO: should probably be delegated to a new child invokenode
     Node* _invokeDefault = nullptr;
     Node* _invokeUnwind = nullptr;
+
+    bool _isDirectCall = true;
 };

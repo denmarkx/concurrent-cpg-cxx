@@ -9,19 +9,6 @@ public:
 
     static ReturnNode* make(const ReturnInst *I) {
         ReturnNode *node = new ReturnNode(I);
-
-        const Function* f = I->getFunction();
-        assert(f != nullptr);
-
-        // Connects to each node who originally called.
-        for (const User *user : f->users()) {
-            if (const CallBase *callInst = dyn_cast<CallBase>(user)) {
-                Node *callNode = GraphManager::get()->getNode(callInst);
-                if (!callNode) continue;
-
-                node->addEdge("RETURN_BIND", callNode);
-            }
-        }
         return node;
     }
 

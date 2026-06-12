@@ -40,19 +40,11 @@ public:
             i++;
         }
 
-        node->identifyTerminators(F);
         return node;
     }
 
-    void identifyTerminators(const Function *F) {
-        for (const BasicBlock &bb : *F) {
-            const Instruction *terminator = bb.getTerminator();
-            if (isa<ReturnInst>(terminator)) {
-                Node *termNode = GraphManager::get()->getNode(terminator);
-                if (termNode)
-                    _terminators.push_back(termNode);
-            }
-        }
+    void addTerminator(Node* terminator) {
+        _terminators.push_back(terminator);
     }
 
     Node* getTerminator() {

@@ -261,10 +261,12 @@ bool Andersen::addConstraintForExternalLibrary(const Context* context,
     Function *routine = dyn_cast<Function>(cs->getArgOperand(2));
     if (routine == nullptr) return false; // Thread with no routine? Nonsense!
 
-    NodeIndex paramIndex = nodeFactory.getValueNodeFor(context, routine->getArg(0));
-    assert(paramIndex != AndersNodeFactory::InvalidIndex && "Failed to find paramIndex node");
+    if (routine->getNumOperands() > 1) {
+      NodeIndex paramIndex = nodeFactory.getValueNodeFor(context, routine->getArg(0));
+      assert(paramIndex != AndersNodeFactory::InvalidIndex && "Failed to find paramIndex node");
+      constraints.emplace_back(AndersConstraint::COPY, paramIndex, argIndex);
+    }
 
-    constraints.emplace_back(AndersConstraint::COPY, paramIndex, argIndex);
     return true;
   }
   return false;

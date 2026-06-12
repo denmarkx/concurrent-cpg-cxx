@@ -62,6 +62,7 @@
 #include <map>
 
 typedef std::vector<const llvm::Value *> PtsSetType;
+typedef std::unordered_map<const llvm::CallBase*, std::vector<const llvm::Value *>> ContextPtsSetType;
 constexpr unsigned int GenericContextID = ~0u;
 
 struct DeferredFunctionPointer {
@@ -116,6 +117,7 @@ private:
   NodeIndex getAdrNodeIndex(NodeIndex n) const;
 
   void fillPointsToSet(const llvm::Value*, PtsSetType &ptsSet, unsigned int contextId);
+  void fillPointsToSet(const llvm::Value*, ContextPtsSetType &ptsSet, unsigned int contextId);
 
   // For debugging
   void dumpConstraint(const AndersConstraint &) const;
@@ -131,6 +133,7 @@ public:
 
   llvm::AliasResult alias(const Value*, const Value*, unsigned int ctxIdA=GenericContextID, unsigned int ctxIdB=GenericContextID);
   void getPointsToSet(const llvm::Value *v, PtsSetType &ptsSet, unsigned int contextId=GenericContextID);
+  void getPointsToSet(const llvm::Value *v, ContextPtsSetType &ptsSet);
   void printPointsToSet(const llvm::Value *v, unsigned int contextId=GenericContextID);
 
   void connectContexts(const Function* parent, const Function* child);

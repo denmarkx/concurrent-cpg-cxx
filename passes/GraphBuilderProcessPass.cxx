@@ -27,6 +27,7 @@ bool GraphBuilderProcessPass::runOnModule(Module &M) {
 
     HappensBeforeGraph *hbg = new HappensBeforeGraph();
     hbg->build(M);
+    return false;
 
     auto endHB = std::chrono::high_resolution_clock::now();
     printElapsed("[HappensBeforeGraph]: Elapsed Time: ", startHB, endHB);

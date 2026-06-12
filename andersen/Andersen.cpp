@@ -131,6 +131,46 @@ void Andersen::fillPointsToSet(const llvm::Value* v, PtsSetType &ptsSet, unsigne
   }
 }
 
+
+/*
+ * Fills in the transitive pointsTo set for a given context.
+ * This differs from getPointsToSet in the fact that the context is not the default context ID.
+*/
+void Andersen::fillPointsToSet(const llvm::Value* v, ContextPtsSetType &ptsSet, unsigned int contextId) {
+    std::queue<unsigned int> worklist;
+
+    NodeIndex ptrTgt = nodeFactory.getMergeTarget(
+      nodeFactory.getValueNodeFor(nodeFactory.getContextByID(contextId), v));
+
+    const llvm::CallBase *ctx = nodeFactory.getContextByID(contextId)->callSite;
+
+    auto ptsItr = ptsGraph.find(ptrTgt);
+    if (ptsItr == ptsGraph.end()) return;
+    for (auto vx : ptsItr->second) {
+      if (vx == nodeFactory.getNullObjectNode()) continue;
+      worklist.push(vx);
+    }
+
+    while (!worklist.empty()) {
+      unsigned int c = worklist.front();
+      worklist.pop();
+
+        const llvm::Value *cv = nodeFactory.getValueForNode(c);
+        if (!cv) continue;
+
+        if (std::find(ptsSet[ctx].begin(), ptsSet[ctx].end(), cv) == ptsSet[ctx].end()) {
+        ptsSet[ctx].push_back(cv);
+
+        auto ptsItr = ptsGraph.find(c);
+        if (ptsItr == ptsGraph.end()) continue;
+        for (auto vx : ptsItr->second) {
+          if (vx == nodeFactory.getNullObjectNode()) continue;
+          worklist.push(vx);
+        }
+    }
+  }
+}
+
 /*
  * Places all the reachable values from the given value into the ptsSet.
  * The third parameter details the specific contextId to filter for. If this is not provided,
@@ -144,6 +184,13 @@ void Andersen::getPointsToSet(const llvm::Value *v, PtsSetType &ptsSet, unsigned
     }
 
     // Otherwise, we need to fill for all associated contexts.
+    for (const Context *ctx : nodeFactory.getAssociatedContexts(v)) {
+      fillPointsToSet(v, ptsSet, ctx->id);
+    }
+}
+
+void Andersen::getPointsToSet(const llvm::Value *v, ContextPtsSetType &ptsSet) {
+    // Fill for all associated contexts.
     for (const Context *ctx : nodeFactory.getAssociatedContexts(v)) {
       fillPointsToSet(v, ptsSet, ctx->id);
     }

@@ -1,16 +1,13 @@
 #include "components/ControlFlowGraph.h"
 #include "concurrency/ThreadNode.h"
 #include "graph/BranchNode.h"
-#include "graph/CallNode.h"
-#include "graph/FunctionNode.h"
 #include "graph/GraphManager.h"
+#include "graph/GraphParser.h"
 #include "graph/Node.h"
 #include "graph/PhiNode.h"
 
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Instruction.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/CFG.h"
 #include <string>
 
 ControlFlowGraph::ControlFlowGraph() { _graph = this; };
@@ -20,104 +17,184 @@ void ControlFlowGraph::parseModule(const Module& module) {
 
     for (FunctionNode *funcNode : graph->getAllNodesOf<FunctionNode>()) {
         if (funcNode->isDeclaration()) continue;
+        parseFunction(funcNode, nullptr);
+    }
 
-        // Connect F -> start block:
-        BasicBlockNode *startBlockNode = funcNode->getStartBlock();
-        assert(startBlockNode != nullptr);
+    clean();
+}
 
-        _edges[funcNode].push_back( CFGEdge { funcNode, startBlockNode, CFGEdgeType::DEFAULT } );
+void ControlFlowGraph::parseFunction(FunctionNode *funcNode, CallNode *callSite, bool isCloned) {
+    if (!isCloned && std::find(_visited.begin(), _visited.end(), funcNode) != _visited.end())
+        return;
 
-        for (BasicBlockNode *bb : funcNode->getBlocks()) {
-            Node *prevNode = bb;
+    _visited.push_back(funcNode);
 
-            for (Node *instr : bb->getInstructions()) {
-                errs() << *instr->getValue() << "\n";
-                switch (instr->getType()) {
-                    // Call / Invoke: handle regular call path
-                    //  Invoke: also handles path to unwind block.
-                    case NodeType::CALL_INVOKE: {
-                        CallNode *node = dynamic_cast<CallNode*>(instr);
-                        assert(node != nullptr);
+    // Connect F -> start block:
+    BasicBlockNode *startBlockNode = funcNode->getStartBlock();
+    assert(startBlockNode != nullptr);
 
-                        for (Node *candidateFunc : node->getCalledFunctions()) {
-                            if (candidateFunc)
-                                _edges[node].push_back( CFGEdge { node, candidateFunc, CFGEdgeType::CALL } );
+    addEdge(funcNode, startBlockNode, CFGEdgeType::DEFAULT);
+
+    for (BasicBlockNode *bb : funcNode->getBlocks()) {
+        Node *prevNode = bb;
+
+        for (Node *instr : bb->getInstructions()) {
+            switch (instr->getType()) {
+                // Call / Invoke: handle regular call path
+                //  Invoke: also handles path to unwind block.
+                case NodeType::CALL_INVOKE: {
+                    CallNode *node = dynamic_cast<CallNode*>(instr);
+                    assert(node != nullptr);
+
+                    if (node->isDirectCall()) {
+                        if (FunctionNode *candidateFunc = dynamic_cast<FunctionNode*>(node->getCalledFunctionNode())) {
+                            if (requiresCloning(candidateFunc) && !isCloned) {
+                                FunctionNode *root = GraphParser::cloneFunction(candidateFunc);
+                                addEdge(node, root, CFGEdgeType::CALL);
+                                parseFunction(root, node, true);
+                                _previousClonedFuncMap[funcNode] = root;
+                                _numTimesCloned[candidateFunc] += 1;
+                            } else {
+                                parseFunction(candidateFunc, node);
+                            }
+                            addEdge(node, candidateFunc, CFGEdgeType::CALL);
                         }
-
-                        Node *invokeDefault = node->getInvokeDefault();
-                        if (invokeDefault)
-                            _edges[node].push_back( CFGEdge { node, invokeDefault, CFGEdgeType::DEFAULT });
-
-                        // Handle unwind path:
-                        Node *invokeUnwind = node->getInvokeUnwind();
-                        if (invokeUnwind)
-                            _edges[node].push_back( CFGEdge { node, invokeUnwind, CFGEdgeType::UNWIND } );
-                        break;
                     }
 
-                    case NodeType::THREAD_SPAWN: {
-                        if (ThreadNode *tNode = dynamic_cast<ThreadNode*>(instr))
-                            _edges[instr].push_back( CFGEdge { instr, tNode->getRoutine(), CFGEdgeType::CALL } ); 
+                    if (callSite && isCloned) {
+                        const CallBase *callBase = dyn_cast<CallBase>(callSite->getValue());
+
+                        for (const auto &f : node->getCandidatesByCall(callBase)) {
+                            FunctionNode *candidateFunc = GraphManager::get()->getNode<FunctionNode>(f);
+                            addEdge(node, candidateFunc, CFGEdgeType::CALL);
+                        }
                         break;
-                    }
+                    } 
 
-                    // Conditional br instructions: handle path to true and false blocks.
-                    case NodeType::BR: {
-                        BranchNode *node = dynamic_cast<BranchNode*>(instr);
-                        assert(node != nullptr);
+                    Node *invokeDefault = node->getInvokeDefault();
+                    if (invokeDefault)
+                        addEdge(node, invokeDefault, CFGEdgeType::DEFAULT);
 
-                        if (node->isConditional()) {
-                            Node *trueNode = node->getTruePath();
-                            assert(trueNode != nullptr);
+                    // Handle unwind path:
+                    Node *invokeUnwind = node->getInvokeUnwind();
+                    if (invokeUnwind)
+                        addEdge(instr, invokeUnwind, CFGEdgeType::UNWIND);
+                    break;
+                }
 
-                            Node *falseNode = node->getFalsePath();
-                            assert(falseNode != nullptr);
+                case NodeType::THREAD_SPAWN: {
+                    if (ThreadNode *tNode = dynamic_cast<ThreadNode*>(instr))
+                        addEdge(instr, tNode->getRoutine(), CFGEdgeType::CALL);
+                    break;
+                }
 
-                            // Connect to both nodes:
-                            _edges[node].push_back( CFGEdge { node, trueNode, CFGEdgeType::COND_TRUE } );
-                            _edges[node].push_back( CFGEdge { node, falseNode, CFGEdgeType::COND_FALSE } );
+                // Conditional br instructions: handle path to true and false blocks.
+                case NodeType::BR: {
+                    BranchNode *node = dynamic_cast<BranchNode*>(instr);
+                    assert(node != nullptr);
+
+                    if (node->isConditional()) {
+                        Node *trueNode = node->getTruePath();
+                        assert(trueNode != nullptr);
+
+                        Node *falseNode = node->getFalsePath();
+                        assert(falseNode != nullptr);
+
+                        // Connect to both nodes:
+                        addEdge(node, trueNode, CFGEdgeType::COND_TRUE);
+                        addEdge(node, falseNode, CFGEdgeType::COND_FALSE);
+
                         } else {
-                            Node *uncondPath = node->getUnconditionalPath();
-                            assert(uncondPath != nullptr);
+                        Node *uncondPath = node->getUnconditionalPath();
+                        assert(uncondPath != nullptr);
 
-                            _edges[node].push_back( CFGEdge { node, uncondPath, CFGEdgeType::DEFAULT } );
-                        }
-                        break;
+                        addEdge(node, uncondPath, CFGEdgeType::DEFAULT);
                     }
-
-                    case NodeType::PHI_NODE: {
-                        PhiNode *node = dynamic_cast<PhiNode*>(instr);
-                        assert(node != nullptr);
-
-                        for (Node *candidateNode : node->getCandidateBlocks()) {
-                            assert(candidateNode != nullptr);
-                            _edges[node].push_back( CFGEdge { node, candidateNode, CFGEdgeType::PHI_CANDIDATE });
-                        }
-                        break;
-                    }
-                    default: break;
+                    break;
                 }
 
-                // If our previous node was a call, then we switch that to be the called function's terminators:
-                // TODO: the determination of function terminators should be delegated to FunctionNode and not here
-                if (prevNode) {
-                    if (CallNode *callNode = dynamic_cast<CallNode*>(prevNode)) {
-                        if (callNode->getCalledFunction()) {
-                            FunctionNode *fNode = dynamic_cast<FunctionNode*>(callNode->getCalledFunctionNode());
-                            if (fNode && fNode->getTerminator())
-                                prevNode = fNode->getTerminator();
-                        }
+                case NodeType::PHI_NODE: {
+                    PhiNode *node = dynamic_cast<PhiNode*>(instr);
+                    assert(node != nullptr);
+
+                    for (Node *candidateNode : node->getCandidateBlocks()) {
+                        assert(candidateNode != nullptr);
+                        addEdge(node, candidateNode, CFGEdgeType::PHI_CANDIDATE);
                     }
+                    break;
                 }
-
-                if (prevNode && instr)
-                    _edges[prevNode].push_back( CFGEdge { prevNode, instr, CFGEdgeType::DEFAULT });
-
-                if (instr)
-                    prevNode = instr;
+                default: break;
             }
+
+            // If our previous node was a call, then we switch that to be the called function's terminators:
+            // TODO: the determination of function terminators should be delegated to FunctionNode and not here
+            if (prevNode) {
+                if (CallNode *callNode = dynamic_cast<CallNode*>(prevNode)) {
+                    if (callNode->getCalledFunction()) {
+                        FunctionNode *fNode = dynamic_cast<FunctionNode*>(callNode->getCalledFunctionNode());
+
+                        // ...we may be cloned..
+                        if (_previousClonedFuncMap.contains(funcNode)) {
+                            FunctionNode *candidate = dynamic_cast<FunctionNode*>(_previousClonedFuncMap[funcNode]);
+                            if (candidate)
+                                fNode = candidate;
+                        }
+
+                        if (fNode && fNode->getTerminator())
+                            prevNode = fNode->getTerminator();
+                    }
+                }
+            }
+
+            if (prevNode && instr)
+                addEdge(prevNode, instr, CFGEdgeType::DEFAULT);
+
+            if (instr)
+                prevNode = instr;
         }
     }
+}
+
+void ControlFlowGraph::addEdge(Node *start, Node *end, CFGEdgeType type) {
+    _edges[start].push_back( CFGEdge { start, end, type });
+    _reverseEdgesMap[end].push_back(start);
+}
+
+void ControlFlowGraph::clean() {
+    for (const auto &[k, v] : _numTimesCloned) {
+        // Get num uses of k's function:
+        const Function *f = dyn_cast<Function>(k->getValue());
+        if (!f) continue;
+
+        if (f->getNumUses() == v) {
+            // Since we've cloned this function the same amount of time
+            // in which it is used, we no longer need it.
+            std::vector<Node*> removed;
+            removeNode(k, removed);
+        }
+    }
+}
+
+void ControlFlowGraph::removeNode(Node *root, std::vector<Node*>& erased) {
+    if (std::find(erased.begin(), erased.end(), root) != erased.end()) return;
+
+    erased.push_back(root);
+    if (_edges[root].empty()) return;
+
+    for (auto &c : _edges[root]) {
+        removeNode(c.end, erased);
+    }
+
+    // Check what nodes we were apart of and remove us from reverse and regular map:
+    auto parents = _reverseEdgesMap[root];
+    for (Node* parent : parents) {
+        std::erase_if(_edges[parent], [&](const auto &e) {
+            return e.end == root;
+        });
+    }
+
+    _edges.erase(root);
+    _reverseEdgesMap.erase(root);
 }
 
 EdgeInfo ControlFlowGraph::getProcessedEdges() const {
@@ -136,6 +213,55 @@ EdgeInfo ControlFlowGraph::getProcessedEdges() const {
         }
     }
     return info;
+}
+
+/*
+ * Returns boolean indicating if this function requires cloning.
+ * This gets determined by if all there exists function pointer calls in the body
+ * where the fptr is from the parameter and all calls to this function pass in
+ * a constant pointer for that parameter. Best example is __rust_try -O0.
+ *
+ * This uses _numTimesCloned[funcNode] as a cache for multiple calls.
+*/
+bool ControlFlowGraph::requiresCloning(FunctionNode *node) {
+    if (_numTimesCloned.contains(node)) return true;
+
+    const Function *f = dyn_cast<Function>(node->getValue());
+    assert(f != nullptr);
+
+    std::unordered_set<unsigned int> funcPtrParamIds;
+    for (const BasicBlock &bb : *f) {
+        for (const Instruction &instr : bb) {
+            if (instr.getOpcode() != Instruction::Call && instr.getOpcode() != Instruction::Invoke)
+                continue;
+            
+            const CallBase *call = dyn_cast<CallBase>(&instr);
+            if (call->getCalledFunction())
+                continue;
+
+            for (unsigned int i=0; i < call->getNumOperands(); i++) {
+                if (isa<Argument>(call->getOperand(i)))
+                    funcPtrParamIds.insert(i);
+            }
+        }
+    }
+
+    if (funcPtrParamIds.empty()) return false;
+
+    // Check if all function uses supply a constant pointer to the params:
+    for (const User *user : f->users()) {
+        const CallBase *call = dyn_cast<CallBase>(user);
+        
+        if (!call) return false;
+
+        for (unsigned int id : funcPtrParamIds) {
+            if (!isa<Function>(call->getOperand(id)))
+                return false;
+        }
+    }
+
+    _numTimesCloned[node] = 0;
+    return true;
 }
 
 /*

@@ -1,6 +1,8 @@
 #pragma once
 #include "ComponentGraphBase.h"
 #include "graph/BasicBlockNode.h"
+#include "graph/CallNode.h"
+#include "graph/FunctionNode.h"
 #include "llvm/IR/InstrTypes.h"
 #include <array>
 #include <stack>
@@ -53,5 +55,19 @@ public:
     static ControlFlowGraph* _graph;
 
 private:
+    void parseFunction(FunctionNode*, CallNode*, bool isCloned=false);
+    void addEdge(Node*, Node*, CFGEdgeType);
+    void removeNode(Node*, std::vector<Node*>& removed);
+    void clean();
+
+    bool requiresCloning(FunctionNode*);
+
+private:
     std::unordered_map<Node*, std::vector<CFGEdge>> _edges;
+    std::unordered_map<Node*, std::vector<Node*>> _reverseEdgesMap;
+    std::unordered_map<FunctionNode*, unsigned int> _numTimesCloned;
+    std::unordered_map<FunctionNode*, Node*> _previousClonedFuncMap;
+
+    std::vector<Node*> _visited;
+    std::vector<FunctionNode*> _originalClonedFunctions;
 };
