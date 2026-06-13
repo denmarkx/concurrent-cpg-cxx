@@ -164,6 +164,15 @@ Node* ControlFlowGraph::getNextInBlock(Node *node) {
     const Instruction *instr = dyn_cast<Instruction>(node->getValue());
     if (!instr) return nullptr;
 
+    if (const InvokeInst *invoke = dyn_cast<InvokeInst>(instr)) {
+        const BasicBlock *normalDest = invoke->getNormalDest();
+        if (!normalDest) return nullptr;
+        
+        const Instruction *first = normalDest->getFirstNonPHIOrDbgOrLifetime();
+        if (!first) return nullptr;
+        return GraphManager::get()->getNode(first);
+    }
+
     const Instruction *next = instr->getNextNonDebugInstruction();
     if (!next) return nullptr;
     return GraphManager::get()->getNode(next);
@@ -305,7 +314,9 @@ std::vector<Node*> ControlFlowGraph::traverse(Node* start, bool followCalls) {
                 Node *currentFunc = n->getFunction();
 
                 if (targetFunc && currentFunc && targetFunc != currentFunc) {
-                    bool onStack = std::find(callStack.begin(), callStack.end(), targetFunc) != callStack.end();
+                    bool onStack = std::find_if(callStack.begin(), callStack.end(), [&](Node *e) {
+                        return e->getFunction() == targetFunc;
+                    }) != callStack.end();
                     if (!onStack)
                         continue;
                 }
@@ -317,7 +328,7 @@ std::vector<Node*> ControlFlowGraph::traverse(Node* start, bool followCalls) {
 
             std::vector<Node*> newStack = callStack;
             if (edge.type == CALL)
-                newStack.push_back(n->getFunction());
+                newStack.push_back(n);
             else if (edge.type == RETURN)
                 newStack.pop_back();
             q.push({edge.end, newStack});

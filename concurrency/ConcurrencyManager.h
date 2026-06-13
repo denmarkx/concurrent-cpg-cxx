@@ -5,6 +5,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
 #include <llvm/IR/Function.h>
+#include <llvm/Demangle/Demangle.h>
 #include <queue>
 #include <stdexcept>
 #include <unordered_map>
@@ -35,7 +36,7 @@ struct OperationInfo {
             (parameters.push_back(args), ...);
         }
 
-    bool checkFunction(const Function *func) const {
+    bool checkFunction(const Function *func, bool firstParamOnly=false) const {
         if (!func) return false;
         if (func->getReturnType()->getTypeID() != returnType) return false;
 
@@ -43,6 +44,7 @@ struct OperationInfo {
         if (numParams != parameters.size()) return false;
 
         for (size_t i=0; i < numParams; i++) {
+            if (firstParamOnly && i >= 1) break;
             Value* operand = func->getArg(i);
             if (operand->getType()->getTypeID() != parameters[i]) return false;
         }
@@ -159,8 +161,10 @@ public:
                 if (const CallBase *cb = dyn_cast<CallInst>(user)) {
                     const Function *calledFunc = cb->getParent()->getParent();
                     if (calledFunc) {
-                        auto it = _highLevelOperationMap.find(calledFunc->getName().str());
-                        if (it != _highLevelOperationMap.end() && it->second.checkFunction(calledFunc)) {
+                        auto it = std::find_if(_highLevelOperationMap.begin(), _highLevelOperationMap.end(), [&calledFunc](const auto& p) {
+                            return demangle(calledFunc->getName()).starts_with(p.first);
+                        });
+                        if (it != _highLevelOperationMap.end() && it->second.checkFunction(calledFunc), true) {
                             final = calledFunc;
                             break;
                         }
@@ -315,23 +319,14 @@ const inline SCOperationMapType ConcurrencyManager::_operationSysCalls{
  * This is done by backtracking the CFG and stopping at a function in this map.
 */
 const inline OperationMapType ConcurrencyManager::_highLevelOperationMap{
-    // TODO: I forgot I need to start compiling with the new Rust mangling scheme
-    // but this should generally be std::thread::spawn.
-    {"_ZN3std6thread5spawn17h850ce3b54e57c103E",
+    {"std::thread::spawn",
         OperationInfo(
             ThreadOperation::CREATE,
             Type::VoidTyID,
-            Type::PointerTyID,Type::PointerTyID
+            Type::PointerTyID
         )
     },
-    {"_ZN3std6thread5spawn17hda204f12d655196cE",
-        OperationInfo(
-            ThreadOperation::CREATE,
-            Type::VoidTyID,
-            Type::PointerTyID,Type::PointerTyID
-        )
-    },
-    {"_ZN3std6thread19JoinHandle$LT$T$GT$4join17hcea5719e14ef9744E",
+    {"std::thread::JoinHandle<T>::join",
         OperationInfo(
             ThreadOperation::JOIN,
             Type::StructTyID,
