@@ -3951,8 +3951,9 @@ bb23:                                             ; preds = %bb9
 
 bb9:                                              ; preds = %bb8
   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(24) %_4.i25, ptr noundef nonnull align 8 dereferenceable(24) %_33, i64 24, i1 false), !dbg !1996
-  invoke void @_ZN3std3sys3pal4unix6thread6Thread3new17h25822420d6359794E(ptr nonnull sret(%"core::result::Result<usize, std::io::error::Error>") align 8 %self4, i64 %stack_size1.0, ptr nonnull align 1 %_4.i25, ptr nonnull align 8 @vtable.3)
-          to label %bb10 unwind label %bb23, !dbg !1997
+  br label %bb10
+  ; invoke void @_ZN3std3sys3pal4unix6thread6Thread3new17h25822420d6359794E(ptr nonnull sret(%"core::result::Result<usize, std::io::error::Error>") align 8 %self4, i64 %stack_size1.0, ptr nonnull align 1 %_4.i25, ptr nonnull align 8 @vtable.3)
+          ; to label %bb10 unwind label %bb23, !dbg !1997
 
 bb10:                                             ; preds = %bb9
   %_109 = load i64, ptr %self4, align 8, !dbg !2001, !range !279, !noundef !33

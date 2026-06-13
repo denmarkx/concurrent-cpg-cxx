@@ -5,6 +5,7 @@ rustc\
     -Ccodegen-units=1\
     -Coverflow-checks=off\
     -Cdebug-assertions=off\
+    -Csymbol-mangling-version=v0\
     -Cllvm-args="--disable-i2p-p2i-opt --emit-call-site-info"\
     "../files/std_rs.rs"\
     -o "../files/std_rs.ll"
@@ -22,6 +23,7 @@ rustc\
     -Coverflow-checks=off\
     -Cdebug-assertions=off\
     -Cllvm-args="--disable-i2p-p2i-opt --emit-call-site-info"\
+    -Csymbol-mangling-version=v0\
     -Clto=fat\
     "../files/std_rs.rs"\
     -o "../files/std_rs_lto.bc"

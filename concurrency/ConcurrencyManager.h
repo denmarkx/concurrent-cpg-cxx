@@ -317,18 +317,18 @@ const inline SCOperationMapType ConcurrencyManager::_operationSysCalls{
 const inline OperationMapType ConcurrencyManager::_highLevelOperationMap{
     // TODO: I forgot I need to start compiling with the new Rust mangling scheme
     // but this should generally be std::thread::spawn.
-    {"_ZN3std6thread5spawn17h64ebb1dd1991f81fE",
+    {"_ZN3std6thread5spawn17h850ce3b54e57c103E",
         OperationInfo(
             ThreadOperation::CREATE,
             Type::VoidTyID,
-            Type::PointerTyID
+            Type::PointerTyID,Type::PointerTyID
         )
     },
-    {"_ZN3std6thread5spawn17h75261b6b5937bc6aE",
+    {"_ZN3std6thread5spawn17hda204f12d655196cE",
         OperationInfo(
             ThreadOperation::CREATE,
             Type::VoidTyID,
-            Type::PointerTyID
+            Type::PointerTyID,Type::PointerTyID
         )
     },
     {"_ZN3std6thread19JoinHandle$LT$T$GT$4join17hcea5719e14ef9744E",

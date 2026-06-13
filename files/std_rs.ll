@@ -3888,17 +3888,16 @@ bb8:                                              ; preds = %bb7
 }
 
 ; Function Attrs: inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(argmem: write) uwtable
-define internal fastcc void @"_ZN6std_rs4main28_$u7b$$u7b$closure$u7d$$u7d$17h55386352f57ce17dE"(ptr nocapture writeonly %0) unnamed_addr #15 {
+define internal fastcc void @"_ZN6std_rs4main28_$u7b$$u7b$closure$u7d$$u7d$17h55386352f57ce17dE"(ptr nocapture writeonly %thread_data) unnamed_addr #15 {
 start:
-  store i32 1234, ptr %0, align 4
+  store i32 1234, ptr %thread_data, align 4
   ret void
 }
 
 ; Function Attrs: inlinehint mustprogress nofree norecurse nosync nounwind nonlazybind willreturn memory(argmem: write) uwtable
-define internal fastcc void @"_ZN6std_rs4main28_$u7b$$u7b$closure$u7d$$u7d$17h3703769f874c261dE"(ptr nocapture writeonly %0) unnamed_addr #15 {
+define internal fastcc void @"_ZN6std_rs4main28_$u7b$$u7b$closure$u7d$$u7d$17h3703769f874c261dE"(ptr nocapture writeonly %thread_data) unnamed_addr #15 {
 start:
-  %read = load i32, ptr %0
-  ; store i32 4321, ptr %0, align 4
+  %read = load i32, ptr %thread_data
   ret void
 }
 

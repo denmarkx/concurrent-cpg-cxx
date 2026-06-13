@@ -10,7 +10,7 @@
 LTOLibCManager::LTOLibCManager(const Module& mainModule) {
     LLVMContext ctx;
     SMDiagnostic error;
-    _module = llvm::parseIRFile("files/mutex_rs_lto.bc", error, ctx);
+    _module = llvm::parseIRFile("files/std_rs_lto.bc", error, ctx);
 
     if (!_module) {
         error.print("", errs());
