@@ -94,8 +94,7 @@ bool RFGraph::isValid(HBNode *w, HBNode *r) {
     auto check = [&](const std::vector<HBNode*>& ws) -> bool {
         for (HBNode *wp : ws) {
             if (wp == w || wp == r) continue;
-            if (GraphManager::get()->getAliasResult()->alias(
-               w->node->ptr, r->node->ptr) == AliasResult::NoAlias) continue;
+            if (HappensBeforeGraph::get()->checkAlias(w, r, AliasResult::NoAlias)) continue;
             if (HappensBeforeGraph::get()->happensBefore(w, wp) &&
                 HappensBeforeGraph::get()->happensBefore(wp, r)) return false;
         }
@@ -116,11 +115,7 @@ bool RFGraph::isValid(HBNode *w, HBNode *r) {
 
 void RFGraph::add(HBNode *a, HBNode *b) {
     if (a == b) return;
-
-    // TODO: need to fix graphmanager::alias
-    if (GraphManager::get()->getAliasResult()->alias(
-        a->node->ptr, b->node->ptr) == AliasResult::NoAlias) return;
-
+    if (HappensBeforeGraph::get()->checkAlias(a, b, AliasResult::NoAlias)) return;
     if (HappensBeforeGraph::get()->happensBefore(b, a)) return;
     _pairs.push_back({a, b});
 
@@ -138,6 +133,22 @@ void RFGraph::debug() {
     errs() << "writes = " << _writes.size() << "\n";
     errs() << "_unknownReads = " << _unknownReads.size() << "\n";
     errs() << "_unknownWrites = " << _unknownWrites.size() << "\n";
+
+    if (!_writes.empty())
+        errs() << "Writes:\n";
+    for (const auto &x : _writes) {
+        errs() << "    " << *x.first << "\n";
+        for (const auto &y : x.second)
+            errs() << "         - " << *y->node->getValue() << "\n";
+    }
+
+    if (!_reads.empty())
+        errs() << "Reads:\n";
+    for (const auto &x : _reads) {
+        errs() << "    " << *x.first << "\n";
+        for (const auto &y : x.second)
+            errs() << "         - " << *y->node->getValue() << "\n";
+    }
 
     if (!_unknownReads.empty())
         errs() << "Unknown Reads:\n";

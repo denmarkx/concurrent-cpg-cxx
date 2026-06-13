@@ -135,21 +135,26 @@ LTOLibCManager* GraphManager::getLTOMgr() {
 const llvm::Value* GraphManager::getMemoryObj(const llvm::Value *ptr) {
     if (!ptr) return nullptr;
 
-    const llvm::Value *obj = llvm::getUnderlyingObject(ptr, 8);
+    const llvm::Value *obj = llvm::getUnderlyingObject(ptr, 16);
 
     if (llvm::isa<llvm::GlobalValue>(obj) || llvm::isa<llvm::AllocaInst>(obj))
         return obj;
 
-    if (auto *callInst = dyn_cast<CallInst>(obj)) {
+    if (auto *callInst = dyn_cast<CallBase>(obj)) {
         if (isHeapAllocator(callInst->getCalledFunction()))
             return callInst;
     }
 
-    // TODO: need to go through AA
     PtsSetType ptsSet;
     getAliasResult()->getPointsToSet(ptr, ptsSet);
-    if (ptsSet.size() == 1)
-        return ptsSet[0];
+    for (const llvm::Value *v : ptsSet) {
+        if (llvm::isa<llvm::GlobalValue>(v) || llvm::isa<llvm::AllocaInst>(v))
+            return v;
+        if (auto *callBase = dyn_cast<llvm::CallBase>(v))
+            if (isHeapAllocator(callBase->getCalledFunction()))
+                return callBase;
+    }
+
     return nullptr;
 }
 

@@ -13,22 +13,25 @@
 void Andersen::solveFunctionPointers() {
     if (deferredFuncPointers.empty()) return;
 
-    for (const DeferredFunctionPointer& fp : deferredFuncPointers) {
+    std::vector<DeferredFunctionPointer> worklist;
+    worklist.swap(deferredFuncPointers);
+
+    for (const DeferredFunctionPointer& fp : worklist) {
         const CallBase *cs = fp.value;
         const Context *ctx = fp.ctx;
-
-        // Initially, we abstain from creating a context during scanFunction
-        // on indirect calls.
-        Context *calleeCtx = nodeFactory.createContext(const_cast<Context*>(ctx), cs);
+        assert(ctx != nullptr);
 
         std::vector<const llvm::Value*> ptsSet;
-        getPointsToSet(fp.value->getCalledOperand(), ptsSet, fp.ctx->id);
+        getPointsToSet(fp.value->getCalledOperand(), ptsSet, ctx->id);
 
-        for (const auto &v: ptsSet) {
+        for (const auto &v : ptsSet) {
             if (!isa<Function>(v)) continue;
+            const Function *f = dyn_cast<Function>(v);
+            Context *calleeCtx = nodeFactory.createContext(
+                const_cast<Context*>(ctx), cs, f);
 
-            const llvm::Function *f = dyn_cast<Function>(v);
             setupFunctionConstraints(calleeCtx, f);
+            scanFunction(calleeCtx, f);
             addReturnConstraintForCall(calleeCtx, ctx, cs, f);
             addArgumentConstraintForCall(calleeCtx, ctx, cs, f);
         }
@@ -36,4 +39,7 @@ void Andersen::solveFunctionPointers() {
 
     optimizeConstraints();
     solveConstraints();
+    
+    if (!deferredFuncPointers.empty())
+        solveFunctionPointers();
 }

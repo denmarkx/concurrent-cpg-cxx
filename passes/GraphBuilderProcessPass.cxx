@@ -4,6 +4,7 @@
 #include "components/RFGraph.h"
 #include "concurrency/ConcurrencyPass.h"
 #include "graph/GraphManager.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 
@@ -27,7 +28,6 @@ bool GraphBuilderProcessPass::runOnModule(Module &M) {
 
     HappensBeforeGraph *hbg = new HappensBeforeGraph();
     hbg->build(M);
-    return false;
 
     auto endHB = std::chrono::high_resolution_clock::now();
     printElapsed("[HappensBeforeGraph]: Elapsed Time: ", startHB, endHB);
@@ -47,10 +47,12 @@ bool GraphBuilderProcessPass::runOnModule(Module &M) {
     auto endFPA = std::chrono::high_resolution_clock::now();
     printElapsed("[FPA]: Elapsed Time: ", startHB, endHB);
 
+    rfg->debug();
     for (HBNode *a : rfg->getNodes()) {
         for (HBNode *b : rfg->getNodes()) {
             if (a->threadId == b->threadId) continue;
-            if (GraphManager::get()->getAliasResult()->alias(a->node->ptr, b->node->ptr) == AliasResult::NoAlias) continue;
+            if (!a->node->ptr || !b->node->ptr) continue;
+            if (hbg->checkAlias(a, b, AliasResult::NoAlias)) continue;
             if (!hbg->happensBefore(a, b) && !hbg->happensBefore(b, a)) {
                 errs() << " === XX ===\n";
                 errs() << "  A (T: " << a->threadId << "): " << *a->node->getValue() << "\n";

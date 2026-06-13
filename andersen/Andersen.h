@@ -137,6 +137,8 @@ public:
   void printPointsToSet(const llvm::Value *v, unsigned int contextId=GenericContextID);
 
   void connectContexts(const Function* parent, const Function* child);
+  int getSupercedingContextID(const Function* context, const Value *v);
+
   bool addConstraint(AndersConstraint::ConstraintType type, const llvm::Value*, const llvm::Value*, bool argument=false);
   void resolveConstraints();
 

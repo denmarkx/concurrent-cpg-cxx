@@ -21,6 +21,7 @@ struct Context {
   Context* prevCtx;
   Context* nextCtx;
   const llvm::CallBase* callSite;
+  const llvm::Function* func = nullptr;
   llvm::DenseMap<const llvm::CallBase*, Context*> children;
 
   Context(unsigned int _id, Context* _prevCtx, const llvm::CallBase* _callSite) {
@@ -45,6 +46,8 @@ struct Context {
     if (!callSite) return;
     for (unsigned int i=0; i < indent; i++)
       errs() << " ";
+    if (func)
+      errs() << "[Handling Callsite for: " << func->getName() << "\n";
     errs() << *callSite << "\n";
     if (prevCtx)
       prevCtx->printChain(indent + 4);
@@ -143,6 +146,7 @@ private:
   DenseMap<std::pair<NodeIndex,FieldType>, NodeIndex> fieldObjectMap;
 
   std::vector<const Context*> _contexts;
+  std::unordered_map<const llvm::CallBase*, std::vector<Context*>> _callSiteContexts;
 
   unsigned int _ctxCounter = 0;
 
@@ -165,6 +169,7 @@ public:
   NodeIndex getReturnNodeFor(const Context *context, const llvm::Function *f) const;
   NodeIndex getVarargNodeFor(const llvm::Function *f) const;
   NodeIndex getOrCreateFieldObject(NodeIndex baseObj, const FieldType& fields);
+  NodeIndex getFieldBaseObject(NodeIndex fieldObj) const;
 
   // [deprecated] - use lookupFields
   llvm::SmallVector<unsigned int, 4> getFields(const Context *ctx, const llvm::Value *v) const;
@@ -207,7 +212,11 @@ public:
 
   // Context management:
   Context* createContext(Context* _prevCtx, const llvm::CallBase* callSite);
+  Context* createContext(Context* _prevCtx, const llvm::CallBase* callSite, const llvm::Function *f);
   Context* createContext();
+
+  void registerCallSiteContext(const llvm::CallBase* cs, Context* ctx);
+  std::vector<Context*> getContextsForCallSite(const llvm::CallBase* cs);
 
   const Context* getGlobalCtx() const;
   const Context* getContext(unsigned int id) const;

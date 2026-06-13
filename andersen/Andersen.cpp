@@ -116,6 +116,15 @@ void Andersen::fillPointsToSet(const llvm::Value* v, PtsSetType &ptsSet, unsigne
       worklist.pop();
 
         const llvm::Value *cv = nodeFactory.getValueForNode(c);
+        if (!cv) {
+            NodeIndex cur = c;
+            while (cur != AndersNodeFactory::InvalidIndex && !cv) {
+                NodeIndex base = nodeFactory.getFieldBaseObject(cur);
+                if (base == AndersNodeFactory::InvalidIndex) break;
+                cv = nodeFactory.getValueForNode(base);
+                cur = base;
+            }
+        }
         if (!cv) continue;
 
         if (std::find(ptsSet.begin(), ptsSet.end(), cv) == ptsSet.end()) {
@@ -156,6 +165,15 @@ void Andersen::fillPointsToSet(const llvm::Value* v, ContextPtsSetType &ptsSet, 
       worklist.pop();
 
         const llvm::Value *cv = nodeFactory.getValueForNode(c);
+        if (!cv) {
+            NodeIndex cur = c;
+            while (cur != AndersNodeFactory::InvalidIndex && !cv) {
+                NodeIndex base = nodeFactory.getFieldBaseObject(cur);
+                if (base == AndersNodeFactory::InvalidIndex) break;
+                cv = nodeFactory.getValueForNode(base);
+                cur = base;
+            }
+        }
         if (!cv) continue;
 
         if (std::find(ptsSet[ctx].begin(), ptsSet[ctx].end(), cv) == ptsSet[ctx].end()) {
@@ -262,15 +280,68 @@ void Andersen::connectContexts(const Function* parent, const Function* child) {
         const CallBase *caller = dyn_cast<CallBase>(user);
         if (!caller) continue;
 
+        std::vector<Context*> contexts;
         const Context *ctx = nodeFactory.getContext(caller);
-        if (!ctx) continue;
+        if (ctx)
+            contexts.push_back(const_cast<Context*>(ctx));
+        else
+            contexts = nodeFactory.getContextsForCallSite(caller);
 
-        const Context *parentCtx = nodeFactory.createContext(const_cast<Context*>(ctx), caller);
+        if (contexts.empty()) continue;
 
-        setupFunctionConstraints(parentCtx, child);
-        scanFunction(const_cast<Context*>(parentCtx), child);
+        for (Context *ctx : contexts) {
+            const Context *parentCtx = nodeFactory.createContext(const_cast<Context*>(ctx), caller, child);
+
+            setupFunctionConstraints(parentCtx, child);
+            scanFunction(const_cast<Context*>(parentCtx), child);
+        }
     }
 }
+
+/*
+ * Given a parent function and a value, we check to see which context for callBases(v->func)
+ * contains the given function somewhere within the prev call chain.
+ * Returns the context's ID or -1 if none is found.
+*/
+int Andersen::getSupercedingContextID(const Function* parent, const Value *v) {
+    assert(parent != nullptr);
+
+    const Function *assocFunction = nullptr;
+    if (const Instruction *instr = dyn_cast<Instruction>(v))
+        assocFunction = instr->getFunction();
+    if (const Argument *arg = dyn_cast<Argument>(v))
+        assocFunction = arg->getParent();
+
+    assert(assocFunction != nullptr);
+
+    // errs() << "===stemsFromContext===\n";
+    // errs() << "    v = " << *v << "\n";
+    // errs() << "    v's f = " << assocFunction->getName() << "\n";
+    // errs() << "    looking for = " << parent->getName() << "\n";
+
+    auto contexts = nodeFactory.getAssociatedContexts(v);
+    const Context *found = nullptr;
+    for (const Context *ctx : contexts) {
+        // ctx->printChain();
+        // Walk back through chain:
+        const Context *cur = ctx;
+        while (cur != nullptr) {
+            if (cur->callSite && (cur->callSite->getFunction() == parent || cur->func == parent)) {
+                found = ctx;
+                break;
+            }
+            cur = cur->prevCtx;
+        }
+    }
+
+    if (found) {
+        // errs() << "    found!!!! ctx = " << *found->callSite << "\n";
+    }
+
+    // Since this is public, I wouldn't ret GenericContextId since thats ~0u and mainly for internal use.
+    return found ? found->id : -1;
+}
+
 
 
 /*
@@ -281,4 +352,5 @@ void Andersen::connectContexts(const Function* parent, const Function* child) {
 void Andersen::resolveConstraints() {
   optimizeConstraints();
   solveConstraints();
+  solveFunctionPointers();
 }

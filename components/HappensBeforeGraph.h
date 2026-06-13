@@ -7,6 +7,7 @@
 #include "components/ComponentGraphBase.h"
 #include "concurrency/ThreadNode.h"
 #include "graph/Node.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 
 struct HBNode {
     Node *node;
@@ -20,11 +21,17 @@ struct HBNode {
 struct ThreadRegistrar {
     uint32_t _next=0;
     std::unordered_map<const llvm::Function*, uint32_t> entry2Thread;
+    std::unordered_map<uint32_t, const llvm::Function*> thread2Entry;
 
     uint32_t getOrCreate(const llvm::Function *entry) {
         auto [it, inserted] = entry2Thread.emplace(entry, _next);
+        thread2Entry[it->second] = entry;
         if (inserted) ++_next;
         return it->second;
+    }
+
+    const Function* getThreadById(uint32_t threadId) {
+        return thread2Entry[threadId];
     }
 };
 
@@ -61,6 +68,8 @@ public:
     void buildLocks(DeltaType& delta);
     void buildSeqCst(DeltaType& delta);
 
+    const Function* getThread(uint32_t threadId);
+
     void addEdge(HBNode* start, HBNode *end);
     bool hasEdge(HBNode *start, HBNode *end);
 
@@ -70,6 +79,8 @@ public:
     EdgeInfo getProcessedEdges() const;
 
     bool happensBefore(HBNode *a, HBNode *b);
+
+    bool checkAlias(HBNode* a, HBNode *b, AliasResult expected);
 
     static HappensBeforeGraph* get();
     static HappensBeforeGraph* _instance;

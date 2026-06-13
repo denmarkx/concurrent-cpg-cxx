@@ -8,6 +8,7 @@
 #include "graph/Node.h"
 #include "graph/ReturnNode.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/IR/Attributes.h"
 #include "llvm/Support/AtomicOrdering.h"
 #include <queue>
 #include <unordered_set>
@@ -153,28 +154,11 @@ void HappensBeforeGraph::buildLocks(DeltaType& delta) {
         lockB = lockB ? lockB : r->node->ptr;
 
         if (lockA != lockB) {
-            errs() << "lockA != lockB\n";
             return;
         };
-        errs() << "w = " << *w->node->getValue() << "\n";
-        errs() << "r = " << *r->node->getValue() << "\n";
-        if (GraphManager::get()->getAliasResult()->alias(w->node->ptr, r->node->ptr) == AliasResult::NoAlias) {
-            errs() << "noalias\n";
-            if (w->node->ptr) {
-                errs() << "w ptr = " << *w->node->ptr << "\n";
-            }
-            if (r->node->ptr) {
-                errs() << "r ptr = " << *r->node->ptr << "\n";
-            }
-
+        if (checkAlias(w, r, AliasResult::NoAlias)) {
             return;
         };
-            if (w->node->ptr) {
-                errs() << "w ptr = " << *w->node->ptr << "\n";
-            }
-            if (r->node->ptr) {
-                errs() << "r ptr = " << *r->node->ptr << "\n";
-            }
         if (happensBefore(r, w)) return;
         if (hasEdge(w, r)) return;
         addEdge(w, r);
@@ -217,7 +201,7 @@ void HappensBeforeGraph::buildSeqCst(DeltaType& delta) {
             HBNode *b = seqCsts[j];
 
             if (a->threadId == b->threadId) continue;
-            if (GraphManager::get()->getAliasResult()->alias(a->node->ptr, b->node->ptr) == AliasResult::NoAlias) continue;
+            if (checkAlias(a, b, AliasResult::NoAlias)) continue;
             if (!hasEdge(a, b)) {
                 addEdge(a, b);
                 delta.insert({a, b});
@@ -245,6 +229,10 @@ void HappensBeforeGraph::buildTransitive() {
     computeSCC();
     computeDAG();
     computeReachability();
+}
+
+const Function* HappensBeforeGraph::getThread(uint32_t threadId) {
+    return _registrar.getThreadById(threadId);
 }
 
 void HappensBeforeGraph::addEdge(HBNode *start, HBNode *end) {
@@ -418,6 +406,31 @@ void HappensBeforeGraph::computeReachability() {
 
 bool HappensBeforeGraph::happensBefore(HBNode *a, HBNode *b) {
     return _reach[_sccIds[a]].test(_sccIds[b]);
+}
+
+bool HappensBeforeGraph::checkAlias(HBNode *a, HBNode *b, AliasResult expected) {
+    if (!a->node->ptr || !b->node->ptr)
+        return expected == AliasResult::NoAlias;
+
+    Andersen *aa = GraphManager::get()->getAliasResult();
+
+    int ctxIdA = aa->getSupercedingContextID(getThread(a->threadId), a->node->ptr);
+    int ctxIdB = aa->getSupercedingContextID(getThread(b->threadId), b->node->ptr);
+
+    AliasResult result = AliasResult::NoAlias;
+    if (ctxIdA >= 0 && ctxIdB >= 0)
+        result = aa->alias(a->node->ptr, b->node->ptr, ctxIdA, ctxIdB);
+    else
+        result = aa->alias(a->node->ptr, b->node->ptr);
+
+    if (expected == AliasResult::NoAlias && (result != AliasResult::NoAlias))
+        return false;
+    if (expected == AliasResult::MayAlias && (result == AliasResult::NoAlias))
+        return false;
+    if (expected == AliasResult::MustAlias && (result == AliasResult::NoAlias))
+        return false;
+    return true;
+
 }
 
 HappensBeforeGraph::HappensBeforeGraph() { _instance = this; }

@@ -293,6 +293,26 @@ Context* AndersNodeFactory::createContext(Context* _prevCtx, const llvm::CallBas
   Context* context = new Context(_ctxCounter, _prevCtx, callSite);
   _ctxCounter++;
   _contexts.push_back(context);
+  if (callSite && _prevCtx)
+      registerCallSiteContext(callSite, _prevCtx);
+  return context;
+}
+
+/**
+ * Creates a new Context object given a previous context, a handling callsite, and a function.
+ * This is used for cases where we manually connect contexts to a new one where the function has an obscure callsite.
+*/
+Context* AndersNodeFactory::createContext(Context* _prevCtx, const llvm::CallBase* callSite, const llvm::Function *f) {
+  if (_prevCtx) {
+    Context* existing = _prevCtx->getChild(callSite);
+    if (existing) return existing;
+  }
+  Context* context = new Context(_ctxCounter, _prevCtx, callSite);
+  context->func = f;
+  _ctxCounter++;
+  _contexts.push_back(context);
+  if (callSite && _prevCtx)
+      registerCallSiteContext(callSite, _prevCtx);
   return context;
 }
 
@@ -313,6 +333,18 @@ Context* AndersNodeFactory::createContext() {
 const Context* AndersNodeFactory::getGlobalCtx() const {
   assert(_contexts.size() > 0);
   return _contexts[0];
+}
+
+void AndersNodeFactory::registerCallSiteContext(const llvm::CallBase* cs, Context* ctx) {
+    auto &vec = _callSiteContexts[cs];
+    if (std::find(vec.begin(), vec.end(), ctx) == vec.end())
+        vec.push_back(ctx);
+}
+
+std::vector<Context*> AndersNodeFactory::getContextsForCallSite(const llvm::CallBase* cs) {
+    auto it = _callSiteContexts.find(cs);
+    if (it == _callSiteContexts.end()) return {};
+    return it->second;
 }
 
 /*
@@ -393,4 +425,12 @@ NodeIndex AndersNodeFactory::getOrCreateFieldObject(NodeIndex baseObj, const Fie
     NodeIndex fieldObj = createObjectNode(nullptr);
     fieldObjectMap[key] = fieldObj;
     return fieldObj;
+}
+
+NodeIndex AndersNodeFactory::getFieldBaseObject(NodeIndex fieldObj) const {
+    for (const auto &[key, idx] : fieldObjectMap) {
+        if (idx == fieldObj)
+            return key.first;
+    }
+    return InvalidIndex;
 }
