@@ -19,6 +19,9 @@ public:
     void filter();
     void debug();
 
+    bool isWrite(HBNode*);
+    bool isRead(HBNode*);
+
     void add(HBNode*, HBNode*);
     RFGraphType& pairs();
     std::vector<HBNode*>& getNodes();

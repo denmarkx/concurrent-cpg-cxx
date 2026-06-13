@@ -52,6 +52,21 @@ bool GraphBuilderProcessPass::runOnModule(Module &M) {
         for (HBNode *b : rfg->getNodes()) {
             if (a->threadId == b->threadId) continue;
             if (!a->node->ptr || !b->node->ptr) continue;
+            if (rfg->isRead(a) && rfg->isRead(b)) continue;
+
+            bool aAtomic = (
+                a->node->getType() == NodeType::ATOMIC_LOAD ||
+                a->node->getType() == NodeType::ATOMIC_STORE ||
+                a->node->getType() == NodeType::ATOMIC_RMW
+            );
+
+            bool bAtomic = (
+                b->node->getType() == NodeType::ATOMIC_LOAD ||
+                b->node->getType() == NodeType::ATOMIC_STORE ||
+                b->node->getType() == NodeType::ATOMIC_RMW
+            );
+
+            if (aAtomic && bAtomic) continue;
             if (hbg->checkAlias(a, b, AliasResult::NoAlias)) continue;
             if (!hbg->happensBefore(a, b) && !hbg->happensBefore(b, a)) {
                 errs() << " === XX ===\n";

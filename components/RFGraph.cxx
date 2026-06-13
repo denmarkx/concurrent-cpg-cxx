@@ -57,6 +57,7 @@ void RFGraph::buildIndex() {
 
 void RFGraph::buildCandidates() {
     _pairs.clear();
+    _nodes.clear();
 
     for (auto &[obj, reads] : _reads) {
         if (auto it = _writes.find(obj); it != _writes.end()) {
@@ -167,6 +168,20 @@ std::vector<HBNode*>& RFGraph::getNodes() {
 
 RFGraphType& RFGraph::pairs() {
     return _pairs;
+}
+
+bool RFGraph::isRead(HBNode *n) {
+    const Value *memObj = GraphManager::get()->getMemoryObj(n->node->ptr);
+    if (!memObj)
+        return std::find(_unknownReads.begin(),_unknownReads.end(), n) != _unknownReads.end();
+    return std::find(_reads[memObj].begin(), _reads[memObj].end(), n) != _reads[memObj].end();
+}
+
+bool RFGraph::isWrite(HBNode *n) {
+    const Value *memObj = GraphManager::get()->getMemoryObj(n->node->ptr);
+    if (!memObj)
+        return std::find(_unknownWrites.begin(), _unknownWrites.end(), n) != _unknownWrites.end();
+    return std::find(_writes[memObj].begin(), _writes[memObj].end(), n) != _writes[memObj].end();
 }
 
 RFCandidateType& RFGraph::getWritesLock() { return _writesLock; }

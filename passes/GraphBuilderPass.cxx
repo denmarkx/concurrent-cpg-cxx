@@ -9,6 +9,8 @@
 #include <chrono>
 
 bool GraphBuilderPass::runOnModule(Module &M) {
+    GraphManager::get()->setDataLayout(M.getDataLayout());
+
     Andersen &AA = getAnalysis<AndersenAAWrapperPass>().getResult();
     GraphManager::get()->setAliasResult(AA);
 

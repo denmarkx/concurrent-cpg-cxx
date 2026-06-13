@@ -4,6 +4,7 @@
 #include "components/LTOLibCManager.h"
 #include "Node.h"
 #include "llvm/Analysis/MemorySSA.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Value.h"
 #include "andersen/Andersen.h"
@@ -80,6 +81,9 @@ public:
     void setupLTOManager(Module &module);
     LTOLibCManager* getLTOMgr();
 
+    void setDataLayout(const DataLayout &layout);
+    const DataLayout& getDataLayout();
+
     static GraphManager* get();
     static GraphManager* _graph;
 
@@ -95,4 +99,6 @@ private:
     BidirectionalCallGraph* _callGraph;
     MSSAGet _mssaGetter = nullptr;
     LTOLibCManager* _ltoMgr;
+
+    const DataLayout* _layout = nullptr;
 };

@@ -166,5 +166,13 @@ bool GraphManager::isHeapAllocator(llvm::Function *func) {
 }
 
 
+void GraphManager::setDataLayout(const DataLayout &layout) {
+    _layout = &layout;
+}
+
+const DataLayout& GraphManager::getDataLayout() {
+    return *_layout;
+}
+
 
 GraphManager* GraphManager::_graph = nullptr;
