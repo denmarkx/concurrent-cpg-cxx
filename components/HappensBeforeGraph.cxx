@@ -413,6 +413,19 @@ bool HappensBeforeGraph::checkAlias(HBNode *a, HBNode *b, AliasResult expected) 
     if (!a->node->ptr || !b->node->ptr)
         return expected == AliasResult::NoAlias;
 
+    auto isThreadLocal = [](const llvm::Value *ptr) {
+        using namespace llvm;
+        const Value *obj = getUnderlyingObject(ptr, 16);
+        if (isa<AllocaInst>(obj)) return true;
+        if (const auto *inst = dyn_cast<Instruction>(obj))
+            if (isa<AllocaInst>(getUnderlyingObject(inst, 16)))
+                return true;
+        return false;
+    };
+
+    if (isThreadLocal(a->node->ptr) || isThreadLocal(b->node->ptr))
+        return expected == AliasResult::NoAlias;
+
     Andersen *aa = GraphManager::get()->getAliasResult();
 
     int ctxIdA = aa->getSupercedingContextID(getThread(a->threadId), a->node->ptr);
