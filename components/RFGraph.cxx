@@ -4,50 +4,61 @@
 
 void RFGraph::buildIndex() {
     GraphManager *graph = GraphManager::get();
+
+    auto addUnique = [](std::vector<HBNode*> &vec, HBNode *n) {
+        if (std::find(vec.begin(), vec.end(), n) == vec.end())
+            vec.push_back(n);
+    };
+
     for (HBNode *n : HappensBeforeGraph::get()->getNodes()) {
-        const Value *memObj = graph->getMemoryObj(n->node->ptr);
+        auto objs = graph->getMemoryObjs(n->node->ptr);
         switch (n->node->getType()) {
             case NodeType::ATOMIC_STORE:
             case NodeType::STORE: {
-                if (memObj)
-                    _writes[memObj].push_back(n);
+                if (objs.empty())
+                    addUnique(_unknownWrites, n);
                 else
-                    _unknownWrites.push_back(n);
+                    for (const Value *obj : objs)
+                        addUnique(_writes[obj], n);
                 break;
             }
             case NodeType::ATOMIC_LOAD:
             case NodeType::LOAD: {
-                if (memObj)
-                    _reads[memObj].push_back(n);
+                if (objs.empty())
+                    addUnique(_unknownReads, n);
                 else
-                    _unknownReads.push_back(n);
+                    for (const Value *obj : objs)
+                        addUnique(_reads[obj], n);
                 break;
             }
             // cmpxchg and rmw are atomically read and write.
             case NodeType::ATOMIC_RMW:
             case NodeType::ATOMIC_CMPXCHG: {
-                if (memObj) {
-                    _reads[memObj].push_back(n);
-                    _writes[memObj].push_back(n);
-                }
-                else {
-                    _unknownReads.push_back(n);
-                    _unknownWrites.push_back(n);
+                if (objs.empty()) {
+                    addUnique(_unknownReads, n);
+                    addUnique(_unknownWrites, n);
+                } else {
+                    for (const Value *obj : objs) {
+                        addUnique(_reads[obj], n);
+                        addUnique(_writes[obj], n);
+                    }
                 }
                 break;
             }
             case NodeType::MUTEX_UNLOCK: {
-                if (memObj)
-                    _writesLock[memObj].push_back(n);
+                if (objs.empty())
+                    addUnique(_unknownWrites, n);
                 else
-                    _unknownWrites.push_back(n);
+                    for (const Value *obj : objs)
+                        addUnique(_writesLock[obj], n);
                 break;
             }
             case NodeType::MUTEX_LOCK: {
-                if (memObj)
-                    _readsLock[memObj].push_back(n);
+                if (objs.empty())
+                    addUnique(_unknownReads, n);
                 else
-                    _unknownReads.push_back(n);
+                    for (const Value *obj : objs)
+                        addUnique(_readsLock[obj], n);
                 break;
             }
             default: break;

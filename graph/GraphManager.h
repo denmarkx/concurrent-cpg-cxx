@@ -88,6 +88,8 @@ public:
     static GraphManager* _graph;
 
     const llvm::Value* getMemoryObj(const llvm::Value *ptr);
+    std::vector<const llvm::Value*> getMemoryObjs(const llvm::Value *ptr);
+
     bool isHeapAllocator(llvm::Function *func);
 
 private:

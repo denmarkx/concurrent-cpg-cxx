@@ -158,13 +158,46 @@ const llvm::Value* GraphManager::getMemoryObj(const llvm::Value *ptr) {
     return nullptr;
 }
 
+std::vector<const llvm::Value*> GraphManager::getMemoryObjs(const llvm::Value *ptr) {
+    std::vector<const llvm::Value*> results;
+    if (!ptr) return results;
+
+    if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(ptr))
+        if (gep->hasAllConstantIndices()) {
+            results.push_back(gep);
+            return results;
+        }
+
+    const llvm::Value *obj = llvm::getUnderlyingObject(ptr, 16);
+    if (isa<GlobalValue>(obj) || isa<AllocaInst>(obj)) {
+        results.push_back(obj);
+        return results;
+    }
+
+    if (auto *cb = dyn_cast<CallBase>(obj))
+        if (isHeapAllocator(cb->getCalledFunction())) {
+            results.push_back(cb);
+            return results;
+        }
+
+    PtsSetType ptsSet;
+    getAliasResult()->getPointsToSet(ptr, ptsSet);
+    for (const llvm::Value *v : ptsSet) {
+        if (isa<GlobalValue>(v) || isa<AllocaInst>(v))
+            results.push_back(v);
+        else if (auto *cb = dyn_cast<CallBase>(v))
+            if (isHeapAllocator(cb->getCalledFunction()))
+                results.push_back(cb);
+    }
+    return results;
+}
+
 bool GraphManager::isHeapAllocator(llvm::Function *func) {
     if (!func) return false;
     StringRef name = func->getName();
     return name == "malloc" || name == "calloc" || name == "realloc" || name == "__rust_alloc" \
         || name == "exchange_malloc" || name == "_Znwm" || name == "_Znam" || func->hasFnAttribute(Attribute::AllocSize);
 }
-
 
 void GraphManager::setDataLayout(const DataLayout &layout) {
     _layout = &layout;

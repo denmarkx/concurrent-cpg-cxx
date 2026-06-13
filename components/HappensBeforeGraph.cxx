@@ -45,6 +45,7 @@ void HappensBeforeGraph::buildFixedPointClosure() {
         buildTransitive();
         if (delta.empty()) break;
     }
+    rfg->filter();
 }
 
 void HappensBeforeGraph::buildThread(FunctionNode *entry) {
