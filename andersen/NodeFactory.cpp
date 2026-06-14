@@ -286,15 +286,16 @@ void AndersNodeFactory::dumpRepInfo() const {
  * Creates a new Context object given a previous context and callsite. 
 */
 Context* AndersNodeFactory::createContext(Context* _prevCtx, const llvm::CallBase* callSite) {
+  const llvm::Function *callee = callSite ? callSite->getCalledFunction() : nullptr;
   if (_prevCtx) {
-    Context* existing = _prevCtx->getChild(callSite);
+    Context* existing = _prevCtx->getChild(callSite, callee);
     if (existing) return existing;
   }
-  Context* context = new Context(_ctxCounter, _prevCtx, callSite);
+  Context* context = new Context(_ctxCounter, _prevCtx, callSite, callee);
   _ctxCounter++;
   _contexts.push_back(context);
   if (callSite && _prevCtx)
-      registerCallSiteContext(callSite, _prevCtx);
+      registerCallSiteContext(callSite, context);
   return context;
 }
 
@@ -304,15 +305,15 @@ Context* AndersNodeFactory::createContext(Context* _prevCtx, const llvm::CallBas
 */
 Context* AndersNodeFactory::createContext(Context* _prevCtx, const llvm::CallBase* callSite, const llvm::Function *f) {
   if (_prevCtx) {
-    Context* existing = _prevCtx->getChild(callSite);
+    Context* existing = _prevCtx->getChild(callSite, f);
     if (existing) return existing;
   }
-  Context* context = new Context(_ctxCounter, _prevCtx, callSite);
+  Context* context = new Context(_ctxCounter, _prevCtx, callSite, f);
   context->func = f;
   _ctxCounter++;
   _contexts.push_back(context);
   if (callSite && _prevCtx)
-      registerCallSiteContext(callSite, _prevCtx);
+      registerCallSiteContext(callSite, context);
   return context;
 }
 
@@ -320,7 +321,7 @@ Context* AndersNodeFactory::createContext(Context* _prevCtx, const llvm::CallBas
  * Creates a new Context object without an associated previous context or callsite. 
 */
 Context* AndersNodeFactory::createContext() {
-  Context* context = new Context(_ctxCounter, nullptr, nullptr);
+  Context* context = new Context(_ctxCounter, nullptr, nullptr, nullptr);
   _ctxCounter++;
   _contexts.push_back(context);
   return context;
@@ -402,32 +403,23 @@ const DataLayout* AndersNodeFactory::getDataLayout() const {
 }
 
 NodeIndex AndersNodeFactory::getOrCreateFieldObject(NodeIndex baseObj, const FieldType& fields) {
+    baseObj = getMergeTarget(baseObj);
     auto key = std::make_pair(baseObj, fields);
     auto it = fieldObjectMap.find(key);
     if (it != fieldObjectMap.end())
         return it->second;
 
-    const llvm::Value *baseVal = getValueForNode(baseObj);
-    if (baseVal != nullptr) {
-        auto contexts = getAssociatedContexts(baseVal);
-        for (const Context *ctx : contexts) {
-          NodeIndex existing = getObjectNodeFor(_globalCtx, baseVal, fields);
-          if (existing != InvalidIndex) {
-            fieldObjectMap[key] = existing;
-            return existing;
-          }
-        }
-    }
 
     NodeIndex fieldObj = createObjectNode(nullptr);
     fieldObjectMap[key] = fieldObj;
+    fieldObjectBaseMap[fieldObj] = baseObj;
     return fieldObj;
 }
 
 NodeIndex AndersNodeFactory::getFieldBaseObject(NodeIndex fieldObj) const {
-    for (const auto &[key, idx] : fieldObjectMap) {
-        if (idx == fieldObj)
-            return key.first;
-    }
-    return InvalidIndex;
+    auto it = fieldObjectBaseMap.find(fieldObj);
+    if (it == fieldObjectBaseMap.end())
+        return InvalidIndex;
+
+    return getMergeTarget(it->second);
 }

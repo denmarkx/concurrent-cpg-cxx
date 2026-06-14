@@ -4,6 +4,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/Module.h"
 #include <queue>
+#include <unordered_set>
 
 using namespace llvm;
 
@@ -99,21 +100,25 @@ llvm::AliasResult Andersen::alias(const Value *valueA, const Value *valueB, unsi
  * This differs from getPointsToSet in the fact that the context is not the default context ID.
 */
 void Andersen::fillPointsToSet(const llvm::Value* v, PtsSetType &ptsSet, unsigned int contextId) {
-    std::queue<unsigned int> worklist;
-
     NodeIndex ptrTgt = nodeFactory.getMergeTarget(
-      nodeFactory.getValueNodeFor(nodeFactory.getContextByID(contextId), v));
+        nodeFactory.getValueNodeFor(nodeFactory.getContextByID(contextId), v));
+    if (ptrTgt == AndersNodeFactory::InvalidIndex) return;
+
+    std::unordered_set<NodeIndex> visited;
+    std::queue<NodeIndex> worklist;
 
     auto ptsItr = ptsGraph.find(ptrTgt);
     if (ptsItr == ptsGraph.end()) return;
+    
     for (auto vx : ptsItr->second) {
-      if (vx == nodeFactory.getNullObjectNode()) continue;
-      worklist.push(vx);
+        if (vx == nodeFactory.getNullObjectNode()) continue;
+        if (visited.insert(vx).second)
+            worklist.push(vx);
     }
 
     while (!worklist.empty()) {
-      unsigned int c = worklist.front();
-      worklist.pop();
+        unsigned int c = worklist.front();
+        worklist.pop();
 
         const llvm::Value *cv = nodeFactory.getValueForNode(c);
         if (!cv) {
@@ -127,17 +132,17 @@ void Andersen::fillPointsToSet(const llvm::Value* v, PtsSetType &ptsSet, unsigne
         }
         if (!cv) continue;
 
-        if (std::find(ptsSet.begin(), ptsSet.end(), cv) == ptsSet.end()) {
-        ptsSet.push_back(cv);
+        if (std::find(ptsSet.begin(), ptsSet.end(), cv) == ptsSet.end())
+            ptsSet.push_back(cv);
 
-        auto ptsItr = ptsGraph.find(c);
-        if (ptsItr == ptsGraph.end()) continue;
-        for (auto vx : ptsItr->second) {
-          if (vx == nodeFactory.getNullObjectNode()) continue;
-          worklist.push(vx);
+        auto ptsItr2 = ptsGraph.find(c);
+        if (ptsItr2 == ptsGraph.end()) continue;
+        for (auto vx : ptsItr2->second) {
+            if (vx == nodeFactory.getNullObjectNode()) continue;
+            if (visited.insert(vx).second)
+                worklist.push(vx);
         }
     }
-  }
 }
 
 
@@ -280,19 +285,15 @@ void Andersen::connectContexts(const Function* parent, const Function* child) {
         const CallBase *caller = dyn_cast<CallBase>(user);
         if (!caller) continue;
 
-        std::vector<Context*> contexts;
-        const Context *ctx = nodeFactory.getContext(caller);
-        if (ctx)
-            contexts.push_back(const_cast<Context*>(ctx));
-        else
-            contexts = nodeFactory.getContextsForCallSite(caller);
-
+        std::vector<Context*> contexts = nodeFactory.getContextsForCallSite(caller);
         if (contexts.empty()) continue;
 
         for (Context *ctx : contexts) {
             const Context *parentCtx = nodeFactory.createContext(const_cast<Context*>(ctx), caller, child);
 
+            _setupFunctions.erase({parentCtx, child});
             setupFunctionConstraints(parentCtx, child);
+            _scannedFunctions.erase({parentCtx, child});
             scanFunction(const_cast<Context*>(parentCtx), child);
         }
     }

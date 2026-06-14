@@ -67,7 +67,19 @@ static bool typeContainsPointer(const Type *t) {
     return false;
 }
 
+static bool isFunctionInContextChain(const Context *ctx, const llvm::Function *f) {
+    const Context *cur = ctx;
+    while (cur != nullptr) {
+      if (cur->func == f) return true;
+      cur = cur->prevCtx;
+    }
+    return false;
+}
+
 void Andersen::scanFunction(Context *context, const llvm::Function *f) {
+  if (!_scannedFunctions.insert({context, f}).second)
+    return;
+
   // First, create a value node for each instruction with pointer type. It is
   // necessary to do the job here rather than on-the-fly because an
   // instruction may refer to the value node defined before it (e.g. phi
@@ -86,16 +98,16 @@ void Andersen::scanFunction(Context *context, const llvm::Function *f) {
       nodeFactory.createValueNode(context, inst);
     // If this is a call, we scan that function:
     if (const CallBase *cs = dyn_cast<CallBase>(inst)) {
-      if (cs->getCalledFunction()) {
-        // TODO: recursive funcs
-        if (f != cs->getCalledFunction()) {
-          Context *child = nodeFactory.createContext(context, cs);
-
-          setupFunctionConstraints(child, cs->getCalledFunction());
-          scanFunction(child, cs->getCalledFunction());
-        } else {
-          recursiveHack = true;
-        }
+      // I will note that this absolutely tears into the points to set at the end
+      // if not guarded..but this is an underlying issue and requires a refactor.
+      if (cs->isInlineAsm()) continue;
+      // TODO: recursive funcs
+      if (isFunctionInContextChain(context, cs->getCalledFunction())) {
+        recursiveHack = true;
+      } else {
+        Context *child = nodeFactory.createContext(context, cs);
+        setupFunctionConstraints(child, cs->getCalledFunction());
+        scanFunction(child, cs->getCalledFunction());
       }
     }
   }
@@ -149,6 +161,8 @@ Context* Andersen::collectConstraintsForGlobals(const Module &M) {
 }
 
 void Andersen::setupFunctionConstraints(const Context *context, const Function *f) {
+  if (!_setupFunctions.insert({context, f}).second)
+    return;
   // If f is an addr-taken function, create a pointer and an object for it
   if (f->hasAddressTaken()) {
     // 创建一个值节点和一个对象节点
@@ -587,7 +601,7 @@ void Andersen::addConstraintForCall(const Context *context, const CallBase* cs) 
       }
     } else // Non-external function call
     {
-      Context* calleeCtx = context->getChild(cs);
+      Context* calleeCtx = context->getChild(cs, cs->getCalledFunction());
       const Type *retTy = cs->getCalledFunction()->getReturnType();
       if (retTy->isPointerTy() || typeContainsPointer(retTy)) {
           NodeIndex retIndex = nodeFactory.getValueNodeFor(context, cs);

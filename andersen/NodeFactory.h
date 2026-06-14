@@ -22,19 +22,20 @@ struct Context {
   Context* nextCtx;
   const llvm::CallBase* callSite;
   const llvm::Function* func = nullptr;
-  llvm::DenseMap<const llvm::CallBase*, Context*> children;
+  llvm::DenseMap<std::pair<const llvm::CallBase*, const Function*>, Context*> children;
 
-  Context(unsigned int _id, Context* _prevCtx, const llvm::CallBase* _callSite) {
+  Context(unsigned int _id, Context* _prevCtx, const llvm::CallBase* _callSite, const llvm::Function *f) {
     id = _id;
     prevCtx = _prevCtx;
     callSite = _callSite;
+    func = f;
 
     if (prevCtx)
-      prevCtx->children[_callSite] = this;
+      prevCtx->children[{_callSite, f}] = this;
   }
 
-  Context* getChild(const llvm::CallBase *cs) const {
-    auto it = children.find(cs);
+  Context* getChild(const llvm::CallBase *cs, const Function *f) const {
+    auto it = children.find({cs, f});
     return it != children.end() ? it->second : nullptr;
   }
 
@@ -144,6 +145,7 @@ private:
   llvm::DenseMap<const llvm::Function *, NodeIndex> varargMap;
 
   DenseMap<std::pair<NodeIndex,FieldType>, NodeIndex> fieldObjectMap;
+  DenseMap<NodeIndex, NodeIndex> fieldObjectBaseMap;
 
   std::vector<const Context*> _contexts;
   std::unordered_map<const llvm::CallBase*, std::vector<Context*>> _callSiteContexts;
