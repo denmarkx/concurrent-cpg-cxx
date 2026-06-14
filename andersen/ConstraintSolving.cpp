@@ -781,25 +781,6 @@ void Andersen::solveConstraints() {
         for (auto const &mapping : updateMap)
           cNode->replaceCopyEdge(mapping.first, mapping.second);
         updateMap.clear();
-
-        for (auto it = deferredFuncPointers.begin(); 
-             it != deferredFuncPointers.end(); ) {
-            std::vector<const Value*> ptsSet;
-            fillPointsToSet(it->value->getCalledOperand(), ptsSet, it->ctx->id);
-            if (ptsSet.empty()) { ++it; continue; }
-            
-            for (const Value *v : ptsSet) {
-                if (!isa<Function>(v)) continue;
-                const Function *f = dyn_cast<Function>(v);
-                Context *calleeCtx = nodeFactory.createContext(
-                    const_cast<Context*>(it->ctx), it->value, f);
-                setupFunctionConstraints(calleeCtx, f);
-                scanFunction(calleeCtx, f);
-                addReturnConstraintForCall(calleeCtx, it->ctx, it->value, f);
-                addArgumentConstraintForCall(calleeCtx, it->ctx, it->value, f);
-            }
-            it = deferredFuncPointers.erase(it);
-        }
       }
       delta.clear();
     }

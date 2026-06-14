@@ -36,6 +36,9 @@ void Andersen::solveFunctionPointers() {
             addArgumentConstraintForCall(calleeCtx, ctx, cs, f);
         }
     }
+    
+    optimizeConstraints();
+    solveConstraints();
 
     if (!deferredFuncPointers.empty())
         solveFunctionPointers();

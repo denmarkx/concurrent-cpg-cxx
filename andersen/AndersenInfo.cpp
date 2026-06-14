@@ -18,6 +18,7 @@ bool Andersen::runOnModule(const Module &M) {
     dumpConstraints();
 
   solveConstraints();
+  solveFunctionPointers();
 
   if (DumpDebugInfo) {
     errs() << "\n";

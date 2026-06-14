@@ -355,4 +355,5 @@ int Andersen::getSupercedingContextID(const Function* parent, const Value *v) {
 void Andersen::resolveConstraints() {
   optimizeConstraints();
   solveConstraints();
+  solveFunctionPointers();
 }
