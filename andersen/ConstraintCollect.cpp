@@ -275,6 +275,18 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
       NodeIndex valIndex = nodeFactory.getValueNodeFor(context, inst);
       assert(valIndex != AndersNodeFactory::InvalidIndex &&
              "Failed to find load value node");
+      if (const auto *gep = dyn_cast<GetElementPtrInst>(inst->getOperand(0))) {
+        FieldType fields = nodeFactory.getFields(context, gep);
+        if (!fields.empty()) {
+            NodeIndex gepSrcIndex = nodeFactory.getValueNodeFor(context, gep->getPointerOperand());
+            assert(gepSrcIndex != AndersNodeFactory::InvalidIndex);
+            NodeIndex tmpIndex = nodeFactory.createValueNode(context, nullptr);
+            constraints.emplace_back(AndersConstraint::GEP, tmpIndex, gepSrcIndex, fields);
+            constraints.emplace_back(AndersConstraint::LOAD, valIndex, tmpIndex);
+            break;
+        }
+      }
+
       constraints.emplace_back(AndersConstraint::LOAD, valIndex, opIndex);
     }
     break;
@@ -287,6 +299,20 @@ void Andersen::collectConstraintsForInstruction(const Context *context, const In
       NodeIndex dstIndex = nodeFactory.getValueNodeFor(context, inst->getOperand(1));
       assert(dstIndex != AndersNodeFactory::InvalidIndex &&
              "Failed to find store dst node");
+
+      const llvm::Value *ptrOp = inst->getOperand(1);
+      if (const auto *gep = dyn_cast<GetElementPtrInst>(ptrOp)) {
+          FieldType fields = nodeFactory.getFields(context, gep);
+          if (!fields.empty()) {
+              NodeIndex gepSrcIndex = nodeFactory.getValueNodeFor(context, gep->getPointerOperand());
+              assert(gepSrcIndex != AndersNodeFactory::InvalidIndex);
+              NodeIndex tmpIndex = nodeFactory.createValueNode(context, nullptr);
+              constraints.emplace_back(AndersConstraint::GEP, tmpIndex, gepSrcIndex, fields);
+              constraints.emplace_back(AndersConstraint::STORE, tmpIndex, srcIndex);
+              break;
+          }
+      }
+
       constraints.emplace_back(AndersConstraint::STORE, dstIndex, srcIndex);
     }
     break;

@@ -37,9 +37,6 @@ void Andersen::solveFunctionPointers() {
         }
     }
 
-    optimizeConstraints();
-    solveConstraints();
-    
     if (!deferredFuncPointers.empty())
         solveFunctionPointers();
 }

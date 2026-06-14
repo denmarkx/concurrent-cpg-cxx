@@ -363,7 +363,8 @@ private:
         break;
       }
       case AndersConstraint::GEP: {
-        // offlineGraph.insertGepEdge()
+        offlineGraph.insertEdge(srcTgt, dstTgt);
+        break;
       }
       }
     }
@@ -689,8 +690,10 @@ void Andersen::solveConstraints() {
                 // errs() << "\tInsert copy edge " << v << " -> " << tgtNode <<
                 // "\n";
                 nextWorkList->enqueue(vRep);
+                AndersPtsSet newPts;
                 // if (reseeded.insert(vRep).second)
-                deltaPts[vRep].unionWith(ptsGraph[vRep]);
+                if (ptsGraph[vRep].subtract(ptsGraph[tgtNode], newPts))
+                  deltaPts[vRep].unionWith(ptsGraph[vRep]);
               }
 
               // If we find that dst has been merged to elsewhere, remember this
@@ -706,7 +709,9 @@ void Andersen::solveConstraints() {
                 // "\n";
                 nextWorkList->enqueue(tgtNode);
                 // if (reseeded.insert(tgtNode).second)
-                deltaPts[tgtNode].unionWith(ptsGraph[tgtNode]);
+                AndersPtsSet newPts;
+                if (ptsGraph[vRep].subtract(ptsGraph[tgtNode], newPts))
+                    deltaPts[tgtNode].unionWith(newPts);
               }
 
               // If we find that dst has been merged to elsewhere, remember this
@@ -776,6 +781,25 @@ void Andersen::solveConstraints() {
         for (auto const &mapping : updateMap)
           cNode->replaceCopyEdge(mapping.first, mapping.second);
         updateMap.clear();
+
+        for (auto it = deferredFuncPointers.begin(); 
+             it != deferredFuncPointers.end(); ) {
+            std::vector<const Value*> ptsSet;
+            fillPointsToSet(it->value->getCalledOperand(), ptsSet, it->ctx->id);
+            if (ptsSet.empty()) { ++it; continue; }
+            
+            for (const Value *v : ptsSet) {
+                if (!isa<Function>(v)) continue;
+                const Function *f = dyn_cast<Function>(v);
+                Context *calleeCtx = nodeFactory.createContext(
+                    const_cast<Context*>(it->ctx), it->value, f);
+                setupFunctionConstraints(calleeCtx, f);
+                scanFunction(calleeCtx, f);
+                addReturnConstraintForCall(calleeCtx, it->ctx, it->value, f);
+                addArgumentConstraintForCall(calleeCtx, it->ctx, it->value, f);
+            }
+            it = deferredFuncPointers.erase(it);
+        }
       }
       delta.clear();
     }

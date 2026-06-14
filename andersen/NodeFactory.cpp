@@ -409,16 +409,13 @@ NodeIndex AndersNodeFactory::getOrCreateFieldObject(NodeIndex baseObj, const Fie
 
     const llvm::Value *baseVal = getValueForNode(baseObj);
     if (baseVal != nullptr) {
-        NodeIndex existing = getObjectNodeFor(_globalCtx, baseVal, fields);
-        if (existing == InvalidIndex) {
-            unsigned baseCtxId = nodes[baseObj].contextId;
-            const Context *ctx = getContextByID(baseCtxId);
-            if (ctx != _globalCtx)
-                existing = getObjectNodeFor(ctx, baseVal, fields);
-        }
-        if (existing != InvalidIndex) {
+        auto contexts = getAssociatedContexts(baseVal);
+        for (const Context *ctx : contexts) {
+          NodeIndex existing = getObjectNodeFor(_globalCtx, baseVal, fields);
+          if (existing != InvalidIndex) {
             fieldObjectMap[key] = existing;
             return existing;
+          }
         }
     }
 

@@ -27,7 +27,7 @@ llvm::AliasResult Andersen::alias(const Value *valueA, const Value *valueB, unsi
     if (ctxIdA != GenericContextID && ctxIdB != GenericContextID) {
         const Context* ctxA = nodeFactory.getContextByID(ctxIdA);
         const Context* ctxB = nodeFactory.getContextByID(ctxIdB);
-        assert(ctxA != nullptr || ctxB != nullptr && "Andersen::alias - ctxIdA/B invalid.");
+        assert(ctxA != nullptr && ctxB != nullptr && "Andersen::alias - ctxIdA/B invalid.");
 
         NodeIndex n1 = nodeFactory.getMergeTarget(nodeFactory.getValueNodeFor(ctxA, valueA));
         NodeIndex n2 = nodeFactory.getMergeTarget(nodeFactory.getValueNodeFor(ctxB, valueB));
@@ -312,6 +312,9 @@ int Andersen::getSupercedingContextID(const Function* parent, const Value *v) {
     if (const Argument *arg = dyn_cast<Argument>(v))
         assocFunction = arg->getParent();
 
+    if (isa<Constant>(v) || isa<GlobalValue>(v))
+        return 0;
+
     assert(assocFunction != nullptr);
 
     // errs() << "===stemsFromContext===\n";
@@ -352,5 +355,4 @@ int Andersen::getSupercedingContextID(const Function* parent, const Value *v) {
 void Andersen::resolveConstraints() {
   optimizeConstraints();
   solveConstraints();
-  solveFunctionPointers();
 }
