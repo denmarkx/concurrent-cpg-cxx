@@ -689,11 +689,15 @@ void Andersen::solveConstraints() {
               if (constraintGraph.insertCopyEdge(vRep, tgtNode)) {
                 // errs() << "\tInsert copy edge " << v << " -> " << tgtNode <<
                 // "\n";
-                nextWorkList->enqueue(vRep);
-                AndersPtsSet newPts;
-                // if (reseeded.insert(vRep).second)
-                if (ptsGraph[vRep].subtract(ptsGraph[tgtNode], newPts))
-                  deltaPts[vRep].unionWith(ptsGraph[vRep]);
+                auto vRepPtsItr = ptsGraph.find(vRep);
+                if (vRepPtsItr != ptsGraph.end() && !vRepPtsItr->second.isEmpty()) {
+                    AndersPtsSet newPts;
+                    if (vRepPtsItr->second.subtract(ptsGraph[tgtNode], newPts)) {
+                        ptsGraph[tgtNode].unionWith(newPts);
+                        deltaPts[tgtNode].unionWith(newPts);
+                        nextWorkList->enqueue(tgtNode);
+                    }
+                }
               }
 
               // If we find that dst has been merged to elsewhere, remember this
@@ -707,11 +711,15 @@ void Andersen::solveConstraints() {
               if (constraintGraph.insertCopyEdge(tgtNode, vRep)) {
                 // errs() << "\tInsert copy edge " << tgtNode << " -> " << v <<
                 // "\n";
-                nextWorkList->enqueue(tgtNode);
-                // if (reseeded.insert(tgtNode).second)
-                AndersPtsSet newPts;
-                if (ptsGraph[vRep].subtract(ptsGraph[tgtNode], newPts))
-                    deltaPts[tgtNode].unionWith(newPts);
+                auto tgtPtsItr = ptsGraph.find(tgtNode);
+                if (tgtPtsItr != ptsGraph.end() && !tgtPtsItr->second.isEmpty()) {
+                    AndersPtsSet newPts;
+                    if (tgtPtsItr->second.subtract(ptsGraph[vRep], newPts)) {
+                        ptsGraph[vRep].unionWith(newPts);
+                        deltaPts[vRep].unionWith(newPts);
+                        nextWorkList->enqueue(vRep);
+                    }
+                }
               }
 
               // If we find that dst has been merged to elsewhere, remember this
