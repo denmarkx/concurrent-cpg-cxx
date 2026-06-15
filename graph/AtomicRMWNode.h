@@ -21,6 +21,7 @@ public:
         Node *lhs = GraphManager::get()->getNode(I->getOperand(0));
         Node *rhs = GraphManager::get()->getNode(I->getOperand(1));
         assert(lhs != nullptr && rhs != nullptr);
+        node->ptr = const_cast<Value*>(I->getPointerOperand());
 
         node->addEdge("LHS", lhs);
         node->addEdge("RHS", rhs);

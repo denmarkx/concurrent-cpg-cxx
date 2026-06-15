@@ -330,7 +330,7 @@ int Andersen::getSupercedingContextID(const Function* parent, const Value *v) {
         // Walk back through chain:
         const Context *cur = ctx;
         while (cur != nullptr) {
-            if (cur->callSite && (cur->callSite->getFunction() == parent || cur->func == parent)) {
+            if ((cur->callSite && cur->callSite->getFunction() == parent) || cur->func == parent) {
                 found = ctx;
                 break;
             }

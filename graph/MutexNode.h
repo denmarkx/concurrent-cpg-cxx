@@ -27,6 +27,7 @@ public:
         ConcurrencyManager::get()->registerNode(node);
 
         const Value *obj = GraphManager::get()->getMemoryObj(I->getOperand(0));
+        errs() << "MutexNode: " << *I->getOperand(0) << "\n";
         if (obj) {
             node->_handle = GraphManager::get()->getNode(obj);
             node->addEdge("HANDLE", node->_handle);

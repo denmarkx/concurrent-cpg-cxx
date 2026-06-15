@@ -13,13 +13,13 @@ public:
     static LoadNode* make(const LoadInst *I) {
         LoadNode *node = new LoadNode(I);
 
-        Value* src = I->getOperand(0);
+        const Value* src = I->getPointerOperand();
         if (src == nullptr) return nullptr;
 
         Node* srcNode = GraphManager::get()->getNode(src);
         if (srcNode == nullptr) return node;
         node->_src = srcNode;
-        node->ptr = src;
+        node->ptr = const_cast<Value*>(src);
 
         if (I->isAtomic()) {
             node->registerLoadEdge(srcNode);

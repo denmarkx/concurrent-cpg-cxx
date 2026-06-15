@@ -158,15 +158,9 @@ const llvm::Value* GraphManager::getMemoryObj(const llvm::Value *ptr) {
     return nullptr;
 }
 
-std::vector<const llvm::Value*> GraphManager::getMemoryObjs(const llvm::Value *ptr) {
+std::vector<const llvm::Value*> GraphManager::getMemoryObjs(const llvm::Value *ptr, unsigned int ctxId) {
     std::vector<const llvm::Value*> results;
     if (!ptr) return results;
-
-    if (const GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(ptr))
-        if (gep->hasAllConstantIndices()) {
-            results.push_back(gep);
-            return results;
-        }
 
     const llvm::Value *obj = llvm::getUnderlyingObject(ptr, 16);
     if (isa<GlobalValue>(obj) || isa<AllocaInst>(obj)) {
@@ -180,14 +174,49 @@ std::vector<const llvm::Value*> GraphManager::getMemoryObjs(const llvm::Value *p
             return results;
         }
 
-    PtsSetType ptsSet;
-    getAliasResult()->getPointsToSet(ptr, ptsSet);
-    for (const llvm::Value *v : ptsSet) {
-        if (isa<GlobalValue>(v) || isa<AllocaInst>(v))
-            results.push_back(v);
-        else if (auto *cb = dyn_cast<CallBase>(v))
-            if (isHeapAllocator(cb->getCalledFunction()))
-                results.push_back(cb);
+    auto collect = [&](const PtsSetType &pts) {
+        for (const Value *v : pts) {
+            if (isa<GlobalValue>(v) || isa<AllocaInst>(v))
+                results.push_back(v);
+            else if (auto *cb = dyn_cast<CallBase>(v))
+                if (isHeapAllocator(cb->getCalledFunction()))
+                    results.push_back(cb);
+        }
+    };
+
+    PtsSetType pts;
+    getAliasResult()->getPointsToSet(ptr, pts, ctxId);
+
+    if (pts.empty() && obj != ptr)
+        getAliasResult()->getPointsToSet(obj, pts, ctxId);
+    collect(pts);
+
+    if (!results.empty())
+        return results;
+
+    const Value *cur = obj;
+    int depth = 0;
+    while (const LoadInst *li = dyn_cast<LoadInst>(cur)) {
+        if (depth++ > 3)
+            break;
+
+        const Value *src = li->getPointerOperand();
+        PtsSetType srcPts;
+        getAliasResult()->getPointsToSet(src, srcPts, ctxId);
+        collect(srcPts);
+
+        if (!results.empty()) 
+            return results;
+
+        cur = llvm::getUnderlyingObject(src, 16);
+        if (cur == src) 
+            break;
+    }
+
+    if (isa<Argument>(obj)) {
+        PtsSetType argPts;
+        getAliasResult()->getPointsToSet(obj, argPts, ~0u);
+        collect(argPts);
     }
     return results;
 }

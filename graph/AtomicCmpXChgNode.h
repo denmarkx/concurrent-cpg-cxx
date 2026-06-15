@@ -38,6 +38,7 @@ public:
         node->addEdge("LHS", ptr);
         node->addEdge("RHS", newValue);
         node->setAtomicOrder(I->getSuccessOrdering());
+        node->ptr = const_cast<Value*>(I->getPointerOperand());
         return node;
     }
 

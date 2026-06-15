@@ -14,17 +14,17 @@ public:
         StoreNode *node = new StoreNode(I);
 
         Value* src = I->getOperand(0);
-        Value* dst = I->getOperand(1);
+        const Value* dst = I->getPointerOperand();
         if (src == nullptr) return nullptr;
         if (dst == nullptr) return nullptr;
 
         Node* srcNode = GraphManager::get()->getNode(src);
         if (srcNode == nullptr) return node;
         node->_src = srcNode;
+        node->ptr = const_cast<Value*>(I->getPointerOperand());
 
         Node* dstNode = GraphManager::get()->getNode(dst);
         if (dstNode == nullptr) return node;
-        node->ptr = dst;
 
         if (I->isAtomic()) {
             // node->registerLoadEdge(srcNode);
