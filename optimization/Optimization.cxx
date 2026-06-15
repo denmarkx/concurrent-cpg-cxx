@@ -2,6 +2,7 @@
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "OptCallees.h"
+#include "OptCFG.h"
 using namespace llvm;
 
 llvm::PassPluginLibraryInfo getOPluginInfo() {
@@ -13,6 +14,7 @@ llvm::PassPluginLibraryInfo getOPluginInfo() {
                    ArrayRef<PassBuilder::PipelineElement>) {
                     if (Name == "optimization") {
                         MPM.addPass(OptCallees());
+                        MPM.addPass(OptCFG());
                         return true;
                     }
                     return false;

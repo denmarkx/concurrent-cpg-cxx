@@ -6,6 +6,7 @@ rustc\
     -Coverflow-checks=off\
     -Cdebug-assertions=off\
     -Csymbol-mangling-version=v0\
+    -Cdebuginfo=0\
     -Cllvm-args="--disable-i2p-p2i-opt --emit-call-site-info"\
     "../files/std_rs.rs"\
     -o "../files/std_rs.ll"
@@ -13,6 +14,13 @@ rustc\
 opt-17 \
     -S \
     --passes="ipsccp,sccp,correlated-propagation,called-value-propagation,mem2reg,early-cse,canonicalize-aliases,loop-simplify,lcssa,loop-rotate,loop-instsimplify,indvars,loop-deletion,loop-reduce,correlated-propagation,instcombine,jump-threading,simplifycfg,tailcallelim,reassociate,gvn,sccp,instcombine,function-attrs,instcombine,adce,dce,globalopt,globaldce,constmerge,strip-dead-prototypes,strip-dead-debug-info,partially-inline-libcalls" \
+    "../files/std_rs.ll" \
+    -o "../files/std_rs.ll"
+
+opt-17 \
+    -S \
+    -load-pass-plugin=../libOptimization.so\
+    -passes="optimization"\
     "../files/std_rs.ll" \
     -o "../files/std_rs.ll"
 
@@ -26,4 +34,15 @@ rustc\
     -Csymbol-mangling-version=v0\
     -Clto=fat\
     "../files/std_rs.rs"\
+    -o "../files/std_rs_lto.bc"
+
+opt-17 \
+    --passes="ipsccp,sccp,correlated-propagation,called-value-propagation,mem2reg,early-cse,canonicalize-aliases,loop-simplify,lcssa,loop-rotate,loop-instsimplify,indvars,loop-deletion,loop-reduce,correlated-propagation,instcombine,jump-threading,simplifycfg,tailcallelim,reassociate,gvn,sccp,instcombine,function-attrs,instcombine,adce,dce,globalopt,globaldce,constmerge,strip-dead-prototypes,strip-dead-debug-info,partially-inline-libcalls" \
+    "../files/std_rs_lto.bc" \
+    -o "../files/std_rs_lto.bc"
+
+opt-17 \
+    -load-pass-plugin=../libOptimization.so \
+    -passes="optimization"\
+    "../files/std_rs_lto.bc" \
     -o "../files/std_rs_lto.bc"

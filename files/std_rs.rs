@@ -1,25 +1,20 @@
+use std::sync::{Arc, Mutex};
 use std::thread;
-use std::sync::Arc;
-
-struct SendablePtr<T>(*mut T);
-unsafe impl<T> Send for SendablePtr<T> {}
-unsafe impl<T> Sync for SendablePtr<T> {}
 
 fn main() {
-    let data = Arc::new(0);
-    let ptr = Arc::into_raw(data) as *mut i32;
+    let data = Arc::new(Mutex::new(1234));
+    // let mut guard = mutex.lock().unwrap();
+    // *guard = 4321;
+    let x = Arc::clone(&data);
+    let y = Arc::clone(&data);
 
-    let y = SendablePtr(ptr);
-    let z = SendablePtr(ptr);
-
-    let t = thread::spawn(move || {
-        unsafe { *y.0 = 1234; }
+    let t1 = std::thread::spawn(move || {
+        let mut guard = x.lock().unwrap();
+        *guard = 1234;
     });
-    // t.join().unwrap();
 
-
-    let t2 = thread::spawn(move || {
-        unsafe { *z.0 = 4321; }
+    let t2 = std::thread::spawn(move || {
+        let mut guard = y.lock().unwrap();
+        *guard = 4321;
     });
-    // t2.join().unwrap();
 }

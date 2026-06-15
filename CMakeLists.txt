@@ -104,6 +104,7 @@ doctest_discover_tests(unit_test)
 
 set (OPT_FILES
     optimization/OptCallees.cxx
+    optimization/OptCFG.cxx
     optimization/Optimization.cxx
 )
 
