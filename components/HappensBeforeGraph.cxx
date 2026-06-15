@@ -409,6 +409,27 @@ bool HappensBeforeGraph::happensBefore(HBNode *a, HBNode *b) {
     return _reach[_sccIds[a]].test(_sccIds[b]);
 }
 
+static bool checkDisjointTypes(Type *tyA, Type *tyB) {
+    const DataLayout& layout = GraphManager::get()->getDataLayout();
+    bool aIsPtr = tyA->isPointerTy();
+    bool bIsPtr = tyB->isPointerTy();
+    if (aIsPtr != bIsPtr)
+        return true;
+    if (aIsPtr && bIsPtr)
+        return false;
+    return layout.getTypeStoreSize(tyA) != layout.getTypeStoreSize(tyB);
+}
+
+static Type *accessType(const HBNode *n) {
+    if (const auto *instr = dyn_cast<LoadInst>(n->node->getValue()))
+        return instr->getType();
+    if (const auto *instr = dyn_cast<StoreInst>(n->node->getValue()))
+        return instr->getValueOperand()->getType();
+    if (const auto *instr = dyn_cast<AtomicRMWInst>(n->node->getValue()))
+        return instr->getValOperand()->getType();
+    return nullptr;
+}
+
 bool HappensBeforeGraph::checkAlias(HBNode *a, HBNode *b, AliasResult expected) {
     if (!a->node->ptr || !b->node->ptr)
         return expected == AliasResult::NoAlias;
@@ -425,6 +446,11 @@ bool HappensBeforeGraph::checkAlias(HBNode *a, HBNode *b, AliasResult expected) 
 
     if (isThreadLocal(a->node->ptr) || isThreadLocal(b->node->ptr))
         return expected == AliasResult::NoAlias;
+
+    if (llvm::Type *tyA = accessType(a))
+        if (llvm::Type *tyB = accessType(b))
+            if (checkDisjointTypes(tyA, tyB))
+                return expected == AliasResult::NoAlias;
 
     Andersen *aa = GraphManager::get()->getAliasResult();
 
@@ -444,7 +470,6 @@ bool HappensBeforeGraph::checkAlias(HBNode *a, HBNode *b, AliasResult expected) 
     if (expected == AliasResult::MustAlias && (result == AliasResult::NoAlias))
         return false;
     return true;
-
 }
 
 HappensBeforeGraph::HappensBeforeGraph() { _instance = this; }
