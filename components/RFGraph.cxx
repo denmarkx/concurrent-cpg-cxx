@@ -38,6 +38,12 @@ void RFGraph::buildIndex() {
                     addUnique(_unknownReads, n);
                     addUnique(_unknownWrites, n);
                     break;
+                case NodeType::MUTEX_LOCK:
+                    addUnique(_unknownReads, n);
+                    break;
+                case NodeType::MUTEX_UNLOCK:
+                    addUnique(_unknownWrites, n);
+                    break;
                 default: break;
             }
             continue;
@@ -58,6 +64,12 @@ void RFGraph::buildIndex() {
             case NodeType::ATOMIC_CMPXCHG:
                 addUnique(_reads[key], n);
                 addUnique(_writes[key], n);
+                break;
+            case NodeType::MUTEX_LOCK:
+                addUnique(_readsLock[key], n);
+                break;
+            case NodeType::MUTEX_UNLOCK:
+                addUnique(_writesLock[key], n);
                 break;
             default: break;
         }

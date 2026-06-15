@@ -41,7 +41,7 @@ struct OperationInfo {
         if (func->getReturnType()->getTypeID() != returnType) return false;
 
         size_t numParams = std::distance(func->args().begin(), func->args().end());
-        if (numParams != parameters.size()) return false;
+        if (!firstParamOnly && numParams != parameters.size()) return false;
 
         for (size_t i=0; i < numParams; i++) {
             if (firstParamOnly && i >= 1) break;
@@ -83,6 +83,14 @@ struct SysCallOperationInfo : OperationInfo {
 
     bool checkCall(const UnixSystemCall *call) const {
         return (sysCode == call->sysCode) && (flags == call->flags);
+    }
+};
+
+struct HLPairHash {
+    std::size_t operator()(const std::pair<std::string, std::string>& p) const {
+        std::size_t h1 = std::hash<std::string>{}(p.first);
+        std::size_t h2 = std::hash<std::string>{}(p.second);
+        return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
     }
 };
 
@@ -161,10 +169,14 @@ public:
                 if (const CallBase *cb = dyn_cast<CallInst>(user)) {
                     const Function *calledFunc = cb->getParent()->getParent();
                     if (calledFunc) {
-                        auto it = std::find_if(_highLevelOperationMap.begin(), _highLevelOperationMap.end(), [&calledFunc](const auto& p) {
-                            return demangle(calledFunc->getName()).starts_with(p.first);
+                        auto it = std::find_if(_highLevelOperationMap.begin(), _highLevelOperationMap.end(), [&calledFunc](const auto &p) {
+                            std::string demangledName = demangle(calledFunc->getName());
+                            bool checkSuffix = true;
+                            if (p.first.second != "") // suffix
+                                checkSuffix = demangledName.ends_with(p.first.second);
+                            return demangledName.starts_with(p.first.first) && checkSuffix;
                         });
-                        if (it != _highLevelOperationMap.end() && it->second.checkFunction(calledFunc), true) {
+                        if (it != _highLevelOperationMap.end() && it->second.checkFunction(calledFunc, true)) {
                             final = calledFunc;
                             break;
                         }
@@ -210,7 +222,7 @@ private:
     static inline ConcurrencyManager* _concurrencyMgr = nullptr;
     static const SCOperationMapType _operationSysCalls;
     static const OperationMapType _operationMap;
-    static const OperationMapType _highLevelOperationMap;
+    static const std::unordered_map<std::pair<std::string, std::string>, OperationInfo, HLPairHash> _highLevelOperationMap;
 };
 
 inline ConcurrencyManager* ConcurrencyManager::get() {
@@ -318,18 +330,31 @@ const inline SCOperationMapType ConcurrencyManager::_operationSysCalls{
  * be beneficial to identify the higher-level operation (IE: std::thread::spawn).
  * This is done by backtracking the CFG and stopping at a function in this map.
 */
-const inline OperationMapType ConcurrencyManager::_highLevelOperationMap{
-    {"std::thread::spawn",
+const inline std::unordered_map<std::pair<std::string, std::string>, OperationInfo, HLPairHash> ConcurrencyManager::_highLevelOperationMap{
+    {{"std::thread::spawn", ""},
         OperationInfo(
             ThreadOperation::CREATE,
             Type::VoidTyID,
             Type::PointerTyID
         )
     },
-    {"std::thread::JoinHandle<T>::join",
+    {{"std::thread::JoinHandle<T>::join", ""},
         OperationInfo(
             ThreadOperation::JOIN,
             Type::StructTyID,
+            Type::PointerTyID
+        )
+    },
+    {{"std::sync::mutex::Mutex<", "::lock"},
+        OperationInfo(
+            ThreadOperation::LOCK,
+            Type::PointerTyID,
+            Type::IntegerTyID
+        )
+    },
+    {{"core::ptr::drop_in_place::<std::sync::mutex::Mutex", ""},
+        OperationInfo(
+            ThreadOperation::UNLOCK,
             Type::PointerTyID
         )
     },

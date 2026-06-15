@@ -25,17 +25,21 @@ public:
             node->_type = NodeType::MUTEX_UNLOCK;
         }
         ConcurrencyManager::get()->registerNode(node);
+        node->_handleVal = I->getOperand(0);
 
         const Value *obj = GraphManager::get()->getMemoryObj(I->getOperand(0));
-        errs() << "MutexNode: " << *I->getOperand(0) << "\n";
-        if (obj) {
-            node->_handle = GraphManager::get()->getNode(obj);
-            node->addEdge("HANDLE", node->_handle);
-            node->ptr = const_cast<Value*>(obj);
-        }
+        if (obj)
+            node->setHandle(obj);
         return node;
     }
 
+    void setHandle(const Value *obj) {
+        _handle = GraphManager::get()->getNode(obj);
+        addEdge("HANDLE", _handle);
+        ptr = const_cast<Value*>(obj);
+    }
+
+    const Value* getHandleValue() { return _handleVal; }
     Node* getHandle() { return _handle; }
     NodeType getType() { return _type; }
 
@@ -44,4 +48,5 @@ private:
 
 private:
     Node* _handle = nullptr;
+    const Value *_handleVal = nullptr;
 };

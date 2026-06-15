@@ -137,7 +137,7 @@ namespace GraphParser {
 
             // It's possible that this might have a higher level caller:
             // I suppose just for now, this can be reserved for joins.
-            if (cOp == JOIN) {
+            if (cOp == JOIN || cOp == LOCK || cOp == UNLOCK) {
                 std::vector<const CallBase*> higherCalls = ConcurrencyManager::get()->getHighestLevelCall(callBase);
 
                 // If there exists a higher call, we'll treat that as the join instead of the lower one.
@@ -154,7 +154,12 @@ namespace GraphParser {
                         GraphManager::get()->removeNode(candidate);
 
                     // Then register these new ones in its place:
-                    handleNode<JoinNode, CallBase>(x, cloning);
+                    switch(cOp) {
+                        case ThreadOperation::JOIN: { handleNode<JoinNode, CallBase>(x, cloning); break; }
+                        case ThreadOperation::LOCK:
+                        case ThreadOperation::UNLOCK: { handleNode<MutexNode, CallBase>(x, cloning); break; }
+                        default: break;
+                    }
                 }
             }
         }

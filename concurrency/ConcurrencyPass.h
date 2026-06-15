@@ -6,6 +6,7 @@
 #include "concurrency/JoinNode.h"
 #include "concurrency/ThreadNode.h"
 #include "graph/GraphManager.h"
+#include "graph/MutexNode.h"
 
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/MemorySSA.h"
@@ -94,6 +95,11 @@ public:
             ConcurrencyManager::get()->getConcurrencyNodes<JoinNode>();
         for (auto *node : joins)
             handleJoinNode(node);
+
+        std::vector<MutexNode*> mutexes = 
+            ConcurrencyManager::get()->getConcurrencyNodes<MutexNode>();
+        for (auto *node : mutexes)
+            handleMutexNode(node);
         // printSummaries();
         // printSharedMap();
 
@@ -186,6 +192,12 @@ private:
                 return;
             }
         }
+    }
+
+    void handleMutexNode(MutexNode *node) {
+        const Value *obj = GraphManager::get()->getMemoryObj(node->getHandleValue());
+        if (obj)
+            node->setHandle(obj);
     }
 
     /**
